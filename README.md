@@ -1,0 +1,2 @@
+# ScholarHub
+A Community database handling team project 
