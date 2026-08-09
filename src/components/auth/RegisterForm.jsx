@@ -6,6 +6,7 @@ import InputField from "./InputField";
 import PasswordInput from "./PasswordInput";
 import PrimaryButton from "./PrimaryButton";
 import useAuth from "../../hooks/useAuth";
+import { useAuthCharacter } from "./AuthCharacterContext";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PHONE_PATTERN = /^[6-9]\d{9}$/; // 10-digit mobile number
@@ -59,6 +60,7 @@ const SectionTitle = ({ children }) => (
 const RegisterForm = ({ defaultEmail = "", onBackToLogin }) => {
   const navigate = useNavigate();
   const { signUp } = useAuth();
+  const { reactCorrect, reactWrong } = useAuthCharacter();
   const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -85,17 +87,25 @@ const RegisterForm = ({ defaultEmail = "", onBackToLogin }) => {
     setIsSubmitting(false);
 
     if (result.success) {
+      reactCorrect();
       const role = result.data?.user?.role || "Student";
       navigate(ROLE_ROUTES[role] || "/", { replace: true });
       return;
     }
 
+    reactWrong();
     setServerError(result.message);
+  };
+
+  // Fires when Register is clicked but client-side validation blocks the
+  // submit (missing required field, passwords don't match, etc.).
+  const onInvalid = () => {
+    reactWrong();
   };
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmit, onInvalid)}
       noValidate
       className="flex max-h-[65vh] flex-col gap-4 overflow-y-auto pr-1"
       aria-label="Registration form"

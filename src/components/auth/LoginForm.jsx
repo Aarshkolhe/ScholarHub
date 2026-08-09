@@ -6,6 +6,7 @@ import InputField from "./InputField";
 import PasswordInput from "./PasswordInput";
 import PrimaryButton from "./PrimaryButton";
 import useAuth from "../../hooks/useAuth";
+import { useAuthCharacter } from "./AuthCharacterContext";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,6 +24,7 @@ const ROLE_ROUTES = {
 const LoginForm = ({ onUserNotFound }) => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
+  const { reactCorrect, reactWrong } = useAuthCharacter();
   const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -42,6 +44,7 @@ const LoginForm = ({ onUserNotFound }) => {
     setIsSubmitting(false);
 
     if (result.success) {
+      reactCorrect();
       const role = result.data?.user?.role;
       navigate(ROLE_ROUTES[role] || "/", { replace: true });
       return;
@@ -49,16 +52,25 @@ const LoginForm = ({ onUserNotFound }) => {
 
     if (result.code === "USER_NOT_FOUND") {
       // Smoothly expand into registration instead of showing an error
+      reactWrong();
       onUserNotFound(getValues("email"));
       return;
     }
 
+    reactWrong();
     setServerError(result.message);
+  };
+
+  // Fires when the user hits Sign In but client-side validation (bad email
+  // format, empty fields, etc.) blocks the submit — react before they even
+  // reach the server.
+  const onInvalid = () => {
+    reactWrong();
   };
 
   return (
     <form
-      onSubmit={handleSubmit(onSubmit)}
+      onSubmit={handleSubmit(onSubmit, onInvalid)}
       noValidate
       className="flex flex-col gap-4"
       aria-label="Sign in form"
