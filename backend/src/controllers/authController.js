@@ -35,30 +35,25 @@ function generateToken(user) {
     {
       expiresIn: process.env.JWT_EXPIRES_IN || "1h",
       issuer: process.env.JWT_ISSUER || "scholarhub-api",
-      audience:
-        process.env.JWT_AUDIENCE || "scholarhub-frontend"
+      audience: process.env.JWT_AUDIENCE || "scholarhub-frontend"
     }
   );
 }
 
 /**
  * Validate registration data.
+ *
+ * Registration is intentionally limited to authentication
+ * information. Profile details such as name, college,
+ * branch, CGPA, category, etc. will be collected later
+ * from the user's dashboard.
  */
-function validateRegistrationInput(
-  name,
-  email,
-  password
-) {
-  if (!name || !email || !password) {
-    return "Name, email and password are required.";
+function validateRegistrationInput(email, password) {
+  if (!email || !password) {
+    return "Email and password are required.";
   }
 
-  if (name.length < 2 || name.length > 120) {
-    return "Name must be between 2 and 120 characters.";
-  }
-
-  const emailRegex =
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
   if (!emailRegex.test(email)) {
     return "Please provide a valid email address.";
@@ -78,31 +73,22 @@ function validateRegistrationInput(
 /**
  * POST /register
  *
- * Creates a new Student account.
+ * Creates a new Student account using only
+ * email and password.
  */
 export async function register(req, res) {
   try {
-    const name = String(
-      req.body?.name || ""
-    ).trim();
-
-    const email = String(
-      req.body?.email || ""
-    )
+    const email = String(req.body?.email || "")
       .trim()
       .toLowerCase();
 
-    const password = String(
-      req.body?.password || ""
-    );
+    const password = String(req.body?.password || "");
 
     // Validate incoming data before touching the database.
-    const validationError =
-      validateRegistrationInput(
-        name,
-        email,
-        password
-      );
+    const validationError = validateRegistrationInput(
+      email,
+      password
+    );
 
     if (validationError) {
       return res.status(400).json({
@@ -117,8 +103,7 @@ export async function register(req, res) {
     /**
      * Check whether an account already exists.
      *
-     * $1 is a parameterized PostgreSQL value,
-     * preventing SQL injection.
+     * The parameterized query prevents SQL injection.
      */
     const existingUser = await pool.query(
       `
@@ -135,47 +120,40 @@ export async function register(req, res) {
         success: false,
         error: {
           code: "EMAIL_EXISTS",
-          message:
-            "An account with this email already exists."
+          message: "An account with this email already exists."
         }
       });
     }
 
     /**
      * Hash the password before storing it.
-     *
-     * 12 bcrypt rounds provides strong password
-     * protection for normal authentication traffic.
      */
     const saltRounds = Number(
       process.env.BCRYPT_ROUNDS || 12
     );
 
-    const passwordHash =
-      await bcrypt.hash(
-        password,
-        saltRounds
-      );
+    const passwordHash = await bcrypt.hash(
+      password,
+      saltRounds
+    );
 
     let result;
 
     try {
       /**
-       * Create the user.
+       * Create the authentication account.
        *
-       * New registrations are Students by default.
-       * Admin accounts should be created through a
-       * controlled administrative process.
+       * Name is intentionally NULL because the user
+       * will complete their profile after login.
        */
       result = await pool.query(
         `
           INSERT INTO users (
-            name,
             email,
             password_hash,
             role
           )
-          VALUES ($1, $2, $3, $4)
+          VALUES ($1, $2, $3)
           RETURNING
             id,
             name,
@@ -183,7 +161,6 @@ export async function register(req, res) {
             role
         `,
         [
-          name,
           email,
           passwordHash,
           "Student"
@@ -192,16 +169,15 @@ export async function register(req, res) {
     } catch (error) {
       /**
        * The database unique constraint is the final
-       * protection against simultaneous registrations
-       * using the same email.
+       * protection against simultaneous duplicate
+       * registrations.
        */
       if (error.code === "23505") {
         return res.status(409).json({
           success: false,
           error: {
             code: "EMAIL_EXISTS",
-            message:
-              "An account with this email already exists."
+            message: "An account with this email already exists."
           }
         });
       }
@@ -211,41 +187,21 @@ export async function register(req, res) {
 
     const user = result.rows[0];
 
-    const safeUser =
-      sanitizeUser(user);
+    const safeUser = sanitizeUser(user);
+    const token = generateToken(safeUser);
 
-    const token =
-      generateToken(safeUser);
-
-    /**
-     * Frontend contract:
-     *
-     * {
-     *   user: {
-     *     id,
-     *     name,
-     *     email,
-     *     role
-     *   },
-     *   token
-     * }
-     */
     return res.status(201).json({
       user: safeUser,
       token
     });
   } catch (error) {
-    console.error(
-      "Registration error:",
-      error
-    );
+    console.error("Registration error:", error);
 
     return res.status(500).json({
       success: false,
       error: {
         code: "REGISTRATION_FAILED",
-        message:
-          "Unable to create account."
+        message: "Unable to create account."
       }
     });
   }
@@ -258,23 +214,18 @@ export async function register(req, res) {
  */
 export async function login(req, res) {
   try {
-    const email = String(
-      req.body?.email || ""
-    )
+    const email = String(req.body?.email || "")
       .trim()
       .toLowerCase();
 
-    const password = String(
-      req.body?.password || ""
-    );
+    const password = String(req.body?.password || "");
 
     if (!email || !password) {
       return res.status(400).json({
         success: false,
         error: {
           code: "VALIDATION_ERROR",
-          message:
-            "Email and password are required."
+          message: "Email and password are required."
         }
       });
     }
@@ -282,7 +233,7 @@ export async function login(req, res) {
     /**
      * Fetch the account using a parameterized query.
      *
-     * password_hash is needed internally for bcrypt
+     * password_hash is required internally for bcrypt
      * verification but is never returned to the client.
      */
     const result = await pool.query(
@@ -303,8 +254,8 @@ export async function login(req, res) {
     const user = result.rows[0];
 
     /**
-     * Use the same error message for both an unknown
-     * email and incorrect password. This prevents
+     * Use the same error message for both unknown
+     * email and incorrect password to prevent
      * account enumeration.
      */
     if (!user) {
@@ -312,51 +263,41 @@ export async function login(req, res) {
         success: false,
         error: {
           code: "INVALID_CREDENTIALS",
-          message:
-            "Invalid email or password."
+          message: "Invalid email or password."
         }
       });
     }
 
-    const passwordMatches =
-      await bcrypt.compare(
-        password,
-        user.password_hash
-      );
+    const passwordMatches = await bcrypt.compare(
+      password,
+      user.password_hash
+    );
 
     if (!passwordMatches) {
       return res.status(401).json({
         success: false,
         error: {
           code: "INVALID_CREDENTIALS",
-          message:
-            "Invalid email or password."
+          message: "Invalid email or password."
         }
       });
     }
 
-    const safeUser =
-      sanitizeUser(user);
-
-    const token =
-      generateToken(safeUser);
+    const safeUser = sanitizeUser(user);
+    const token = generateToken(safeUser);
 
     return res.status(200).json({
       user: safeUser,
       token
     });
   } catch (error) {
-    console.error(
-      "Login error:",
-      error
-    );
+    console.error("Login error:", error);
 
     return res.status(500).json({
       success: false,
       error: {
         code: "LOGIN_FAILED",
-        message:
-          "Unable to process login."
+        message: "Unable to process login."
       }
     });
   }
@@ -371,7 +312,7 @@ export async function login(req, res) {
  * The frontend should remove its stored token.
  *
  * Server-side token revocation can be added later using
- * a session table or Redis.
+ * a session table or Redis if required.
  */
 export async function logout(req, res) {
   return res.status(200).json({
