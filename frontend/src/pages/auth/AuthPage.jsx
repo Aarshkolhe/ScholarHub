@@ -6,15 +6,18 @@ import RegisterForm from "../../components/auth/RegisterForm";
 
 /**
  * Single authentication page.
- * Starts in "login" mode. If the backend reports "User Not Found",
- * it transitions in place to "register" mode — no route change.
+ *
+ * Starts in login mode.
+ * Users can switch to registration using the Sign Up button.
+ *
+ * Profile and scholarship information will be collected later
+ * from the user's dashboard/profile page.
  */
 const AuthPage = () => {
-  const [mode, setMode] = useState("login"); // "login" | "register"
+  const [mode, setMode] = useState("login");
   const [prefillEmail, setPrefillEmail] = useState("");
 
-  const handleUserNotFound = (email) => {
-    setPrefillEmail(email);
+  const handleRegister = () => {
     setMode("register");
   };
 
@@ -27,24 +30,36 @@ const AuthPage = () => {
   return (
     <AuthLayout>
       <div
-        className={`w-full rounded-2xl border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/60 transition-all duration-500 ease-out sm:p-8
-          ${isRegister ? "max-w-xl" : "max-w-md"}`}
+        className={`w-full rounded-2xl border border-slate-100 bg-white p-6 shadow-xl shadow-slate-200/60 transition-all duration-500 ease-out sm:p-8 ${
+          isRegister ? "max-w-xl" : "max-w-md"
+        }`}
       >
         <AuthHeader
-          title={isRegister ? "Create your account" : "Welcome back"}
+          title={
+            isRegister
+              ? "Create your account"
+              : "Welcome back"
+          }
           subtitle={
             isRegister
-              ? "We couldn't find an account — let's set one up for you."
+              ? "Create your ScholarHub account to get started."
               : "Sign in to continue to your dashboard"
           }
         />
 
-        {/* Cross-fade between the two form states */}
-        <div key={mode} className="animate-fade-in-up">
+        <div
+          key={mode}
+          className="animate-fade-in-up"
+        >
           {isRegister ? (
-            <RegisterForm defaultEmail={prefillEmail} onBackToLogin={handleBackToLogin} />
+            <RegisterForm
+              defaultEmail={prefillEmail}
+              onBackToLogin={handleBackToLogin}
+            />
           ) : (
-            <LoginForm onUserNotFound={handleUserNotFound} />
+            <LoginForm
+              onRegister={handleRegister}
+            />
           )}
         </div>
       </div>

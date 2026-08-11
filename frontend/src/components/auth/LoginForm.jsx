@@ -10,30 +10,26 @@ import { useAuthCharacter } from "./AuthCharacterContext";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// Where each role lands after a successful sign in
 const ROLE_ROUTES = {
   Student: "/student/dashboard",
   Admin: "/admin/dashboard",
 };
 
-/**
- * Sign-in form. On "User Not Found" it does NOT navigate — instead it calls
- * `onUserNotFound(email)` so the parent AuthPage can smoothly expand the
- * Registration form on the same page, pre-filling the email the user typed.
- */
-const LoginForm = ({ onUserNotFound }) => {
+const LoginForm = ({ onRegister }) => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
   const { reactCorrect, reactWrong } = useAuthCharacter();
+
   const [serverError, setServerError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {
     register,
     handleSubmit,
-    getValues,
     formState: { errors },
-  } = useForm({ mode: "onTouched" });
+  } = useForm({
+    mode: "onTouched",
+  });
 
   const onSubmit = async (values) => {
     setServerError("");
@@ -45,15 +41,13 @@ const LoginForm = ({ onUserNotFound }) => {
 
     if (result.success) {
       reactCorrect();
-      const role = result.data?.user?.role;
-      navigate(ROLE_ROUTES[role] || "/", { replace: true });
-      return;
-    }
 
-    if (result.code === "USER_NOT_FOUND") {
-      // Smoothly expand into registration instead of showing an error
-      reactWrong();
-      onUserNotFound(getValues("email"));
+      const role = result.data?.user?.role;
+
+      navigate(ROLE_ROUTES[role] || "/", {
+        replace: true,
+      });
+
       return;
     }
 
@@ -61,9 +55,6 @@ const LoginForm = ({ onUserNotFound }) => {
     setServerError(result.message);
   };
 
-  // Fires when the user hits Sign In but client-side validation (bad email
-  // format, empty fields, etc.) blocks the submit — react before they even
-  // reach the server.
   const onInvalid = () => {
     reactWrong();
   };
@@ -80,7 +71,11 @@ const LoginForm = ({ onUserNotFound }) => {
           role="alert"
           className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600 animate-fade-in"
         >
-          <FiAlertCircle className="shrink-0" size={16} />
+          <FiAlertCircle
+            className="shrink-0"
+            size={16}
+          />
+
           <span>{serverError}</span>
         </div>
       )}
@@ -93,7 +88,10 @@ const LoginForm = ({ onUserNotFound }) => {
         error={errors.email?.message}
         registration={register("email", {
           required: "Email is required",
-          pattern: { value: EMAIL_PATTERN, message: "Enter a valid email address" },
+          pattern: {
+            value: EMAIL_PATTERN,
+            message: "Enter a valid email address",
+          },
         })}
       />
 
@@ -103,7 +101,10 @@ const LoginForm = ({ onUserNotFound }) => {
         error={errors.password?.message}
         registration={register("password", {
           required: "Password is required",
-          minLength: { value: 8, message: "Password must be at least 8 characters" },
+          minLength: {
+            value: 8,
+            message: "Password must be at least 8 characters",
+          },
         })}
       />
 
@@ -116,14 +117,35 @@ const LoginForm = ({ onUserNotFound }) => {
         </button>
       </div>
 
-      <PrimaryButton type="submit" isLoading={isSubmitting} className="mt-1">
+      <PrimaryButton
+        type="submit"
+        isLoading={isSubmitting}
+        className="mt-1"
+      >
         Sign In
       </PrimaryButton>
 
-      <p className="mt-1 flex items-center justify-center gap-1 text-xs text-slate-400">
+      <div className="flex items-center gap-2">
+        <div className="h-px flex-1 bg-slate-200" />
+        <span className="text-xs text-slate-400">
+          OR
+        </span>
+        <div className="h-px flex-1 bg-slate-200" />
+      </div>
+
+      <p className="flex items-center justify-center gap-1 text-xs text-slate-400">
         <FiMail size={13} />
-        New here? Just enter your email and password — we'll set you up.
+        Don't have an account?
       </p>
+
+      <PrimaryButton
+        type="button"
+        variant="ghost"
+        onClick={onRegister}
+        disabled={isSubmitting}
+      >
+        Sign Up
+      </PrimaryButton>
     </form>
   );
 };
