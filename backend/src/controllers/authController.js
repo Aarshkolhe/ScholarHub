@@ -3,6 +3,12 @@ import jwt from "jsonwebtoken";
 
 import pool from "../config/db.js";
 
+import {
+  requestPasswordResetOtp,
+  verifyPasswordResetOtp,
+  markOtpAsUsed
+} from "../services/otpService.js";
+
 /**
  * Remove sensitive information before sending
  * user data back to the frontend.
@@ -42,11 +48,6 @@ function generateToken(user) {
 
 /**
  * Validate registration data.
- *
- * Registration is intentionally limited to authentication
- * information. Profile details such as name, college,
- * branch, CGPA, category, etc. will be collected later
- * from the user's dashboard.
  */
 function validateRegistrationInput(email, password) {
   if (!email || !password) {
@@ -72,9 +73,6 @@ function validateRegistrationInput(email, password) {
 
 /**
  * POST /register
- *
- * Creates a new Student account using only
- * email and password.
  */
 export async function register(req, res) {
   try {
@@ -84,7 +82,6 @@ export async function register(req, res) {
 
     const password = String(req.body?.password || "");
 
-    // Validate incoming data before touching the database.
     const validationError = validateRegistrationInput(
       email,
       password
@@ -100,11 +97,6 @@ export async function register(req, res) {
       });
     }
 
-    /**
-     * Check whether an account already exists.
-     *
-     * The parameterized query prevents SQL injection.
-     */
     const existingUser = await pool.query(
       `
         SELECT id
@@ -125,9 +117,6 @@ export async function register(req, res) {
       });
     }
 
-    /**
-     * Hash the password before storing it.
-     */
     const saltRounds = Number(
       process.env.BCRYPT_ROUNDS || 12
     );
@@ -137,23 +126,20 @@ export async function register(req, res) {
       saltRounds
     );
 
+    const name = String(req.body?.name || email.split("@")[0]).trim();
+
     let result;
 
     try {
-      /**
-       * Create the authentication account.
-       *
-       * Name is intentionally NULL because the user
-       * will complete their profile after login.
-       */
       result = await pool.query(
         `
           INSERT INTO users (
+            name,
             email,
             password_hash,
             role
           )
-          VALUES ($1, $2, $3)
+          VALUES ($1, $2, $3, $4)
           RETURNING
             id,
             name,
@@ -161,17 +147,13 @@ export async function register(req, res) {
             role
         `,
         [
+          name,
           email,
           passwordHash,
           "Student"
         ]
       );
     } catch (error) {
-      /**
-       * The database unique constraint is the final
-       * protection against simultaneous duplicate
-       * registrations.
-       */
       if (error.code === "23505") {
         return res.status(409).json({
           success: false,
@@ -209,8 +191,6 @@ export async function register(req, res) {
 
 /**
  * POST /login
- *
- * Authenticates an existing user.
  */
 export async function login(req, res) {
   try {
@@ -230,12 +210,6 @@ export async function login(req, res) {
       });
     }
 
-    /**
-     * Fetch the account using a parameterized query.
-     *
-     * password_hash is required internally for bcrypt
-     * verification but is never returned to the client.
-     */
     const result = await pool.query(
       `
         SELECT
@@ -253,11 +227,6 @@ export async function login(req, res) {
 
     const user = result.rows[0];
 
-    /**
-     * Use the same error message for both unknown
-     * email and incorrect password to prevent
-     * account enumeration.
-     */
     if (!user) {
       return res.status(401).json({
         success: false,
@@ -305,18 +274,256 @@ export async function login(req, res) {
 
 /**
  * POST /logout
- *
- * JWTs are stateless, so the current implementation
- * cannot revoke an already-issued token on the server.
- *
- * The frontend should remove its stored token.
- *
- * Server-side token revocation can be added later using
- * a session table or Redis if required.
  */
 export async function logout(req, res) {
   return res.status(200).json({
     success: true,
     message: "Logged out successfully."
   });
+}
+
+/**
+ * POST /forgot-password
+ *
+ * Sends a password-reset OTP to the registered email.
+ */
+export async function forgotPassword(req, res) {
+  try {
+    const email = String(req.body?.email || "")
+      .trim()
+      .toLowerCase();
+
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email is required."
+        }
+      });
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+    if (!emailRegex.test(email)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Please provide a valid email address."
+        }
+      });
+    }
+
+    const result = await requestPasswordResetOtp(email);
+
+    return res.status(200).json(result);
+  } catch (error) {
+    console.error("Forgot password error:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: "FORGOT_PASSWORD_FAILED",
+        message: "Unable to process password reset request."
+      }
+    });
+  }
+}
+
+/**
+ * POST /verify-otp
+ *
+ * Verifies the OTP sent to the user's email.
+ */
+export async function verifyOtp(req, res) {
+  try {
+    const email = String(req.body?.email || "")
+      .trim()
+      .toLowerCase();
+
+    const otp = String(req.body?.otp || "").trim();
+
+    if (!email || !otp) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email and OTP are required."
+        }
+      });
+    }
+
+    if (!/^\d{6}$/.test(otp)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "INVALID_OTP",
+          message: "OTP must contain 6 digits."
+        }
+      });
+    }
+
+    const result = await verifyPasswordResetOtp(
+      email,
+      otp
+    );
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "INVALID_OTP",
+          message: result.message
+        }
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "OTP verified successfully.",
+      resetToken: result.otpId
+    });
+  } catch (error) {
+    console.error("OTP verification error:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: "OTP_VERIFICATION_FAILED",
+        message: "Unable to verify OTP."
+      }
+    });
+  }
+}
+
+/**
+ * POST /reset-password
+ *
+ * Creates a new password after OTP verification.
+ */
+export async function resetPassword(req, res) {
+  try {
+    const email = String(req.body?.email || "")
+      .trim()
+      .toLowerCase();
+
+    const otp = String(req.body?.otp || "").trim();
+
+    const newPassword = String(
+      req.body?.newPassword || ""
+    );
+
+    if (!email || !otp || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "VALIDATION_ERROR",
+          message: "Email, OTP and new password are required."
+        }
+      });
+    }
+
+    if (!/^\d{6}$/.test(otp)) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "INVALID_OTP",
+          message: "OTP must contain 6 digits."
+        }
+      });
+    }
+
+    if (newPassword.length < 8) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "WEAK_PASSWORD",
+          message: "Password must contain at least 8 characters."
+        }
+      });
+    }
+
+    if (newPassword.length > 128) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "WEAK_PASSWORD",
+          message: "Password must not exceed 128 characters."
+        }
+      });
+    }
+
+    // Verify OTP again before changing the password.
+    const otpResult = await verifyPasswordResetOtp(
+      email,
+      otp
+    );
+
+    if (!otpResult.success) {
+      return res.status(400).json({
+        success: false,
+        error: {
+          code: "INVALID_OTP",
+          message: otpResult.message
+        }
+      });
+    }
+
+    const saltRounds = Number(
+      process.env.BCRYPT_ROUNDS || 12
+    );
+
+    const passwordHash = await bcrypt.hash(
+      newPassword,
+      saltRounds
+    );
+
+    const updateResult = await pool.query(
+      `
+        UPDATE users
+        SET
+          password_hash = $1,
+          updated_at = CURRENT_TIMESTAMP
+        WHERE id = $2
+        RETURNING
+          id,
+          name,
+          email,
+          role
+      `,
+      [
+        passwordHash,
+        otpResult.userId
+      ]
+    );
+
+    if (updateResult.rowCount === 0) {
+      return res.status(404).json({
+        success: false,
+        error: {
+          code: "USER_NOT_FOUND",
+          message: "User account could not be found."
+        }
+      });
+    }
+
+    // Prevent the OTP from being reused.
+    await markOtpAsUsed(otpResult.otpId);
+
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successfully."
+    });
+  } catch (error) {
+    console.error("Reset password error:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: {
+        code: "PASSWORD_RESET_FAILED",
+        message: "Unable to reset password."
+      }
+    });
+  }
 }

@@ -3,18 +3,8 @@ import { AuthProvider } from "./context/AuthContext";
 import AuthPage from "./pages/auth/AuthPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
-// Placeholder dashboards — swap these for your real pages.
-const StudentDashboard = () => (
-  <div className="flex h-screen items-center justify-center bg-slate-50 text-slate-700">
-    Student Dashboard
-  </div>
-);
-
-const AdminDashboard = () => (
-  <div className="flex h-screen items-center justify-center bg-slate-50 text-slate-700">
-    Admin Dashboard
-  </div>
-);
+import StudentDashboard from "./pages/dashboard/StudentDashboard";
+import AdminDashboard from "./pages/dashboard/AdminDashboard";
 
 function App() {
   return (

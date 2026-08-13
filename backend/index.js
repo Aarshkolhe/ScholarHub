@@ -3,6 +3,8 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import authRoutes from "./src/routes/authRoutes.js";
+import { testEmailConnection } from "./src/services/emailService.js";
+
 import {
   testDatabaseConnection,
   initializeDatabase
@@ -36,16 +38,6 @@ app.get("/api/health", (req, res) => {
 // --------------------------------------------------
 // Authentication Routes
 // --------------------------------------------------
-//
-// Frontend endpoints:
-//
-// POST /login
-// POST /register
-// POST /logout
-//
-// We mount the router at "/" because your frontend
-// expects these exact URLs.
-//
 
 app.use("/", authRoutes);
 
@@ -61,7 +53,10 @@ async function startServer() {
     // Create required database tables/indexes.
     await initializeDatabase();
 
-    // Start Express only after the database is ready.
+    // Test Gmail SMTP connection.
+    await testEmailConnection();
+
+    // Start Express only after all services are ready.
     app.listen(PORT, () => {
       console.log(
         `ScholarHub backend running on http://localhost:${PORT}`

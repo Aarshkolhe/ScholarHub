@@ -120,6 +120,58 @@ export const logout = async () => {
 };
 
 /**
+ * Request Password Reset OTP
+ * POST /forgot-password
+ */
+export const forgotPassword = async ({ email }) => {
+  try {
+    const { data } = await api.post("/forgot-password", { email });
+    return {
+      success: true,
+      data,
+    };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};
+
+/**
+ * Verify Password Reset OTP
+ * POST /verify-otp
+ */
+export const verifyOtp = async ({ email, otp }) => {
+  try {
+    const { data } = await api.post("/verify-otp", { email, otp });
+    return {
+      success: true,
+      data,
+    };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};
+
+/**
+ * Reset Password
+ * POST /reset-password
+ */
+export const resetPassword = async ({ email, otp, newPassword }) => {
+  try {
+    const { data } = await api.post("/reset-password", {
+      email,
+      otp,
+      newPassword,
+    });
+    return {
+      success: true,
+      data,
+    };
+  } catch (error) {
+    return normalizeError(error);
+  }
+};
+
+/**
  * Convert backend/Axios errors into
  * a predictable format for the frontend.
  */

@@ -15,7 +15,7 @@ const ROLE_ROUTES = {
   Admin: "/admin/dashboard",
 };
 
-const LoginForm = ({ onRegister }) => {
+const LoginForm = ({ onRegister, onForgotPassword }) => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
   const { reactCorrect, reactWrong } = useAuthCharacter();
@@ -111,6 +111,7 @@ const LoginForm = ({ onRegister }) => {
       <div className="flex justify-end">
         <button
           type="button"
+          onClick={onForgotPassword}
           className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
         >
           Forgot password?
