@@ -32,8 +32,8 @@ function NavItem({ label, icon: Icon, active, onClick }) {
       className={cn(
         "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-1",
         active
-          ? "bg-blue-50 text-blue-600 font-semibold"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+          ? "bg-blue-50 text-blue-600 font-semibold dark:bg-blue-950/60 dark:text-blue-400"
+          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100"
       )}
     >
       <Icon className="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
@@ -46,13 +46,13 @@ export function Sidebar() {
   const { signOut, user } = useAuth();
 
   return (
-    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-white">
-      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-slate-100">
+    <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 transition-colors">
+      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-slate-100 dark:border-slate-800">
         <span className="flex size-9 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/20">
           <GraduationCap className="size-5" />
         </span>
-        <span className="font-display text-lg font-bold tracking-tight text-slate-900">
-          Scholar<span className="text-blue-600">Hub</span>
+        <span className="font-display text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+          Scholar<span className="text-blue-600 dark:text-blue-400">Hub</span>
         </span>
       </div>
 
@@ -61,7 +61,7 @@ export function Sidebar() {
           <NavItem key={item.label} {...item} />
         ))}
 
-        <div className="my-3 h-px bg-slate-100" />
+        <div className="my-3 h-px bg-slate-100 dark:bg-slate-800" />
 
         <NavItem label="Profile" icon={User} />
         <NavItem label="Settings" icon={Settings} />
@@ -73,7 +73,7 @@ export function Sidebar() {
       </nav>
 
       <div className="p-3">
-        <div className="rounded-2xl bg-blue-600 p-4 text-white shadow-lg shadow-blue-600/20">
+        <div className="rounded-2xl bg-blue-600 dark:bg-blue-700 p-4 text-white shadow-lg shadow-blue-600/20">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-100">
             Profile Strength
           </p>

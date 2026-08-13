@@ -191,7 +191,50 @@ const AuthCharacter = forwardRef(function AuthCharacter(_props, ref) {
       <ellipse cx="290" cy="270" rx="90" ry="12" fill="rgba(0,0,0,0.18)" />
 
       <g ref={studentRef} transform="translate(230,55)">
-        <rect x="20" y="90" width="80" height="110" rx="26" fill="#f4f6fb" />
+        {/* Left & Right Arms in Matching Grey Suit Sleeves */}
+        <path
+          d="M 22 96 Q 8 135 18 165"
+          stroke="#8b9bb4"
+          strokeWidth="15"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <circle cx="18" cy="165" r="7.5" fill="#ffd9a0" />
+
+        <path
+          d="M 98 96 Q 112 135 102 165"
+          stroke="#8b9bb4"
+          strokeWidth="15"
+          strokeLinecap="round"
+          fill="none"
+        />
+        <circle cx="102" cy="165" r="7.5" fill="#ffd9a0" />
+
+        {/* Original Mascot Body Shape */}
+        <rect x="20" y="90" width="80" height="110" rx="26" fill="#8b9bb4" />
+
+        {/* Clean V-Neck Collar */}
+        <polygon points="40,90 60,138 80,90" fill="#64748b" />
+        <polygon points="46,90 60,124 74,90" fill="#ffffff" />
+
+        {/* Red Striped Tie */}
+        <g>
+          {/* Tie Knot */}
+          <polygon points="56,92 64,92 63,100 57,100" fill="#dc2626" />
+
+          {/* Main Red Tie Body */}
+          <path d="M 57 100 L 63 100 L 65 145 L 60 154 L 55 145 Z" fill="#ef4444" />
+
+          {/* Clean Diagonal White Stripes */}
+          <line x1="56" y1="108" x2="63" y2="112" stroke="#ffffff" strokeWidth="2" opacity="0.9" />
+          <line x1="56" y1="118" x2="64" y2="122" stroke="#ffffff" strokeWidth="2" opacity="0.9" />
+          <line x1="56" y1="128" x2="64" y2="132" stroke="#ffffff" strokeWidth="2" opacity="0.9" />
+          <line x1="56" y1="138" x2="63" y2="142" stroke="#ffffff" strokeWidth="2" opacity="0.9" />
+        </g>
+
+        {/* 2 Clean Centered Buttons */}
+        <circle cx="60" cy="162" r="2.5" fill="#475569" />
+        <circle cx="60" cy="174" r="2.5" fill="#475569" />
 
         <g ref={headRef}>
           <circle cx="60" cy="60" r="46" fill="#ffd9a0" />

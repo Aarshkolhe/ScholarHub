@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import { ThemeProvider } from "./context/ThemeContext";
 import AuthPage from "./pages/auth/AuthPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 
@@ -8,7 +9,8 @@ import AdminDashboard from "./pages/dashboard/AdminDashboard";
 
 function App() {
   return (
-    <AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<AuthPage />} />
@@ -35,6 +37,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+  </ThemeProvider>
   );
 }
 

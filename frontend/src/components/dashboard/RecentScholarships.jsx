@@ -21,35 +21,35 @@ const scholarships = [
 
 export function RecentScholarships() {
   return (
-    <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
+    <section className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm">
       <div className="flex items-center justify-between">
-        <h2 className="font-display text-base font-semibold text-slate-900">
+        <h2 className="font-display text-base font-semibold text-slate-900 dark:text-white">
           Recently Added Scholarships
         </h2>
         <a
           href="#"
-          className="text-sm font-medium text-blue-600 hover:underline"
+          className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
         >
           View all
         </a>
       </div>
 
-      <ul className="mt-4 divide-y divide-slate-100">
+      <ul className="mt-4 divide-y divide-slate-100 dark:divide-slate-800">
         {scholarships.map((s, i) => (
           <li
             key={s.name}
             style={{ animationDelay: `${i * 100 + 150}ms` }}
-            className="group flex animate-rise-in items-center justify-between gap-4 rounded-lg px-2 py-3.5 transition-colors hover:bg-slate-50"
+            className="group flex animate-rise-in items-center justify-between gap-4 rounded-lg px-2 py-3.5 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/60"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-slate-900 transition-colors group-hover:text-blue-600">
+              <p className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100 transition-colors group-hover:text-blue-600 dark:group-hover:text-blue-400">
                 {s.name}
               </p>
-              <p className="mt-0.5 text-xs text-slate-500">
+              <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                 Deadline: {s.deadline} &middot; {s.amount}
               </p>
             </div>
-            <span className="shrink-0 rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-600 transition-transform duration-300 group-hover:scale-105">
+            <span className="shrink-0 rounded-full bg-blue-50 dark:bg-blue-950/80 px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 transition-transform duration-300 group-hover:scale-105">
               {s.match}
             </span>
           </li>
