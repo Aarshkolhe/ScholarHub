@@ -99,9 +99,6 @@ export const register = async ({ email, password }) => {
   }
 };
 
-/**
- * Logout
- */
 export const logout = async () => {
   try {
     await api.post("/logout");
@@ -111,6 +108,14 @@ export const logout = async () => {
   } finally {
     localStorage.removeItem("scholarhub_token");
     localStorage.removeItem("scholarhub_user");
+    localStorage.removeItem("scholarhub_avatar");
+    localStorage.removeItem("scholarhub_saved_landing_name");
+    localStorage.removeItem("scholarhub_profile_personal");
+    localStorage.removeItem("scholarhub_profile_education");
+    localStorage.removeItem("scholarhub_profile_financial");
+    localStorage.removeItem("scholarhub_profile_eligibility");
+    localStorage.removeItem("scholarhub_saved_ids");
+    localStorage.removeItem("scholarhub_applied_ids");
   }
 
   return {

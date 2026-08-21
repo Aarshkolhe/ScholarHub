@@ -25,7 +25,11 @@ export function AiAssistantHub() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState(null);
 
-  const initialGreeting = `Hello ${firstName}! I am your AI Scholarship Counselor. I have evaluated your profile (${studentProfile.category || "General"}, ${studentProfile.domicileState || "State"}, ₹${parseFloat(studentProfile.annualIncome || 0).toLocaleString("en-IN")} Income). Ask me any questions about matching schemes, eligibility criteria, required documents, or application guidelines.`;
+  const initialGreeting = `Hello ${firstName}! I am your AI Scholarship Counselor. ${
+    studentProfile.category || studentProfile.currentCourse || studentProfile.annualIncome
+      ? `I have evaluated your profile (${studentProfile.category || "General"}, ${studentProfile.domicileState || "State"}, ₹${parseFloat(studentProfile.annualIncome || 0).toLocaleString("en-IN")} Income).`
+      : "Complete your profile in the Eligibility Details tab or load the demo profile in Settings to receive personalized grant suggestions."
+  } Ask me any questions about matching schemes, eligibility criteria, required documents, or application guidelines.`;
 
   const [messages, setMessages] = useState([
     {

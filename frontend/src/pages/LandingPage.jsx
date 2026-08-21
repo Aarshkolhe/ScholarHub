@@ -13,15 +13,12 @@ export default function LandingPage() {
 
   // Initialize input state from user profile or saved local storage name
   const [userName, setUserName] = useState(() => {
-    return user?.fullName || user?.name || localStorage.getItem(SAVED_NAME_KEY) || "";
+    return user?.fullName || user?.name || "";
   });
 
   // Synchronize when user session updates
   useEffect(() => {
-    const existingName = user?.fullName || user?.name || localStorage.getItem(SAVED_NAME_KEY);
-    if (existingName) {
-      setUserName(existingName);
-    }
+    setUserName(user?.fullName || user?.name || "");
   }, [user]);
 
   const isNameSaved = Boolean(userName.trim());
@@ -30,7 +27,9 @@ export default function LandingPage() {
     const val = e.target.value;
     setUserName(val);
     if (val.trim()) {
+      const uid = user?.id ? `_${user.id}` : "";
       localStorage.setItem(SAVED_NAME_KEY, val.trim());
+      localStorage.setItem(`scholarhub_saved_landing_name${uid}`, val.trim());
       updateUser({ name: val.trim(), fullName: val.trim() });
     }
   };

@@ -99,31 +99,56 @@ export function SearchScholarshipView({
   // Modals state
   const [activeModalScholarship, setActiveModalScholarship] = useState(null);
   const [applyModalScholarship, setApplyModalScholarship] = useState(null);
+  const studentProfile = useMemo(() => getStoredStudentProfile(), [user]);
   const [applicantName, setApplicantName] = useState(user?.fullName || user?.name || "");
-  const [applicantCourse, setApplicantCourse] = useState("Undergraduate Course");
+  const [applicantCourse, setApplicantCourse] = useState(studentProfile.currentCourse || "");
   const [applicantStatement, setApplicantStatement] = useState("");
   const [isSubmittingApp, setIsSubmittingApp] = useState(false);
   const [appSuccessMsg, setAppSuccessMsg] = useState("");
 
-  const studentProfile = useMemo(() => getStoredStudentProfile(), [user]);
-
   // Saved IDs tracking
   const [savedIds, setSavedIds] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("scholarhub_saved_ids") || "[]");
+      const uid = user?.id ? `_${user.id}` : "";
+      const raw = uid
+        ? localStorage.getItem(`scholarhub_saved_ids${uid}`)
+        : localStorage.getItem("scholarhub_saved_ids");
+      return JSON.parse(raw || "[]");
     } catch {
-      return ["mahadbt-10th-1", "mahadbt-1"];
+      return [];
     }
   });
 
   // Applied IDs tracking
   const [appliedIds, setAppliedIds] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("scholarhub_applied_ids") || "[]");
+      const uid = user?.id ? `_${user.id}` : "";
+      const raw = uid
+        ? localStorage.getItem(`scholarhub_applied_ids${uid}`)
+        : localStorage.getItem("scholarhub_applied_ids");
+      return JSON.parse(raw || "[]");
     } catch {
       return [];
     }
   });
+
+  useEffect(() => {
+    const uid = user?.id ? `_${user.id}` : "";
+    try {
+      const rawS = uid
+        ? localStorage.getItem(`scholarhub_saved_ids${uid}`)
+        : localStorage.getItem("scholarhub_saved_ids");
+      setSavedIds(JSON.parse(rawS || "[]"));
+    } catch {}
+    try {
+      const rawA = uid
+        ? localStorage.getItem(`scholarhub_applied_ids${uid}`)
+        : localStorage.getItem("scholarhub_applied_ids");
+      setAppliedIds(JSON.parse(rawA || "[]"));
+    } catch {}
+    setApplicantName(user?.fullName || user?.name || "");
+    setApplicantCourse(studentProfile.currentCourse || "");
+  }, [user, studentProfile]);
 
   const toggleSave = (id, e) => {
     if (e) e.stopPropagation();
@@ -134,7 +159,12 @@ export function SearchScholarshipView({
       next = [...savedIds, id];
     }
     setSavedIds(next);
-    localStorage.setItem("scholarhub_saved_ids", JSON.stringify(next));
+    const uid = user?.id ? `_${user.id}` : "";
+    if (uid) {
+      localStorage.setItem(`scholarhub_saved_ids${uid}`, JSON.stringify(next));
+    } else {
+      localStorage.setItem("scholarhub_saved_ids", JSON.stringify(next));
+    }
     if (onUpdateSavedCount) onUpdateSavedCount(next.length);
   };
 
@@ -159,22 +189,13 @@ export function SearchScholarshipView({
       if (selectedPortal === "MahaJYOTI" && !s.id.includes("mahajyoti") && !s.provider.toLowerCase().includes("mahajyoti")) return false;
       if (selectedPortal === "Vidyasaarathi" && !s.id.includes("vidya") && !s.provider.toLowerCase().includes("vidyasaarathi")) return false;
 
-      // Filter: Status
-      if (selectedStatus === "Eligible Only" && !s.isEligible) return false;
-      if (selectedStatus === "Not Eligible" && s.isEligible) return false;
+      // Form Filters
+      if (selectedStatus === "Active" && s.daysLeft <= 0) return false;
+      if (selectedStatus === "Closing Soon" && (s.daysLeft <= 0 || s.daysLeft > 15)) return false;
+      if (selectedDegree && s.degree !== selectedDegree) return false;
+      if (selectedCategory && !s.category.includes(selectedCategory) && s.category !== "All Categories") return false;
 
-      // Filter: Degree
-      if (selectedDegree === "School" && s.degree !== "School") return false;
-      if (selectedDegree === "Undergraduate" && s.degree !== "Undergraduate") return false;
-      if (selectedDegree === "Postgraduate" && s.degree !== "Postgraduate") return false;
-      if (selectedDegree === "Doctorate" && s.degree !== "Doctorate / PhD") return false;
-
-      // Filter: Category
-      if (selectedCategory !== "All" && !s.criteria?.allowedCategories?.includes(selectedCategory) && !s.criteria?.allowedCategories?.includes("All")) {
-        return false;
-      }
-
-      // Search Query
+      // Text Query Search
       if (query.trim()) {
         const q = query.toLowerCase();
         const matchesName = s.name.toLowerCase().includes(q);
@@ -205,6 +226,7 @@ export function SearchScholarshipView({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: user?.id,
           scholarshipId: applyModalScholarship.id,
           scholarshipName: applyModalScholarship.name,
           applicantName,
@@ -216,7 +238,12 @@ export function SearchScholarshipView({
       // Local fallback
     } finally {
       setAppliedIds(nextApplied);
-      localStorage.setItem("scholarhub_applied_ids", JSON.stringify(nextApplied));
+      const uid = user?.id ? `_${user.id}` : "";
+      if (uid) {
+        localStorage.setItem(`scholarhub_applied_ids${uid}`, JSON.stringify(nextApplied));
+      } else {
+        localStorage.setItem("scholarhub_applied_ids", JSON.stringify(nextApplied));
+      }
       if (onUpdateAppliedCount) onUpdateAppliedCount(nextApplied.length);
 
       setIsSubmittingApp(false);

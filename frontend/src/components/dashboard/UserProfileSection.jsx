@@ -8,8 +8,11 @@ import {
   CheckCircle2,
   Database,
   Info,
+  RotateCcw,
+  Trash2,
 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
+import { calculateProfileStrength } from "../../lib/eligibilityEngine";
 
 const BACKEND_URL = "http://localhost:5000";
 
@@ -21,77 +24,183 @@ export function UserProfileSection() {
 
   // 1. Personal Identity State
   const [personal, setPersonal] = useState(() => {
-    const stored = localStorage.getItem("scholarhub_profile_personal");
-    return stored
-      ? JSON.parse(stored)
-      : {
-          fullName: user?.fullName || user?.name || "Student User",
-          email: user?.email || "student@scholarhub.edu",
-          phone: "9876543210",
-          gender: "Male",
-          dob: "2004-05-15",
-          age: "21",
-        };
+    const uid = user?.id ? `_${user.id}` : "";
+    const stored = uid
+      ? localStorage.getItem(`scholarhub_profile_personal${uid}`)
+      : localStorage.getItem("scholarhub_profile_personal");
+    const parsed = stored ? JSON.parse(stored) : {};
+    return {
+      fullName: user?.fullName || user?.name || parsed.fullName || "",
+      email: user?.email || parsed.email || "",
+      phone: parsed.phone || "",
+      gender: parsed.gender || "",
+      dob: parsed.dob || "",
+      age: parsed.age || "",
+    };
   });
 
   // 2. Education Details State
   const [education, setEducation] = useState(() => {
-    const stored = localStorage.getItem("scholarhub_profile_education");
+    const uid = user?.id ? `_${user.id}` : "";
+    const stored = uid
+      ? localStorage.getItem(`scholarhub_profile_education${uid}`)
+      : localStorage.getItem("scholarhub_profile_education");
     return stored
       ? JSON.parse(stored)
       : {
-          currentCourse: "B.Tech Computer Science",
-          qualification: "Undergraduate (UG)",
-          collegeName: "National Institute of Technology",
-          yearSemester: "3rd Year (Sem 6)",
-          marksPercentage: "78%",
-          passingYear: "2027",
-          streamBranch: "Engineering & Technology",
+          currentCourse: "",
+          qualification: "",
+          collegeName: "",
+          yearSemester: "",
+          marksPercentage: "",
+          passingYear: "",
+          streamBranch: "",
         };
   });
 
   // 3. Family & Financial State
   const [financial, setFinancial] = useState(() => {
-    const stored = localStorage.getItem("scholarhub_profile_financial");
+    const uid = user?.id ? `_${user.id}` : "";
+    const stored = uid
+      ? localStorage.getItem(`scholarhub_profile_financial${uid}`)
+      : localStorage.getItem("scholarhub_profile_financial");
     return stored
       ? JSON.parse(stored)
       : {
-          annualIncome: "200000",
-          guardianOccupation: "Agriculture / Farming",
-          incomeCertNo: "MH-INC-2026-88492",
-          incomeIssuingAuth: "Tahsildar Revenue Office",
+          annualIncome: "",
+          guardianOccupation: "",
+          incomeCertNo: "",
+          incomeIssuingAuth: "",
         };
   });
 
   // 4. Category & Quota Eligibility State
   const [eligibility, setEligibility] = useState(() => {
-    const stored = localStorage.getItem("scholarhub_profile_eligibility");
+    const uid = user?.id ? `_${user.id}` : "";
+    const stored = uid
+      ? localStorage.getItem(`scholarhub_profile_eligibility${uid}`)
+      : localStorage.getItem("scholarhub_profile_eligibility");
     return stored
       ? JSON.parse(stored)
       : {
-          category: "OBC",
+          category: "",
           isMinority: "No",
           isDisability: "No",
-          domicileState: "Maharashtra",
-          specialCriteria: "First-Generation Learner",
+          domicileState: "",
+          specialCriteria: "",
         };
   });
 
+  // Sync state when user changes
   useEffect(() => {
-    localStorage.setItem("scholarhub_profile_personal", JSON.stringify(personal));
-  }, [personal]);
+    const uid = user?.id ? `_${user.id}` : "";
+    const p = uid
+      ? localStorage.getItem(`scholarhub_profile_personal${uid}`)
+      : localStorage.getItem("scholarhub_profile_personal");
+    if (p) {
+      const parsed = JSON.parse(p);
+      setPersonal({
+        ...parsed,
+        fullName: user?.fullName || user?.name || parsed.fullName || "",
+        email: user?.email || parsed.email || "",
+      });
+    } else {
+      setPersonal({
+        fullName: user?.fullName || user?.name || "",
+        email: user?.email || "",
+        phone: "",
+        gender: "",
+        dob: "",
+        age: "",
+      });
+    }
+
+    const ed = uid
+      ? localStorage.getItem(`scholarhub_profile_education${uid}`)
+      : localStorage.getItem("scholarhub_profile_education");
+    if (ed) {
+      setEducation(JSON.parse(ed));
+    } else {
+      setEducation({
+        currentCourse: "",
+        qualification: "",
+        collegeName: "",
+        yearSemester: "",
+        marksPercentage: "",
+        passingYear: "",
+        streamBranch: "",
+      });
+    }
+
+    const fin = uid
+      ? localStorage.getItem(`scholarhub_profile_financial${uid}`)
+      : localStorage.getItem("scholarhub_profile_financial");
+    if (fin) {
+      setFinancial(JSON.parse(fin));
+    } else {
+      setFinancial({
+        annualIncome: "",
+        guardianOccupation: "",
+        incomeCertNo: "",
+        incomeIssuingAuth: "",
+      });
+    }
+
+    const el = uid
+      ? localStorage.getItem(`scholarhub_profile_eligibility${uid}`)
+      : localStorage.getItem("scholarhub_profile_eligibility");
+    if (el) {
+      setEligibility(JSON.parse(el));
+    } else {
+      setEligibility({
+        category: "",
+        isMinority: "No",
+        isDisability: "No",
+        domicileState: "",
+        specialCriteria: "",
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
-    localStorage.setItem("scholarhub_profile_education", JSON.stringify(education));
-  }, [education]);
+    const uid = user?.id ? `_${user.id}` : "";
+    if (uid) {
+      localStorage.setItem(`scholarhub_profile_personal${uid}`, JSON.stringify(personal));
+    } else {
+      localStorage.setItem("scholarhub_profile_personal", JSON.stringify(personal));
+    }
+    window.dispatchEvent(new Event("scholarhub_profile_updated"));
+  }, [personal, user]);
 
   useEffect(() => {
-    localStorage.setItem("scholarhub_profile_financial", JSON.stringify(financial));
-  }, [financial]);
+    const uid = user?.id ? `_${user.id}` : "";
+    if (uid) {
+      localStorage.setItem(`scholarhub_profile_education${uid}`, JSON.stringify(education));
+    } else {
+      localStorage.setItem("scholarhub_profile_education", JSON.stringify(education));
+    }
+    window.dispatchEvent(new Event("scholarhub_profile_updated"));
+  }, [education, user]);
 
   useEffect(() => {
-    localStorage.setItem("scholarhub_profile_eligibility", JSON.stringify(eligibility));
-  }, [eligibility]);
+    const uid = user?.id ? `_${user.id}` : "";
+    if (uid) {
+      localStorage.setItem(`scholarhub_profile_financial${uid}`, JSON.stringify(financial));
+    } else {
+      localStorage.setItem("scholarhub_profile_financial", JSON.stringify(financial));
+    }
+    window.dispatchEvent(new Event("scholarhub_profile_updated"));
+  }, [financial, user]);
+
+  useEffect(() => {
+    const uid = user?.id ? `_${user.id}` : "";
+    if (uid) {
+      localStorage.setItem(`scholarhub_profile_eligibility${uid}`, JSON.stringify(eligibility));
+    } else {
+      localStorage.setItem("scholarhub_profile_eligibility", JSON.stringify(eligibility));
+    }
+    window.dispatchEvent(new Event("scholarhub_profile_updated"));
+  }, [eligibility, user]);
 
   const handlePersonalChange = (e) => {
     const { name, value } = e.target;
@@ -154,24 +263,60 @@ export function UserProfileSection() {
     }
   };
 
-  // Calculate details completion percentage
-  const totalFields = 13;
-  let filledFields = 0;
-  if (personal.fullName) filledFields++;
-  if (personal.email) filledFields++;
-  if (personal.gender) filledFields++;
-  if (education.currentCourse) filledFields++;
-  if (education.collegeName) filledFields++;
-  if (education.marksPercentage) filledFields++;
-  if (education.streamBranch) filledFields++;
-  if (education.yearSemester) filledFields++;
-  if (financial.annualIncome) filledFields++;
-  if (financial.guardianOccupation) filledFields++;
-  if (eligibility.category) filledFields++;
-  if (eligibility.domicileState) filledFields++;
-  if (eligibility.specialCriteria) filledFields++;
+  const handleResetProfile = () => {
+    const uid = user?.id ? `_${user.id}` : "";
+    if (uid) {
+      localStorage.removeItem(`scholarhub_profile_personal${uid}`);
+      localStorage.removeItem(`scholarhub_profile_education${uid}`);
+      localStorage.removeItem(`scholarhub_profile_financial${uid}`);
+      localStorage.removeItem(`scholarhub_profile_eligibility${uid}`);
+    }
+    localStorage.removeItem("scholarhub_profile_personal");
+    localStorage.removeItem("scholarhub_profile_education");
+    localStorage.removeItem("scholarhub_profile_financial");
+    localStorage.removeItem("scholarhub_profile_eligibility");
 
-  const completionPercent = Math.min(Math.round((filledFields / totalFields) * 100), 100);
+    setPersonal({
+      fullName: user?.fullName || user?.name || "",
+      email: user?.email || "",
+      phone: "",
+      gender: "",
+      dob: "",
+      age: "",
+    });
+    setEducation({
+      currentCourse: "",
+      qualification: "",
+      collegeName: "",
+      yearSemester: "",
+      marksPercentage: "",
+      passingYear: "",
+      streamBranch: "",
+    });
+    setFinancial({
+      annualIncome: "",
+      guardianOccupation: "",
+      incomeCertNo: "",
+      incomeIssuingAuth: "",
+    });
+    setEligibility({
+      category: "",
+      isMinority: "No",
+      isDisability: "No",
+      domicileState: "",
+      specialCriteria: "",
+    });
+    window.dispatchEvent(new Event("scholarhub_profile_updated"));
+    triggerSaveFeedback("Profile reset to clean state (0% strength).");
+  };
+
+  // Calculate details completion percentage using unified weighted domain calculator
+  const completionPercent = calculateProfileStrength({
+    ...personal,
+    ...education,
+    ...financial,
+    ...eligibility,
+  });
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -187,17 +332,30 @@ export function UserProfileSection() {
           </p>
         </div>
 
-        {/* Details Completion Badge */}
-        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-2xl shadow-sm">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Details Completion</p>
-            <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{completionPercent}% Complete</p>
-          </div>
-          <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-            <div
-              style={{ width: `${completionPercent}%` }}
-              className="h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-500"
-            />
+        <div className="flex items-center gap-3">
+          {/* Clear / Reset Profile Button */}
+          <button
+            type="button"
+            onClick={handleResetProfile}
+            title="Reset profile fields to clean state"
+            className="flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs transition-colors cursor-pointer"
+          >
+            <RotateCcw className="size-3.5" />
+            <span>Reset to 0%</span>
+          </button>
+
+          {/* Details Completion Badge */}
+          <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-2xl shadow-sm">
+            <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Details Completion</p>
+              <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{completionPercent}% Complete</p>
+            </div>
+            <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+              <div
+                style={{ width: `${completionPercent}%` }}
+                className="h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-500"
+              />
+            </div>
           </div>
         </div>
       </div>
@@ -328,6 +486,7 @@ export function UserProfileSection() {
                   onChange={handlePersonalChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 >
+                  <option value="">Select Gender...</option>
                   <option value="Male">Male</option>
                   <option value="Female">Female</option>
                   <option value="Other">Other / Prefer not to say</option>
@@ -362,6 +521,7 @@ export function UserProfileSection() {
                 <input
                   type="text"
                   name="currentCourse"
+                  placeholder="e.g. B.Tech Computer Science, Class 12, MBBS"
                   value={education.currentCourse}
                   onChange={handleEdChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
@@ -376,6 +536,7 @@ export function UserProfileSection() {
                   onChange={handleEdChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 >
+                  <option value="">Select Qualification...</option>
                   <option value="Higher Secondary (10+2)">Higher Secondary (10+2)</option>
                   <option value="Undergraduate (UG)">Undergraduate (UG)</option>
                   <option value="Postgraduate (PG)">Postgraduate (PG)</option>
@@ -388,6 +549,7 @@ export function UserProfileSection() {
                 <input
                   type="text"
                   name="collegeName"
+                  placeholder="e.g. National Institute of Technology"
                   value={education.collegeName}
                   onChange={handleEdChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
@@ -399,6 +561,7 @@ export function UserProfileSection() {
                 <input
                   type="text"
                   name="yearSemester"
+                  placeholder="e.g. 1st Year, Sem 4"
                   value={education.yearSemester}
                   onChange={handleEdChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
@@ -410,6 +573,7 @@ export function UserProfileSection() {
                 <input
                   type="text"
                   name="marksPercentage"
+                  placeholder="e.g. 78% or 8.5 CGPA"
                   value={education.marksPercentage}
                   onChange={handleEdChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
@@ -424,6 +588,7 @@ export function UserProfileSection() {
                   onChange={handleEdChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 >
+                  <option value="">Select Stream...</option>
                   <option value="Engineering & Technology">Engineering & Technology</option>
                   <option value="Science / STEM">Science / STEM</option>
                   <option value="Arts & Commerce">Arts & Commerce</option>
@@ -448,6 +613,7 @@ export function UserProfileSection() {
                 <input
                   type="number"
                   name="annualIncome"
+                  placeholder="e.g. 200000"
                   value={financial.annualIncome}
                   onChange={handleFinChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
@@ -459,6 +625,7 @@ export function UserProfileSection() {
                 <input
                   type="text"
                   name="guardianOccupation"
+                  placeholder="e.g. Agriculture, Business, Service"
                   value={financial.guardianOccupation}
                   onChange={handleFinChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
@@ -470,6 +637,7 @@ export function UserProfileSection() {
                 <input
                   type="text"
                   name="incomeCertNo"
+                  placeholder="e.g. MH-INC-2026-88492"
                   value={financial.incomeCertNo}
                   onChange={handleFinChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
@@ -481,6 +649,7 @@ export function UserProfileSection() {
                 <input
                   type="text"
                   name="incomeIssuingAuth"
+                  placeholder="e.g. Tahsildar / Revenue Office"
                   value={financial.incomeIssuingAuth}
                   onChange={handleFinChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
@@ -507,6 +676,7 @@ export function UserProfileSection() {
                   onChange={handleEligibilityChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 >
+                  <option value="">Select Category...</option>
                   <option value="General">General</option>
                   <option value="OBC">OBC (Other Backward Class)</option>
                   <option value="SC">SC (Scheduled Caste)</option>
@@ -523,6 +693,7 @@ export function UserProfileSection() {
                   onChange={handleEligibilityChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 >
+                  <option value="">Select Domicile State...</option>
                   <option value="Maharashtra">Maharashtra</option>
                   <option value="Delhi">Delhi</option>
                   <option value="Karnataka">Karnataka</option>
@@ -558,6 +729,7 @@ export function UserProfileSection() {
                   onChange={handleEligibilityChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 >
+                  <option value="">Select Special Quota...</option>
                   <option value="First-Generation Learner">First-Generation Learner</option>
                   <option value="Single Girl Child">Single Girl Child</option>
                   <option value="Rural Background">Rural / Remote District Resident</option>

@@ -6,7 +6,6 @@ import { AiAssistantHub } from "../../components/dashboard/AiAssistantHub";
 import { Sidebar } from "../../components/dashboard/Sidebar";
 import { Topbar } from "../../components/dashboard/Topbar";
 import { StatCards } from "../../components/dashboard/StatCards";
-import { RecentScholarships } from "../../components/dashboard/RecentScholarships";
 import {
   Sparkles,
   Mail,
@@ -18,20 +17,83 @@ import {
   RefreshCw,
   Clock,
   ShieldCheck,
+  UserCheck,
+  Trash2,
+  Download,
+  Upload,
+  Database,
+  GraduationCap,
+  IndianRupee,
+  Search,
 } from "lucide-react";
-import { evaluateAllScholarships } from "../../lib/eligibilityEngine";
+import {
+  evaluateAllScholarships,
+  loadSimulationProfile,
+  clearProfileData,
+  getStoredStudentProfile,
+  calculateProfileStrength,
+  SIMULATION_DEMO_PROFILE,
+} from "../../lib/eligibilityEngine";
 import useAuth from "../../hooks/useAuth";
 
 const BACKEND_URL = "http://localhost:5000";
 
 export function StudentDashboard() {
-  const { user } = useAuth();
+  const { user, updateUser, loadSimulationSession, clearSimulationSession } = useAuth();
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [searchQuery, setSearchQuery] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  const [savedCount, setSavedCount] = useState(0);
-  const [appliedCount, setAppliedCount] = useState(0);
+  const [savedCount, setSavedCount] = useState(() => {
+    try {
+      const uid = user?.id ? `_${user.id}` : "";
+      const raw = uid
+        ? localStorage.getItem(`scholarhub_saved_ids${uid}`)
+        : localStorage.getItem("scholarhub_saved_ids");
+      return JSON.parse(raw || "[]").length;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [appliedCount, setAppliedCount] = useState(() => {
+    try {
+      const uid = user?.id ? `_${user.id}` : "";
+      const raw = uid
+        ? localStorage.getItem(`scholarhub_applied_ids${uid}`)
+        : localStorage.getItem("scholarhub_applied_ids");
+      return JSON.parse(raw || "[]").length;
+    } catch {
+      return 0;
+    }
+  });
+
+  const [profileStrength, setProfileStrength] = useState(() => calculateProfileStrength());
+
+  useEffect(() => {
+    const uid = user?.id ? `_${user.id}` : "";
+    try {
+      const rawS = uid
+        ? localStorage.getItem(`scholarhub_saved_ids${uid}`)
+        : localStorage.getItem("scholarhub_saved_ids");
+      setSavedCount(JSON.parse(rawS || "[]").length);
+    } catch {
+      setSavedCount(0);
+    }
+    try {
+      const rawA = uid
+        ? localStorage.getItem(`scholarhub_applied_ids${uid}`)
+        : localStorage.getItem("scholarhub_applied_ids");
+      setAppliedCount(JSON.parse(rawA || "[]").length);
+    } catch {
+      setAppliedCount(0);
+    }
+
+    const updateStrength = () => setProfileStrength(calculateProfileStrength());
+    updateStrength();
+    window.addEventListener("scholarhub_profile_updated", updateStrength);
+    return () => window.removeEventListener("scholarhub_profile_updated", updateStrength);
+  }, [user, activeTab]);
 
   // System Mode: 'realtime' (Live Production) vs 'simulation' (Demo Sandbox)
   const [systemMode, setSystemMode] = useState(() => {
@@ -50,13 +112,40 @@ export function StudentDashboard() {
     setTimeout(() => setModeToast(""), 4500);
   };
 
+  // Simulation Profile Load & Clear Handlers
+  const handleLoadSimulationData = () => {
+    const loaded = loadSimulationProfile();
+    if (loadSimulationSession) {
+      loadSimulationSession(loaded.user);
+    } else {
+      updateUser(loaded.user);
+    }
+    setSavedCount(loaded.savedIds.length);
+    setAppliedCount(loaded.appliedIds.length);
+    setModeToast("⚡ Simulation Demo Profile Loaded: Aarsh Kolhe (B.Tech CS @ NIT, 78% marks, ₹2L income, OBC, Maharashtra)");
+    setTimeout(() => setModeToast(""), 5000);
+  };
+
+  const handleClearSimulationData = () => {
+    clearProfileData();
+    if (clearSimulationSession) {
+      clearSimulationSession();
+    } else {
+      updateUser({ name: "", fullName: "", avatar: "" });
+    }
+    setSavedCount(0);
+    setAppliedCount(0);
+    setModeToast("🧹 Profile data cleared. Sandbox is now completely clean.");
+    setTimeout(() => setModeToast(""), 4000);
+  };
+
   const [isSendingTestEmail, setIsSendingTestEmail] = useState(false);
   const [testEmailMsg, setTestEmailMsg] = useState("");
 
   const handleSendTestDeadlineEmail = async () => {
     setIsSendingTestEmail(true);
     const recipient = user?.email || "student@scholarhub.edu";
-    const studentName = user?.fullName || user?.name || "Aarsh Kolhe";
+    const studentName = user?.fullName || user?.name || "Student";
 
     try {
       const response = await fetch(`${BACKEND_URL}/api/notifications/send-deadline-alert`, {
@@ -93,46 +182,11 @@ export function StudentDashboard() {
       const evaluated = evaluateAllScholarships();
       return evaluated.filter((s) => s.matchScore >= 50).length;
     } catch {
-      return 5;
+      return 0;
     }
-  }, [user, activeTab]);
-
-  // Eligibility Calculator State
-  const [elGpa, setElGpa] = useState("85");
-  const [elIncome, setElIncome] = useState("450000");
-  const [elCategory, setElCategory] = useState("STEM");
-  const [elResult, setElResult] = useState(null);
+  }, [user, activeTab, systemMode, modeToast]);
 
   const firstName = (user?.fullName || user?.name || "Student").split(" ")[0];
-
-  // Dynamically sync Eligibility inputs with updated profile data
-  useEffect(() => {
-    try {
-      const savedEd = JSON.parse(localStorage.getItem("scholarhub_profile_education") || "{}");
-      const savedFin = JSON.parse(localStorage.getItem("scholarhub_profile_financial") || "{}");
-      if (savedEd.marksPercentage) {
-        const parsed = parseFloat(savedEd.marksPercentage.replace("%", ""));
-        if (!isNaN(parsed)) setElGpa(parsed.toString());
-      }
-      if (savedFin.annualIncome) {
-        setElIncome(savedFin.annualIncome.toString());
-      }
-    } catch {}
-  }, [activeTab, user]);
-
-  const handleCalculateEligibility = (e) => {
-    e.preventDefault();
-    const gpa = parseFloat(elGpa) || 0;
-    const income = parseFloat(elIncome) || 0;
-    let score = 70;
-    if (gpa >= 80) score += 20;
-    if (income <= 500000) score += 10;
-    setElResult({
-      score: Math.min(score, 98),
-      eligible: score >= 75,
-      recommendation: score >= 75 ? "High match! You qualify for National Merit STEM Grant & State Tech Fund." : "Moderate match. Consider applying for First-Gen Excellence Award.",
-    });
-  };
 
   // Searchbar ONLY on Dashboard and Search tabs
   const showSearchBar = activeTab === "Dashboard" || activeTab === "Search";
@@ -207,12 +261,76 @@ export function StudentDashboard() {
                 </div>
               </div>
 
-              <StatCards recommendedCount={recommendedCount} savedCount={savedCount} appliedCount={appliedCount} />
-              <RecentScholarships
-                onViewAllClick={() => setActiveTab("Search")}
-                onUpdateSavedCount={setSavedCount}
-                onUpdateAppliedCount={setAppliedCount}
+              <StatCards
+                recommendedCount={recommendedCount}
+                savedCount={savedCount}
+                appliedCount={appliedCount}
+                profileStrength={profileStrength}
+                onSelectStatFilter={(tab) => setActiveTab(tab)}
               />
+
+              {/* Quick Actions & Dashboard Navigation Hub */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                {/* 1. Search & Browse Scholarships Card */}
+                <div
+                  onClick={() => setActiveTab("Search")}
+                  className="group relative rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer space-y-3"
+                >
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-blue-50 dark:bg-blue-950/70 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform">
+                    <Search className="size-6" />
+                  </div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+                    Search & Explore Schemes
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Filter across government portals (MahaDBT, NSP, MahaJYOTI) and corporate CSR grants tailored to your criteria.
+                  </p>
+                  <div className="pt-2 flex items-center gap-1 text-xs font-bold text-blue-600 dark:text-blue-400">
+                    <span>Browse Catalog</span>
+                    <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
+                  </div>
+                </div>
+
+                {/* 2. AI Counselor Hub Card */}
+                <div
+                  onClick={() => setActiveTab("AI")}
+                  className="group relative rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer space-y-3"
+                >
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-purple-50 dark:bg-purple-950/70 text-purple-600 dark:text-purple-400 group-hover:scale-110 transition-transform">
+                    <Sparkles className="size-6" />
+                  </div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-purple-600 dark:group-hover:text-purple-400 transition-colors">
+                    AI Scholarship Counselor
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Ask questions, check specific eligibility cutoffs, compare schemes, and get instant recommendations powered by AI.
+                  </p>
+                  <div className="pt-2 flex items-center gap-1 text-xs font-bold text-purple-600 dark:text-purple-400">
+                    <span>Launch AI Counselor</span>
+                    <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
+                  </div>
+                </div>
+
+                {/* 3. Eligibility Details Card */}
+                <div
+                  onClick={() => setActiveTab("Details")}
+                  className="group relative rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm hover:shadow-xl transition-all duration-300 hover:scale-[1.02] cursor-pointer space-y-3"
+                >
+                  <div className="flex size-12 items-center justify-center rounded-2xl bg-emerald-50 dark:bg-emerald-950/70 text-emerald-600 dark:text-emerald-400 group-hover:scale-110 transition-transform">
+                    <UserCheck className="size-6" />
+                  </div>
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                    Eligibility Profile Manager
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    Update your academic marks, annual family income, category, and domicile to unlock 90%+ match score grants.
+                  </p>
+                  <div className="pt-2 flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                    <span>Manage Details</span>
+                    <span className="transition-transform group-hover:translate-x-1">&rarr;</span>
+                  </div>
+                </div>
+              </div>
             </div>
           )}
 
@@ -374,52 +492,142 @@ export function StudentDashboard() {
 
                 {/* Simulation Sandbox Interactive Tools (Active when Simulation mode is selected) */}
                 {systemMode === "simulation" && (
-                  <div className="rounded-xl bg-amber-50/80 dark:bg-amber-950/50 p-4 border border-amber-200/80 dark:border-amber-800/60 space-y-3 animate-fade-in">
-                    <div className="flex items-center gap-2">
-                      <FlaskConical className="size-4 text-amber-600 dark:text-amber-400" />
-                      <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
-                        Interactive Sandbox Simulator Controls
-                      </span>
+                  <div className="space-y-4 animate-fade-in">
+                    {/* DEMO STUDENT DATA PRELOADER SECTION */}
+                    <div className="rounded-xl bg-amber-50/90 dark:bg-amber-950/60 p-4 border border-amber-200 dark:border-amber-800/70 space-y-3">
+                      <div className="flex items-center justify-between border-b border-amber-200/70 dark:border-amber-800/50 pb-2.5">
+                        <div className="flex items-center gap-2">
+                          <Database className="size-4 text-amber-600 dark:text-amber-400" />
+                          <span className="text-xs font-bold text-amber-950 dark:text-amber-100">
+                            Simulation Demo Student Profile Manager
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/80 px-2.5 py-0.5 rounded-full">
+                          Sandbox Dataset
+                        </span>
+                      </div>
+
+                      <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
+                        In standard Real-Time mode, student profiles start completely clean. In Simulation Mode, you can prefill a complete demo student profile (Aarsh Kolhe — B.Tech CS @ NIT, 78% marks, ₹2L income, OBC, Maharashtra domicile) with 1 click to test matching rules, % badges, and AI counselor prompts:
+                      </p>
+
+                      {/* Action Buttons */}
+                      <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={handleLoadSimulationData}
+                          className="rounded-xl bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white px-3.5 py-2 text-xs font-bold shadow-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                        >
+                          <Zap className="size-3.5" />
+                          <span>Load Simulation Demo Profile</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={handleClearSimulationData}
+                          className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs transition-colors flex items-center gap-1.5"
+                        >
+                          <Trash2 className="size-3.5" />
+                          <span>Clear / Reset Profile Data</span>
+                        </button>
+                      </div>
+
+                      {/* Active Profile Snapshot Preview */}
+                      {(() => {
+                        const prof = getStoredStudentProfile();
+                        const hasData = Boolean(prof.name || prof.collegeName || prof.annualIncome);
+                        return (
+                          <div className="mt-3 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-amber-200/60 dark:border-amber-800/40 p-3 text-xs">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                                <UserCheck className="size-3.5 text-amber-600 dark:text-amber-400" />
+                                Current Sandbox Profile Snapshot:
+                              </span>
+                              <span
+                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                                  hasData
+                                    ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                                    : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                                }`}
+                              >
+                                {hasData ? "Demo Data Active" : "Clean / Empty State"}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px] text-slate-600 dark:text-slate-300">
+                              <div>
+                                <span className="text-slate-400 font-medium">Name:</span>{" "}
+                                <strong className="text-slate-800 dark:text-slate-100">{prof.name || "—"}</strong>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 font-medium">College:</span>{" "}
+                                <strong className="text-slate-800 dark:text-slate-100">{prof.collegeName || "—"}</strong>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 font-medium">Score / Income:</span>{" "}
+                                <strong className="text-slate-800 dark:text-slate-100">
+                                  {prof.marksPercentage || "—"} / {prof.annualIncome ? `₹${parseFloat(prof.annualIncome).toLocaleString("en-IN")}` : "—"}
+                                </strong>
+                              </div>
+                              <div>
+                                <span className="text-slate-400 font-medium">Category / State:</span>{" "}
+                                <strong className="text-slate-800 dark:text-slate-100">
+                                  {prof.category || "—"} ({prof.domicileState || "—"})
+                                </strong>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
-                    <p className="text-xs text-amber-800/90 dark:text-amber-300/90">
-                      Trigger simulated events to test notification popups, urgency countdowns, and grant match evaluations:
-                    </p>
-                    <div className="flex flex-wrap gap-2.5 pt-1">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setModeToast("⏳ Simulation Triggered: Application deadline shifted 5 days closer (Urgent Status)!");
-                          setTimeout(() => setModeToast(""), 4000);
-                        }}
-                        className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 shadow-xs transition-colors flex items-center gap-1.5"
-                      >
-                        <Clock className="size-3.5" />
-                        <span>Simulate Urgent Deadline</span>
-                      </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setModeToast("✨ Simulation Triggered: Injected 1 New High-Match Grant (95% Match)!");
-                          setTimeout(() => setModeToast(""), 4000);
-                        }}
-                        className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 shadow-xs transition-colors flex items-center gap-1.5"
-                      >
-                        <Sparkles className="size-3.5" />
-                        <span>Simulate New Grant Match</span>
-                      </button>
+                    {/* EVENT SIMULATION TRIGGERS */}
+                    <div className="rounded-xl bg-amber-50/80 dark:bg-amber-950/50 p-4 border border-amber-200/80 dark:border-amber-800/60 space-y-3">
+                      <div className="flex items-center gap-2">
+                        <FlaskConical className="size-4 text-amber-600 dark:text-amber-400" />
+                        <span className="text-xs font-bold text-amber-900 dark:text-amber-200">
+                          Interactive Sandbox Event Triggers
+                        </span>
+                      </div>
+                      <p className="text-xs text-amber-800/90 dark:text-amber-300/90">
+                        Trigger simulated events to test notification popups, urgency countdowns, and grant match evaluations:
+                      </p>
+                      <div className="flex flex-wrap gap-2.5 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModeToast("⏳ Simulation Triggered: Application deadline shifted 5 days closer (Urgent Status)!");
+                            setTimeout(() => setModeToast(""), 4000);
+                          }}
+                          className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 shadow-xs transition-colors flex items-center gap-1.5"
+                        >
+                          <Clock className="size-3.5" />
+                          <span>Simulate Urgent Deadline</span>
+                        </button>
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setModeToast("🛡️ Simulation Triggered: Student Profile Credentials Verified (100% Match Eligibility)!");
-                          setTimeout(() => setModeToast(""), 4000);
-                        }}
-                        className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 shadow-xs transition-colors flex items-center gap-1.5"
-                      >
-                        <ShieldCheck className="size-3.5" />
-                        <span>Simulate Instant Verification</span>
-                      </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModeToast("✨ Simulation Triggered: Injected 1 New High-Match Grant (95% Match)!");
+                            setTimeout(() => setModeToast(""), 4000);
+                          }}
+                          className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 shadow-xs transition-colors flex items-center gap-1.5"
+                        >
+                          <Sparkles className="size-3.5" />
+                          <span>Simulate New Grant Match</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setModeToast("🛡️ Simulation Triggered: Student Profile Credentials Verified (100% Match Eligibility)!");
+                            setTimeout(() => setModeToast(""), 4000);
+                          }}
+                          className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-3 py-1.5 text-xs font-semibold text-amber-800 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 shadow-xs transition-colors flex items-center gap-1.5"
+                        >
+                          <ShieldCheck className="size-3.5" />
+                          <span>Simulate Instant Verification</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 )}

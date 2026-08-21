@@ -20,7 +20,7 @@ import {
   Check,
 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
-import { getStoredStudentProfile } from "../../lib/eligibilityEngine";
+import { getStoredStudentProfile, calculateProfileStrength } from "../../lib/eligibilityEngine";
 
 export function StudentProfileOverview({ onNavigateTab }) {
   const { user, updateUser } = useAuth();
@@ -41,19 +41,27 @@ export function StudentProfileOverview({ onNavigateTab }) {
 
   const savedIds = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem("scholarhub_saved_ids") || "[]");
+      const uid = user?.id ? `_${user.id}` : "";
+      const raw = uid
+        ? localStorage.getItem(`scholarhub_saved_ids${uid}`)
+        : localStorage.getItem("scholarhub_saved_ids");
+      return JSON.parse(raw || "[]");
     } catch {
       return [];
     }
-  }, []);
+  }, [user]);
 
   const appliedIds = useMemo(() => {
     try {
-      return JSON.parse(localStorage.getItem("scholarhub_applied_ids") || "[]");
+      const uid = user?.id ? `_${user.id}` : "";
+      const raw = uid
+        ? localStorage.getItem(`scholarhub_applied_ids${uid}`)
+        : localStorage.getItem("scholarhub_applied_ids");
+      return JSON.parse(raw || "[]");
     } catch {
       return [];
     }
-  }, []);
+  }, [user]);
 
   const handleImageUpload = (e) => {
     const file = e.target.files?.[0];
@@ -201,10 +209,10 @@ export function StudentProfileOverview({ onNavigateTab }) {
             </div>
 
             <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-              <Mail className="size-3.5" /> {profile.email || user?.email}
+              <Mail className="size-3.5" /> {profile.email || user?.email || "No email linked"}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
-              <GraduationCap className="size-3.5" /> {profile.collegeName || "National Institute of Technology"} &bull; {profile.currentCourse || "Higher Education"} ({profile.yearSemester || "1st Year"})
+              <GraduationCap className="size-3.5" /> {profile.collegeName || "Institution Not Set"} &bull; {profile.currentCourse || "Course Not Set"} {profile.yearSemester ? `(${profile.yearSemester})` : ""}
             </p>
 
             {/* Photo Action Buttons */}
@@ -244,11 +252,13 @@ export function StudentProfileOverview({ onNavigateTab }) {
           </div>
           <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 text-center">
             <p className="text-[10px] uppercase font-bold text-slate-400">Score / CGPA</p>
-            <p className="font-display text-xl font-bold text-blue-600 dark:text-blue-400 mt-0.5">{profile.marksPercentage || "78%"}</p>
+            <p className="font-display text-xl font-bold text-blue-600 dark:text-blue-400 mt-0.5">{profile.marksPercentage || "N/A"}</p>
           </div>
           <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 p-3 text-center">
-            <p className="text-[10px] uppercase font-bold text-slate-400">Profile Status</p>
-            <p className="font-display text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">Verified</p>
+            <p className="text-[10px] uppercase font-bold text-slate-400">Details Strength</p>
+            <p className="font-display text-xl font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+              {calculateProfileStrength(profile)}%
+            </p>
           </div>
         </div>
       </div>
@@ -263,26 +273,26 @@ export function StudentProfileOverview({ onNavigateTab }) {
               Academic Credentials
             </h3>
             <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full">
-              Matched
+              {profile.marksPercentage ? "Completed" : "Pending Details"}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
               <p className="text-slate-400 font-medium">Degree Level</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.degreeLevel || "Undergraduate"}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.degreeLevel || profile.qualification || "Not Specified"}</p>
             </div>
             <div>
               <p className="text-slate-400 font-medium">Current Stream</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.currentStream || "Engineering"}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.currentStream || profile.streamBranch || "Not Specified"}</p>
             </div>
             <div>
               <p className="text-slate-400 font-medium">Class 10th Score</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.tenthPercentage || "88.4%"}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.tenthPercentage || "Not Specified"}</p>
             </div>
             <div>
               <p className="text-slate-400 font-medium">Class 12th Score</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.twelfthPercentage || "85.2%"}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.twelfthPercentage || "Not Specified"}</p>
             </div>
           </div>
         </div>
@@ -295,26 +305,28 @@ export function StudentProfileOverview({ onNavigateTab }) {
               Socio-Economic Verification
             </h3>
             <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-full">
-              Verified
+              {profile.category || profile.annualIncome ? "Profile Set" : "Unspecified"}
             </span>
           </div>
 
           <div className="grid grid-cols-2 gap-4 text-xs">
             <div>
               <p className="text-slate-400 font-medium">Social Category</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.category || "OBC"}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.category || "Not Specified"}</p>
             </div>
             <div>
               <p className="text-slate-400 font-medium">Annual Family Income</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">₹{parseFloat(profile.annualIncome || 200000).toLocaleString("en-IN")}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                {profile.annualIncome ? `₹${parseFloat(profile.annualIncome).toLocaleString("en-IN")}` : "Not Specified"}
+              </p>
             </div>
             <div>
               <p className="text-slate-400 font-medium">Domicile State</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.domicileState || "Maharashtra"}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.domicileState || "Not Specified"}</p>
             </div>
             <div>
               <p className="text-slate-400 font-medium">Disability Status</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.isSpeciallyAbled ? "Yes (PWD)" : "None"}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.isDisability === "Yes" ? "Yes (PwD)" : "None"}</p>
             </div>
           </div>
         </div>

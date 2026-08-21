@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   CheckCircle2,
   ExternalLink,
@@ -26,32 +26,57 @@ export function RecentScholarships({
   const [activeModalItem, setActiveModalItem] = useState(null);
 
   // Application Modal state
+  const studentProfile = useMemo(() => getStoredStudentProfile(), [user]);
   const [applyModalItem, setApplyModalItem] = useState(null);
   const [applicantName, setApplicantName] = useState(user?.fullName || user?.name || "");
-  const [applicantCourse, setApplicantCourse] = useState("B.Tech Computer Science");
+  const [applicantCourse, setApplicantCourse] = useState(studentProfile.currentCourse || "");
   const [applicantStatement, setApplicantStatement] = useState("");
   const [isSubmittingApp, setIsSubmittingApp] = useState(false);
   const [appSuccessMsg, setAppSuccessMsg] = useState("");
 
-  const studentProfile = useMemo(() => getStoredStudentProfile(), [user]);
-
   // Saved IDs tracking
   const [savedIds, setSavedIds] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("scholarhub_saved_ids") || "[]");
+      const uid = user?.id ? `_${user.id}` : "";
+      const raw = uid
+        ? localStorage.getItem(`scholarhub_saved_ids${uid}`)
+        : localStorage.getItem("scholarhub_saved_ids");
+      return JSON.parse(raw || "[]");
     } catch {
-      return [1];
+      return [];
     }
   });
 
   // Applied IDs tracking
   const [appliedIds, setAppliedIds] = useState(() => {
     try {
-      return JSON.parse(localStorage.getItem("scholarhub_applied_ids") || "[]");
+      const uid = user?.id ? `_${user.id}` : "";
+      const raw = uid
+        ? localStorage.getItem(`scholarhub_applied_ids${uid}`)
+        : localStorage.getItem("scholarhub_applied_ids");
+      return JSON.parse(raw || "[]");
     } catch {
       return [];
     }
   });
+
+  useEffect(() => {
+    const uid = user?.id ? `_${user.id}` : "";
+    try {
+      const rawS = uid
+        ? localStorage.getItem(`scholarhub_saved_ids${uid}`)
+        : localStorage.getItem("scholarhub_saved_ids");
+      setSavedIds(JSON.parse(rawS || "[]"));
+    } catch {}
+    try {
+      const rawA = uid
+        ? localStorage.getItem(`scholarhub_applied_ids${uid}`)
+        : localStorage.getItem("scholarhub_applied_ids");
+      setAppliedIds(JSON.parse(rawA || "[]"));
+    } catch {}
+    setApplicantName(user?.fullName || user?.name || "");
+    setApplicantCourse(studentProfile.currentCourse || "");
+  }, [user, studentProfile]);
 
   const toggleSave = (id, e) => {
     if (e) e.stopPropagation();
@@ -62,7 +87,12 @@ export function RecentScholarships({
       next = [...savedIds, id];
     }
     setSavedIds(next);
-    localStorage.setItem("scholarhub_saved_ids", JSON.stringify(next));
+    const uid = user?.id ? `_${user.id}` : "";
+    if (uid) {
+      localStorage.setItem(`scholarhub_saved_ids${uid}`, JSON.stringify(next));
+    } else {
+      localStorage.setItem("scholarhub_saved_ids", JSON.stringify(next));
+    }
     if (onUpdateSavedCount) onUpdateSavedCount(next.length);
   };
 
@@ -83,16 +113,15 @@ export function RecentScholarships({
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesName = s.name.toLowerCase().includes(q);
-        const matchesCat = s.category.toLowerCase().includes(q);
-        const matchesProv = s.provider.toLowerCase().includes(q);
+        const matchesCat = s.category?.toLowerCase().includes(q);
+        const matchesProv = s.provider?.toLowerCase().includes(q);
         if (!matchesName && !matchesCat && !matchesProv) return false;
       }
 
       // Filter chips
       if (filter === "Govt Schemes" && !s.isGovt) return false;
-      if (filter === "STEM" && !s.category?.includes("STEM") && !s.requirements?.includes("STEM")) return false;
-      if (filter === "Technology" && !s.category?.includes("Tech") && !s.name?.includes("Tech")) return false;
-      if (filter === "Engineering" && !s.category?.includes("Engineering") && !s.name?.includes("Engineering")) return false;
+      if (filter === "Engineering" && s.category !== "Engineering" && !s.name?.toLowerCase().includes("engineering") && !s.name?.toLowerCase().includes("b.tech") && !s.description?.toLowerCase().includes("engineering")) return false;
+      if (filter === "Research" && s.category !== "Research" && !s.name?.toLowerCase().includes("fellowship") && !s.name?.toLowerCase().includes("research") && !s.description?.toLowerCase().includes("science")) return false;
 
       return true;
     });
@@ -116,6 +145,7 @@ export function RecentScholarships({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          userId: user?.id,
           scholarshipId: applyModalItem.id,
           scholarshipName: applyModalItem.name,
           applicantName,
@@ -127,7 +157,12 @@ export function RecentScholarships({
       // Local fallback
     } finally {
       setAppliedIds(nextApplied);
-      localStorage.setItem("scholarhub_applied_ids", JSON.stringify(nextApplied));
+      const uid = user?.id ? `_${user.id}` : "";
+      if (uid) {
+        localStorage.setItem(`scholarhub_applied_ids${uid}`, JSON.stringify(nextApplied));
+      } else {
+        localStorage.setItem("scholarhub_applied_ids", JSON.stringify(nextApplied));
+      }
       if (onUpdateAppliedCount) onUpdateAppliedCount(nextApplied.length);
 
       setIsSubmittingApp(false);
@@ -139,14 +174,14 @@ export function RecentScholarships({
 
   return (
     <section className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 shadow-md p-5 sm:p-6 space-y-5">
-      {/* Header & Filter Controls matching reference UI */}
+      {/* Header & Filter Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-4">
         <div>
           <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <span>🎓</span> List of Scholarships
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {filteredScholarships.length} verified government & portal opportunities matched to your profile
+            {filteredScholarships.length} verified government & portal opportunities in static catalog
           </p>
         </div>
 
@@ -155,11 +190,34 @@ export function RecentScholarships({
           <button
             type="button"
             onClick={onViewAllClick}
-            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
+            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 self-start lg:self-auto"
           >
-            View All &rarr;
+            <span>Explore All Search Schemes</span> &rarr;
           </button>
         )}
+      </div>
+
+      {/* Category Filter Pills */}
+      <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {[
+          { id: "All", label: "All Scholarships" },
+          { id: "Govt Schemes", label: "🏛️ Govt Schemes" },
+          { id: "Engineering", label: "⚙️ Engineering & Tech" },
+          { id: "Research", label: "🔬 Research & Fellowships" },
+        ].map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setFilter(tab.id)}
+            className={`shrink-0 rounded-xl px-3.5 py-1.5 text-xs font-semibold transition-all cursor-pointer ${
+              filter === tab.id
+                ? "bg-blue-600 text-white shadow-sm"
+                : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
       {/* Application Success Toast */}

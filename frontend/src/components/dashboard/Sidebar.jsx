@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import useAuth from "../../hooks/useAuth";
+import { calculateProfileStrength } from "../../lib/eligibilityEngine";
 
 const mainNav = [
   { id: "Dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -56,29 +57,14 @@ export function Sidebar({
   onTabChange,
 }) {
   const { signOut, user } = useAuth();
-  const [profileStrength, setProfileStrength] = useState(90);
+  const [profileStrength, setProfileStrength] = useState(() => calculateProfileStrength());
 
   // Dynamic Profile Strength calculation
   useEffect(() => {
-    try {
-      const savedEd = JSON.parse(localStorage.getItem("scholarhub_profile_education") || "{}");
-      const savedFin = JSON.parse(localStorage.getItem("scholarhub_profile_financial") || "{}");
-      const savedEl = JSON.parse(localStorage.getItem("scholarhub_profile_eligibility") || "{}");
-
-      let count = 0;
-      if (savedEd.currentCourse) count++;
-      if (savedEd.collegeName) count++;
-      if (savedEd.marksPercentage) count++;
-      if (savedFin.annualIncome) count++;
-      if (savedFin.guardianOccupation) count++;
-      if (savedEl.category) count++;
-      if (savedEl.domicileState) count++;
-
-      const percent = Math.min(Math.max(Math.round((count / 7) * 100), 75), 100);
-      setProfileStrength(percent);
-    } catch {
-      setProfileStrength(90);
-    }
+    const updateStrength = () => setProfileStrength(calculateProfileStrength());
+    updateStrength();
+    window.addEventListener("scholarhub_profile_updated", updateStrength);
+    return () => window.removeEventListener("scholarhub_profile_updated", updateStrength);
   }, [user, activeTab]);
 
   const handleSelect = (id) => {
@@ -177,13 +163,32 @@ export function Sidebar({
             <button
               type="button"
               onClick={() => handleSelect("Details")}
-              className="w-full text-left rounded-2xl bg-blue-600 dark:bg-blue-700 p-4 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all hover:scale-[1.02] outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
+              className={cn(
+                "w-full text-left rounded-2xl p-4 text-white shadow-lg transition-all hover:scale-[1.02] outline-none focus-visible:ring-2 focus-visible:ring-blue-400 group cursor-pointer",
+                profileStrength >= 80
+                  ? "bg-gradient-to-br from-emerald-600 to-teal-700 shadow-emerald-600/20"
+                  : profileStrength >= 40
+                  ? "bg-gradient-to-br from-blue-600 to-indigo-700 shadow-blue-600/20"
+                  : "bg-gradient-to-br from-amber-600 to-orange-700 shadow-amber-600/20"
+              )}
             >
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-100">
-                Details Strength
-              </p>
+              <div className="flex items-center justify-between">
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-white/90">
+                  Details Strength
+                </p>
+                <span className="text-[10px] font-bold bg-white/20 px-2 py-0.5 rounded-full backdrop-blur-xs">
+                  {profileStrength >= 80 ? "Complete" : profileStrength >= 40 ? "In Progress" : "Setup"}
+                </span>
+              </div>
               <p className="mt-1 font-display text-2xl font-bold">{profileStrength}%</p>
-              <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/30">
+              <p className="text-[10px] text-white/80 mt-0.5">
+                {profileStrength >= 80
+                  ? "✓ Verified for high-match grants"
+                  : profileStrength >= 40
+                  ? "Click to complete remaining details"
+                  : "Click to set up eligibility profile"}
+              </p>
+              <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-black/20">
                 <div
                   style={{ width: `${profileStrength}%` }}
                   className="h-full rounded-full bg-white transition-all duration-500"

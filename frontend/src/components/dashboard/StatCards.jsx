@@ -1,6 +1,15 @@
 import { Star, Clock, UserCheck, Bookmark, Send } from "lucide-react";
+import { calculateProfileStrength } from "../../lib/eligibilityEngine";
 
-export function StatCards({ recommendedCount = 5, savedCount = 1, appliedCount = 0, onSelectStatFilter }) {
+export function StatCards({
+  recommendedCount = 0,
+  savedCount = 0,
+  appliedCount = 0,
+  profileStrength = null,
+  onSelectStatFilter,
+}) {
+  const dynamicStrength = profileStrength !== null ? profileStrength : calculateProfileStrength();
+
   const stats = [
     {
       id: "recommended",
@@ -9,6 +18,7 @@ export function StatCards({ recommendedCount = 5, savedCount = 1, appliedCount =
       icon: Star,
       tint: "bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400",
       anim: "animate-icon-twinkle",
+      targetTab: "Recommended",
     },
     {
       id: "applied",
@@ -17,14 +27,16 @@ export function StatCards({ recommendedCount = 5, savedCount = 1, appliedCount =
       icon: Send,
       tint: "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400",
       anim: "animate-icon-float",
+      targetTab: "Search",
     },
     {
       id: "profile",
-      value: "90%",
-      label: "Profile Completion",
+      value: `${dynamicStrength}%`,
+      label: "Details Strength",
       icon: UserCheck,
       tint: "bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400",
       anim: "animate-icon-tick",
+      targetTab: "Details",
     },
     {
       id: "saved",
@@ -33,6 +45,7 @@ export function StatCards({ recommendedCount = 5, savedCount = 1, appliedCount =
       icon: Bookmark,
       tint: "bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400",
       anim: "animate-icon-bounce",
+      targetTab: "Saved",
     },
   ];
 
@@ -43,7 +56,7 @@ export function StatCards({ recommendedCount = 5, savedCount = 1, appliedCount =
         return (
           <div
             key={stat.id}
-            onClick={() => onSelectStatFilter && onSelectStatFilter(stat.id)}
+            onClick={() => onSelectStatFilter && onSelectStatFilter(stat.targetTab || stat.id)}
             style={{ animationDelay: `${i * 90}ms` }}
             className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all duration-300 ease-out hover:scale-[1.025] hover:shadow-xl cursor-pointer"
           >
