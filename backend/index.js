@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 
 import authRoutes from "./src/routes/authRoutes.js";
+import aiRoutes from "./src/routes/aiRoutes.js";
 import { testEmailConnection } from "./src/services/emailService.js";
 
 import {
@@ -20,7 +21,6 @@ const PORT = process.env.PORT || 5000;
 // --------------------------------------------------
 
 app.use(cors());
-
 app.use(express.json());
 
 // --------------------------------------------------
@@ -36,10 +36,11 @@ app.get("/api/health", (req, res) => {
 });
 
 // --------------------------------------------------
-// Authentication Routes
+// API Routes
 // --------------------------------------------------
 
 app.use("/", authRoutes);
+app.use("/", aiRoutes);
 
 // --------------------------------------------------
 // Start Server
@@ -62,10 +63,11 @@ async function startServer() {
         `ScholarHub backend running on http://localhost:${PORT}`
       );
 
-      console.log("Authentication routes:");
+      console.log("Authentication & AI routes:");
       console.log(`POST http://localhost:${PORT}/register`);
       console.log(`POST http://localhost:${PORT}/login`);
-      console.log(`POST http://localhost:${PORT}/logout`);
+      console.log(`POST http://localhost:${PORT}/api/ai/chat`);
+      console.log(`POST http://localhost:${PORT}/api/ai/essay`);
     });
   } catch (error) {
     console.error(

@@ -7,10 +7,12 @@ import AiAssistantPill from "../../components/dashboard/AiAssistantPill";
 import StatCards from "../../components/dashboard/StatCards";
 import RecentScholarships from "../../components/dashboard/RecentScholarships";
 import SearchScholarshipView from "../../components/dashboard/SearchScholarshipView";
+import UserProfileSection from "../../components/dashboard/UserProfileSection";
+import AiAssistantHub from "../../components/dashboard/AiAssistantHub";
 import useAuth from "../../hooks/useAuth";
 
 export function StudentDashboard() {
-  const { user, updateUser } = useAuth();
+  const { user } = useAuth();
   const location = useLocation();
   const queryParams = new URLSearchParams(location.search);
 
@@ -22,32 +24,13 @@ export function StudentDashboard() {
   const [savedCount, setSavedCount] = useState(1);
   const [appliedCount, setAppliedCount] = useState(0);
 
-  // Profile Edit State
-  const [profileName, setProfileName] = useState(user?.fullName || user?.name || "Student");
-  const [profileEmail, setProfileEmail] = useState(user?.email || "student@scholarhub.edu");
-  const [profileCourse, setProfileCourse] = useState("B.Tech Computer Science");
-  const [profileSavedMsg, setProfileSavedMsg] = useState(false);
-
   // Eligibility Calculator State
   const [elGpa, setElGpa] = useState("85");
   const [elIncome, setElIncome] = useState("450000");
   const [elCategory, setElCategory] = useState("STEM");
   const [elResult, setElResult] = useState(null);
 
-  useEffect(() => {
-    if (user?.fullName || user?.name) {
-      setProfileName(user.fullName || user.name);
-    }
-  }, [user]);
-
-  const firstName = profileName.split(" ")[0] || "Student";
-
-  const handleProfileSave = (e) => {
-    e.preventDefault();
-    updateUser({ name: profileName, fullName: profileName, email: profileEmail });
-    setProfileSavedMsg(true);
-    setTimeout(() => setProfileSavedMsg(false), 2500);
-  };
+  const firstName = (user?.fullName || user?.name || "Student").split(" ")[0];
 
   const handleCalculateEligibility = (e) => {
     e.preventDefault();
@@ -150,7 +133,10 @@ export function StudentDashboard() {
             />
           )}
 
-          {/* TAB 3: ELIGIBILITY CHECKER */}
+          {/* TAB 3: DEDICATED AI ASSISTANT HUB */}
+          {activeTab === "AI" && <AiAssistantHub />}
+
+          {/* TAB 4: ELIGIBILITY CHECKER */}
           {activeTab === "Eligibility" && (
             <div className="animate-fade-in space-y-6">
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -244,71 +230,10 @@ export function StudentDashboard() {
             </div>
           )}
 
-          {/* TAB 4: PROFILE TAB */}
-          {activeTab === "Profile" && (
-            <div className="animate-fade-in space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Student Profile Settings</h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Manage your account details and contact information.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("Dashboard")}
-                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  &larr; Back to Dashboard
-                </button>
-              </div>
+          {/* TAB 5: COMPLETE USER PROFILE & DOCUMENT VAULT */}
+          {activeTab === "Profile" && <UserProfileSection />}
 
-              <form onSubmit={handleProfileSave} className="max-w-xl rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4">
-                {profileSavedMsg && (
-                  <div className="flex items-center gap-2 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 p-3 text-xs font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
-                    <CheckCircle2 className="size-4" /> Profile details saved successfully!
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Full Name</label>
-                  <input
-                    type="text"
-                    value={profileName}
-                    onChange={(e) => setProfileName(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Email Address</label>
-                  <input
-                    type="email"
-                    value={profileEmail}
-                    onChange={(e) => setProfileEmail(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Current Degree / Institution</label>
-                  <input
-                    type="text"
-                    value={profileCourse}
-                    onChange={(e) => setProfileCourse(e.target.value)}
-                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-2.5 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="flex items-center justify-center gap-2 w-full rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-semibold py-2.5 text-sm shadow-md hover:bg-blue-700 transition-colors"
-                >
-                  <Save className="size-4" /> Save Profile Changes
-                </button>
-              </form>
-            </div>
-          )}
-
-          {/* TAB 5: SETTINGS & NOTIFICATIONS */}
+          {/* TAB 6: SETTINGS & NOTIFICATIONS */}
           {(activeTab === "Settings" || activeTab === "Notifications") && (
             <div className="animate-fade-in space-y-6">
               <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
