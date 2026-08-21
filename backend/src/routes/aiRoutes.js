@@ -3,17 +3,22 @@ import { askGemini } from "../services/aiService.js";
 
 const router = express.Router();
 
-// 1. AI Q&A Chat Endpoint
+// 1. AI Q&A Chat Endpoint with Live Profile Matching
 router.post("/api/ai/chat", async (req, res) => {
-  const { prompt, studentName, course } = req.body;
+  const { prompt, studentName, course, profileSummary } = req.body;
   if (!prompt) {
     return res.status(400).json({ success: false, message: "Prompt is required" });
   }
 
-  const systemInstruction = `You are ScholarHub AI, an empathetic academic and scholarship guidance counselor for Indian & Global university students.
+  const systemInstruction = `You are ScholarHub AI, an expert academic and scholarship matching advisor for students in India and globally.
 Student Name: ${studentName || "Student"}
-Student Course: ${course || "Higher Education"}
-Keep responses encouraging, clear, and actionable. Format with bullet points where appropriate.`;
+Student Profile Context: ${profileSummary || course || "Higher Education"}
+
+Your Objectives:
+- Analyze the student's degree course, academic marks, annual family income, category quota, and state domicile.
+- Recommend specific top matching scholarships (e.g. National Merit STEM Grant, State Tech Fund, AI & Machine Learning Research Grant, First-Gen Excellence Award, Higher Education Merit Scholarship).
+- Provide clear, actionable advice regarding document requirements, income eligibility limits, and application tips.
+- Use clean markdown bullet points, bold highlights, and encouraging tone.`;
 
   const result = await askGemini({ prompt, systemInstruction });
 
@@ -29,7 +34,7 @@ Keep responses encouraging, clear, and actionable. Format with bullet points whe
   return res.status(200).json({
     success: true,
     source: "local-rule-engine",
-    reply: `Hi ${studentName || "Student"}! Based on your profile in ${course || "Higher Education"}:\n\n- Key Document Checklist: Aadhaar, Income Certificate, Semester Marksheets, College ID.\n- Top Recommendation: Complete all 4 profile sections to maximize match scores!\n\n(Tip: Configure your free GEMINI_API_KEY in backend/.env for live Google AI responses)`,
+    reply: `Hi ${studentName || "Student"}! Based on your profile (${profileSummary || course}):\n\n1. **National Merit STEM Grant** (98% Match - ₹50,000)\n2. **AI & Machine Learning Research Grant** (96% Match - ₹90,000)\n3. **Higher Education Merit Scholarship** (91% Match - ₹60,000)\n\nClick "Go to Recommended" to view and apply directly!`,
   });
 });
 

@@ -1,27 +1,19 @@
 import { useState, useEffect } from "react";
-import { useLocation } from "react-router-dom";
-import { Search, ShieldCheck, CheckCircle2, Save } from "lucide-react";
-import Sidebar from "../../components/dashboard/Sidebar";
-import Topbar from "../../components/dashboard/Topbar";
-import AiAssistantPill from "../../components/dashboard/AiAssistantPill";
-import StatCards from "../../components/dashboard/StatCards";
-import RecentScholarships from "../../components/dashboard/RecentScholarships";
-import SearchScholarshipView from "../../components/dashboard/SearchScholarshipView";
-import UserProfileSection from "../../components/dashboard/UserProfileSection";
-import AiAssistantHub from "../../components/dashboard/AiAssistantHub";
+import { SearchScholarshipView } from "../../components/dashboard/SearchScholarshipView";
+import { UserProfileSection } from "../../components/dashboard/UserProfileSection";
+import { AiAssistantHub } from "../../components/dashboard/AiAssistantHub";
+import { Sidebar } from "../../components/dashboard/Sidebar";
+import { Topbar } from "../../components/dashboard/Topbar";
+import { StatCards } from "../../components/dashboard/StatCards";
+import { RecentScholarships } from "../../components/dashboard/RecentScholarships";
+import { ShieldCheck, Sparkles } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 
 export function StudentDashboard() {
   const { user } = useAuth();
-  const location = useLocation();
-  const queryParams = new URLSearchParams(location.search);
-
-  const initialQuery = queryParams.get("q") || queryParams.get("name") || "";
-  const [searchQuery, setSearchQuery] = useState(initialQuery);
   const [activeTab, setActiveTab] = useState("Dashboard");
-
-  // Dynamic Counters
-  const [savedCount, setSavedCount] = useState(1);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [savedCount, setSavedCount] = useState(0);
   const [appliedCount, setAppliedCount] = useState(0);
 
   // Eligibility Calculator State
@@ -31,6 +23,21 @@ export function StudentDashboard() {
   const [elResult, setElResult] = useState(null);
 
   const firstName = (user?.fullName || user?.name || "Student").split(" ")[0];
+
+  // Dynamically sync Eligibility inputs with updated profile data
+  useEffect(() => {
+    try {
+      const savedEd = JSON.parse(localStorage.getItem("scholarhub_profile_education") || "{}");
+      const savedFin = JSON.parse(localStorage.getItem("scholarhub_profile_financial") || "{}");
+      if (savedEd.marksPercentage) {
+        const parsed = parseFloat(savedEd.marksPercentage.replace("%", ""));
+        if (!isNaN(parsed)) setElGpa(parsed.toString());
+      }
+      if (savedFin.annualIncome) {
+        setElIncome(savedFin.annualIncome.toString());
+      }
+    } catch (e) {}
+  }, [activeTab, user]);
 
   const handleCalculateEligibility = (e) => {
     e.preventDefault();
@@ -58,69 +65,58 @@ export function StudentDashboard() {
         <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar onSelectTab={setActiveTab} />
+      <div className="flex flex-1 flex-col overflow-hidden">
+        <Topbar
+          searchQuery={searchQuery}
+          onSearchChange={setSearchQuery}
+          onSelectTab={setActiveTab}
+          showSearchBar={showSearchBar}
+          showAiAssistant={showAiAssistant}
+        />
 
-        <main className="flex-1 space-y-6 px-6 py-6 max-w-7xl w-full mx-auto">
-          {/* Header Bar Area */}
-          {(showSearchBar || showAiAssistant) ? (
-            <div className="flex items-center justify-between gap-3">
-              {showSearchBar ? (
-                <div className="relative min-w-0 flex-1">
-                  <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-                  <input
-                    type="search"
-                    value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      if (activeTab !== "Dashboard" && activeTab !== "Search") setActiveTab("Search");
-                    }}
-                    placeholder="Search scholarships by keyword, field, or organization..."
-                    aria-label="Search scholarships"
-                    className="w-full rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-100 outline-none shadow-sm transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-                  />
-                </div>
-              ) : (
-                <div className="flex-1 font-semibold text-slate-700 dark:text-slate-300 text-sm">
-                  ScholarHub Portal / <span className="text-blue-600 dark:text-blue-400">{activeTab}</span>
-                </div>
-              )}
-              {showAiAssistant && <AiAssistantPill />}
-            </div>
-          ) : null}
-
-          {/* TAB 1: OVERVIEW DASHBOARD */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+          {/* TAB 1: MAIN DASHBOARD */}
           {activeTab === "Dashboard" && (
-            <>
-              <div className="animate-rise-in flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div>
-                  <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">
-                    Welcome back, {firstName}{" "}
-                    <span className="animate-wave" aria-hidden="true">
-                      {"\u{1F44B}"}
-                    </span>
+            <div className="space-y-6 animate-fade-in">
+              {/* Welcome Hero Banner */}
+              <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-blue-600 via-blue-700 to-indigo-800 p-6 md:p-8 text-white shadow-xl shadow-blue-600/10">
+                <div className="relative z-10 max-w-2xl space-y-3">
+                  <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-1 text-xs font-semibold backdrop-blur-md">
+                    <Sparkles className="size-3.5 text-amber-300" />
+                    <span>AI-Powered Matching Engine Active</span>
+                  </div>
+                  <h1 className="text-2xl md:text-3xl font-extrabold tracking-tight">
+                    Welcome back, {firstName}! 👋
                   </h1>
-                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-                    Here&apos;s what&apos;s happening with your scholarship applications today.
+                  <p className="text-xs md:text-sm text-blue-100 leading-relaxed">
+                    Your profile is active. Check out your latest scholarship recommendations and grant matches.
                   </p>
+                  <div className="pt-2 flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("Search")}
+                      className="rounded-xl bg-white px-5 py-2.5 text-xs font-bold text-blue-700 shadow-md hover:bg-blue-50 transition-colors"
+                    >
+                      Explore Scholarships &rarr;
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setActiveTab("Profile")}
+                      className="rounded-xl border border-white/30 bg-white/10 px-4 py-2.5 text-xs font-semibold text-white backdrop-blur-md hover:bg-white/20 transition-colors"
+                    >
+                      Update Profile
+                    </button>
+                  </div>
                 </div>
               </div>
 
-              <StatCards
-                savedCount={savedCount}
-                appliedCount={appliedCount}
-                onSelectStatFilter={(id) => {
-                  if (id === "saved") setActiveTab("Saved");
-                  if (id === "recommended") setActiveTab("Recommended");
-                }}
-              />
-
+              <StatCards savedCount={savedCount} appliedCount={appliedCount} />
               <RecentScholarships
-                searchQuery={searchQuery}
+                onViewAllClick={() => setActiveTab("Search")}
                 onUpdateSavedCount={setSavedCount}
                 onUpdateAppliedCount={setAppliedCount}
               />
-            </>
+            </div>
           )}
 
           {/* TAB 2: SEARCH / RECOMMENDED / SAVED VIEWS */}
@@ -134,7 +130,7 @@ export function StudentDashboard() {
           )}
 
           {/* TAB 3: DEDICATED AI ASSISTANT HUB */}
-          {activeTab === "AI" && <AiAssistantHub />}
+          {activeTab === "AI" && <AiAssistantHub onSelectTab={setActiveTab} />}
 
           {/* TAB 4: ELIGIBILITY CHECKER */}
           {activeTab === "Eligibility" && (
@@ -146,7 +142,7 @@ export function StudentDashboard() {
                     AI Eligibility Checker
                   </h1>
                   <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Calculate your match score and grant eligibility in seconds.
+                    Calculate your match score and grant eligibility in seconds based on your active profile.
                   </p>
                 </div>
                 <button
@@ -221,50 +217,53 @@ export function StudentDashboard() {
                       </div>
                     ) : (
                       <div className="py-16 text-center text-xs text-slate-400">
-                        Enter your academic details on the left and click "Calculate Match Score" to see your eligibility analysis.
+                        Click "Calculate Match Score" to evaluate your eligibility across active grants.
                       </div>
                     )}
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab("Recommended")}
+                    className="mt-6 flex items-center justify-center gap-2 rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-semibold py-2.5 text-xs shadow-sm hover:bg-blue-700 transition-colors"
+                  >
+                    <Sparkles className="size-4 text-amber-300" /> View Recommended Grants &rarr;
+                  </button>
                 </div>
               </div>
             </div>
           )}
 
-          {/* TAB 5: COMPLETE USER PROFILE & DOCUMENT VAULT */}
+          {/* TAB 5: PROFILE MANAGEMENT */}
           {activeTab === "Profile" && <UserProfileSection />}
 
-          {/* TAB 6: SETTINGS & NOTIFICATIONS */}
-          {(activeTab === "Settings" || activeTab === "Notifications") && (
-            <div className="animate-fade-in space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white">Account Preferences</h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">Configure notifications and system parameters.</p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("Dashboard")}
-                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  &larr; Back to Dashboard
-                </button>
-              </div>
-
-              <div className="max-w-xl rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4">
-                <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+          {/* TAB 6: SETTINGS */}
+          {activeTab === "Settings" && (
+            <div className="animate-fade-in space-y-6 max-w-2xl">
+              <h1 className="text-2xl font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-4">
+                Account Settings
+              </h1>
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">Email Deadline Alerts</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Receive alerts 3 days before scholarship deadlines close.</p>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Email Notifications</h3>
+                    <p className="text-xs text-slate-500">Receive alerts when new matching scholarships are released</p>
                   </div>
-                  <input type="checkbox" defaultChecked className="size-4 rounded text-blue-600" />
+                  <input type="checkbox" defaultChecked className="size-4 accent-blue-600" />
                 </div>
-
-                <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                   <div>
-                    <p className="text-sm font-semibold text-slate-900 dark:text-white">New Match Recommendations</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400">Get notified when a new scholarship matches over 90% of your profile.</p>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">AI Matching System</h3>
+                    <p className="text-xs text-slate-500">Allow AI assistant to auto-evaluate profile documents</p>
                   </div>
-                  <input type="checkbox" defaultChecked className="size-4 rounded text-blue-600" />
+                  <input type="checkbox" defaultChecked className="size-4 accent-blue-600" />
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-900 dark:text-white">Deadline Alerts</h3>
+                    <p className="text-xs text-slate-500">Get reminders 3 days before scholarship deadlines close</p>
+                  </div>
+                  <input type="checkbox" defaultChecked className="size-4 accent-blue-600" />
                 </div>
               </div>
             </div>

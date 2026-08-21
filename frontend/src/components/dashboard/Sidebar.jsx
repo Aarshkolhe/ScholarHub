@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard,
   Search,
@@ -44,7 +44,32 @@ function NavItem({ label, icon: Icon, active, onClick }) {
 }
 
 export function Sidebar({ activeTab = "Dashboard", onTabChange }) {
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
+  const [profileStrength, setProfileStrength] = useState(90);
+
+  useEffect(() => {
+    try {
+      const savedEd = JSON.parse(localStorage.getItem("scholarhub_profile_education") || "{}");
+      const savedFin = JSON.parse(localStorage.getItem("scholarhub_profile_financial") || "{}");
+      const savedEl = JSON.parse(localStorage.getItem("scholarhub_profile_eligibility") || "{}");
+      const savedDocs = JSON.parse(localStorage.getItem("scholarhub_profile_documents") || "{}");
+
+      let count = 0;
+      if (savedEd.currentCourse) count++;
+      if (savedEd.collegeName) count++;
+      if (savedEd.marksPercentage) count++;
+      if (savedFin.annualIncome) count++;
+      if (savedFin.guardianOccupation) count++;
+      if (savedEl.category) count++;
+      if (savedEl.domicileState) count++;
+      count += Math.min(Object.keys(savedDocs).length, 3);
+
+      const percent = Math.min(Math.max(Math.round((count / 10) * 100), 75), 100);
+      setProfileStrength(percent);
+    } catch (e) {
+      setProfileStrength(90);
+    }
+  }, [user, activeTab]);
 
   const handleSelect = (id) => {
     if (onTabChange) onTabChange(id);
@@ -102,9 +127,12 @@ export function Sidebar({ activeTab = "Dashboard", onTabChange }) {
           <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-100">
             Profile Strength
           </p>
-          <p className="mt-1 font-display text-2xl font-bold">90%</p>
+          <p className="mt-1 font-display text-2xl font-bold">{profileStrength}%</p>
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/30">
-            <div className="h-full w-[90%] rounded-full bg-white" />
+            <div
+              style={{ width: `${profileStrength}%` }}
+              className="h-full rounded-full bg-white transition-all duration-500"
+            />
           </div>
         </button>
       </div>

@@ -1,73 +1,96 @@
 import { useState, useEffect } from "react";
-import { Bookmark, CheckCircle2, FileText, Send, Sparkles, X, Filter } from "lucide-react";
+import { Bookmark, CheckCircle2, FileText, Send, Sparkles, X, Filter, ExternalLink, ShieldCheck, Building2 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 
 const INITIAL_SCHOLARSHIPS = [
   {
-    id: "s1",
-    name: "National Merit STEM Grant",
-    deadline: "18 Aug 2026",
-    amount: "₹50,000",
+    id: "nsp-1",
+    name: "Central Sector Scheme of Scholarships for College & University Students (CSSS)",
+    deadline: "31 Oct 2026",
+    amount: "₹20,000 / yr",
     match: "98% Match",
-    category: "STEM",
-    provider: "National Science Foundation",
-    description: "Financial grant for undergraduate students pursuing Science, Technology, and Mathematics degrees.",
-    requirements: "Minimum 75% aggregate score in 12th/previous semester. Annual family income below ₹6 Lakhs.",
+    category: "Govt Scheme",
+    provider: "Ministry of Education (Govt of India) — NSP",
+    portalUrl: "https://scholarships.gov.in",
+    isGovt: true,
+    description: "Financial assistance for meritorious students from low-income families pursuing regular graduate and post-graduate courses.",
+    requirements: "Above 80th percentile in Class 12 board exam. Annual family income below ₹4.5 Lakhs.",
   },
   {
-    id: "s2",
-    name: "State Girls in Tech Fund",
-    deadline: "12 Sep 2026",
-    amount: "₹35,000",
-    match: "93% Match",
-    category: "Technology",
-    provider: "State Education Council",
-    description: "Empowering female students enrolled in Computer Science, IT, and Artificial Intelligence programs.",
-    requirements: "Enrolled in accredited IT/CS course. Open to female candidates across all states.",
+    id: "aicte-1",
+    name: "AICTE Pragati Scholarship Scheme for Girl Students",
+    deadline: "15 Nov 2026",
+    amount: "₹50,000 / yr",
+    match: "96% Match",
+    category: "Govt Scheme",
+    provider: "AICTE & Ministry of Education (Govt of India)",
+    portalUrl: "https://scholarships.gov.in",
+    isGovt: true,
+    description: "Empowering female technical students admitted to 1st year AICTE-approved Degree/Diploma institutions.",
+    requirements: "Up to 2 girl children per family. Annual family income below ₹8 Lakhs.",
   },
   {
-    id: "s3",
-    name: "First-Gen Excellence Award",
-    deadline: "30 Sep 2026",
-    amount: "₹40,000",
-    match: "89% Match",
-    category: "General",
-    provider: "Global Higher Ed Trust",
-    description: "Dedicated scholarship award for first-generation university students with demonstrated merit.",
-    requirements: "First person in immediate family to pursue higher university education.",
-  },
-  {
-    id: "s4",
-    name: "Global Engineering Fellowship",
+    id: "nsp-2",
+    name: "PM-YASASVI Post-Matric Scholarship for OBC, EBC & DNT Students",
     deadline: "15 Oct 2026",
-    amount: "₹75,000",
-    match: "95% Match",
-    category: "Engineering",
-    provider: "International Tech Alliance",
-    description: "Prestige scholarship for outstanding engineering undergraduates specializing in Robotics & AI.",
-    requirements: "Minimum 8.0 CGPA or equivalent 80% mark in previous semester.",
+    amount: "₹75,000 / yr",
+    match: "94% Match",
+    category: "Govt Scheme",
+    provider: "Ministry of Social Justice & Empowerment",
+    portalUrl: "https://yet.nta.ac.in",
+    isGovt: true,
+    description: "Comprehensive tuition and hostel allowance grant for OBC, EBC, and De-notified Tribe college students.",
+    requirements: "Belonging to OBC/EBC/DNT category. Annual family income below ₹2.5 Lakhs.",
   },
   {
-    id: "s5",
-    name: "Higher Education Merit Scholarship",
-    deadline: "01 Nov 2026",
-    amount: "₹60,000",
+    id: "dst-1",
+    name: "INSPIRE Scholarship for Higher Education (SHE)",
+    deadline: "31 Dec 2026",
+    amount: "₹80,000 / yr",
+    match: "95% Match",
+    category: "STEM",
+    provider: "Department of Science & Technology (DST Govt of India)",
+    portalUrl: "https://online-inspire.gov.in",
+    isGovt: true,
+    description: "Prestigious fellowship for students pursuing Natural & Basic Sciences (B.Sc / M.Sc integrated) at top universities.",
+    requirements: "Top 1% in Class 12 board exams or rank in JEE/NEET. Enrolled in Basic & Natural Sciences.",
+  },
+  {
+    id: "min-1",
+    name: "Merit-cum-Means Scholarship for Professional & Technical Courses",
+    deadline: "05 Nov 2026",
+    amount: "₹30,000 / yr",
+    match: "93% Match",
+    category: "Govt Scheme",
+    provider: "Ministry of Minority Affairs (Govt of India)",
+    portalUrl: "https://scholarships.gov.in",
+    isGovt: true,
+    description: "Financial assistance for minority students pursuing technical or professional courses at recognized colleges.",
+    requirements: "Belonging to notified minority community (Muslim, Christian, Sikh, Buddhist, Jain, Parsi). Income < ₹2.5 Lakhs.",
+  },
+  {
+    id: "mahadbt-1",
+    name: "Rajarshi Chhatrapati Shahu Maharaj Shikshan Shulkh Shishyavrutti Yojana",
+    deadline: "15 Dec 2026",
+    amount: "₹60,000 / yr",
     match: "91% Match",
-    category: "Merit",
-    provider: "Ministry of Education",
-    description: "Merit-cum-means scholarship for post-secondary education across recognized institutions.",
-    requirements: "Demonstrated academic excellence and top rank in institutional admissions.",
+    category: "Govt Scheme",
+    provider: "Government of Maharashtra (MahaDBT Portal)",
+    portalUrl: "https://mahadbt.maharashtra.gov.in",
+    isGovt: true,
+    description: "50% to 100% tuition fee reimbursement for EBC & General category students in professional streams.",
+    requirements: "Domicile of Maharashtra State. Annual family income below ₹8 Lakhs.",
   },
 ];
 
-const CATEGORIES = ["All", "STEM", "Technology", "Engineering", "General", "Merit"];
+const CATEGORIES = ["All", "Govt Scheme", "STEM", "Technology", "Engineering"];
 
-export function RecentScholarships({ searchQuery = "", onUpdateSavedCount, onUpdateAppliedCount }) {
+export function RecentScholarships({ searchQuery = "", onViewAllClick, onUpdateSavedCount, onUpdateAppliedCount }) {
   const { user } = useAuth();
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [savedIds, setSavedIds] = useState(() => {
     const stored = localStorage.getItem("scholarhub_saved_ids");
-    return stored ? JSON.parse(stored) : ["s1"];
+    return stored ? JSON.parse(stored) : ["nsp-1", "aicte-1"];
   });
   const [appliedIds, setAppliedIds] = useState(() => {
     const stored = localStorage.getItem("scholarhub_applied_ids");
@@ -140,16 +163,17 @@ export function RecentScholarships({ searchQuery = "", onUpdateSavedCount, onUpd
       {/* Header & Category Filters */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
         <div>
-          <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white">
-            Available & Recommended Scholarships
+          <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <Building2 className="size-5 text-blue-600 dark:text-blue-400" />
+            Official Government & National Scholarships
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {filtered.length} opportunities matched to your academic profile
+            {filtered.length} verified government portal opportunities matched to your profile
           </p>
         </div>
 
-        {/* Category Pills */}
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        {/* Category Pills & View All */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
           {CATEGORIES.map((cat) => (
             <button
               key={cat}
@@ -161,16 +185,25 @@ export function RecentScholarships({ searchQuery = "", onUpdateSavedCount, onUpd
                   : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
               }`}
             >
-              {cat}
+              {cat === "Govt Scheme" ? "🏛️ Govt Schemes" : cat}
             </button>
           ))}
+          {onViewAllClick && (
+            <button
+              type="button"
+              onClick={onViewAllClick}
+              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline shrink-0 ml-1"
+            >
+              View All &rarr;
+            </button>
+          )}
         </div>
       </div>
 
       {/* Scholarship List */}
       {filtered.length === 0 ? (
         <div className="py-12 text-center text-sm text-slate-500 dark:text-slate-400">
-          No scholarships found matching "{searchQuery || selectedCategory}". Try clearing your filter.
+          No government scholarships found matching "{searchQuery || selectedCategory}". Try clearing your filter.
         </div>
       ) : (
         <ul className="mt-3 divide-y divide-slate-100 dark:divide-slate-800">
@@ -189,8 +222,13 @@ export function RecentScholarships({ searchQuery = "", onUpdateSavedCount, onUpd
                     <span className="shrink-0 rounded-full bg-blue-50 dark:bg-blue-950/80 px-2.5 py-0.5 text-[11px] font-semibold text-blue-600 dark:text-blue-400">
                       {s.match}
                     </span>
+                    {s.isGovt && (
+                      <span className="shrink-0 rounded-full bg-amber-50 dark:bg-amber-950/80 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                        🏛️ Govt Scheme
+                      </span>
+                    )}
                     <span className="text-xs text-slate-400 dark:text-slate-500">&bull;</span>
-                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+                    <span className="text-xs font-medium text-slate-500 dark:text-slate-400 truncate">
                       {s.provider}
                     </span>
                   </div>
@@ -244,9 +282,16 @@ export function RecentScholarships({ searchQuery = "", onUpdateSavedCount, onUpd
           <div className="w-full max-w-lg rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800">
             <div className="flex items-start justify-between">
               <div>
-                <span className="inline-block rounded-full bg-blue-50 dark:bg-blue-950/80 px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
-                  {activeModalItem.category} &bull; {activeModalItem.match}
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block rounded-full bg-blue-50 dark:bg-blue-950/80 px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400">
+                    {activeModalItem.category} &bull; {activeModalItem.match}
+                  </span>
+                  {activeModalItem.isGovt && (
+                    <span className="inline-block rounded-full bg-amber-50 dark:bg-amber-950 px-2 py-0.5 text-[10px] font-bold text-amber-700 dark:text-amber-300">
+                      🏛️ Govt Scheme
+                    </span>
+                  )}
+                </div>
                 <h3 className="mt-2 text-xl font-bold text-slate-900 dark:text-white">
                   {activeModalItem.name}
                 </h3>
@@ -273,6 +318,20 @@ export function RecentScholarships({ searchQuery = "", onUpdateSavedCount, onUpd
                 </div>
               </div>
 
+              {activeModalItem.portalUrl && (
+                <div className="flex justify-between items-center p-3 rounded-xl bg-blue-50/50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 text-xs">
+                  <span className="font-semibold text-slate-700 dark:text-slate-200">Official Portal Link:</span>
+                  <a
+                    href={activeModalItem.portalUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1"
+                  >
+                    {activeModalItem.portalUrl} <ExternalLink className="size-3" />
+                  </a>
+                </div>
+              )}
+
               <div>
                 <p className="font-semibold text-slate-900 dark:text-slate-100">Description</p>
                 <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-400">
@@ -289,14 +348,16 @@ export function RecentScholarships({ searchQuery = "", onUpdateSavedCount, onUpd
             </div>
 
             <div className="mt-6 flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setActiveModalItem(null)}
-                className="rounded-xl px-4 py-2 text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
-              >
-                Close
-              </button>
-
+              {activeModalItem.portalUrl && (
+                <a
+                  href={activeModalItem.portalUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 flex items-center gap-1"
+                >
+                  Visit Govt Portal <ExternalLink className="size-3" />
+                </a>
+              )}
               {appliedIds.includes(activeModalItem.id) ? (
                 <span className="inline-flex items-center gap-1 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 px-4 py-2 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                   <CheckCircle2 className="size-4" /> Already Applied

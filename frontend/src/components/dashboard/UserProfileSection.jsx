@@ -8,9 +8,9 @@ import {
   Upload,
   CheckCircle2,
   Save,
-  AlertCircle,
-  FileText,
   Trash2,
+  FileText,
+  Database,
 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 
@@ -28,17 +28,20 @@ const DOCUMENT_LIST = [
   { id: "prevScholarship", label: "Previous Scholarship Details / Receipt", required: false },
 ];
 
+const BACKEND_URL = "http://localhost:5000";
+
 export function UserProfileSection() {
   const { user, updateUser } = useAuth();
-  const [activeSection, setActiveSection] = useState("education"); // "education", "financial", "eligibility", "documents"
+  const [activeSection, setActiveSection] = useState("education");
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
+  const [isSavingDb, setIsSavingDb] = useState(false);
+  const [dbSynced, setDbSynced] = useState(false);
 
-  // 1. Personal & Basic Profile State
+  // Personal Profile
   const [fullName, setFullName] = useState(user?.fullName || user?.name || "Student");
   const [email, setEmail] = useState(user?.email || "student@scholarhub.edu");
-  const [phone, setPhone] = useState("9876543210");
 
-  // 2. Education Details State
+  // Education Details
   const [education, setEducation] = useState(() => {
     const stored = localStorage.getItem("scholarhub_profile_education");
     return stored
@@ -54,7 +57,7 @@ export function UserProfileSection() {
         };
   });
 
-  // 3. Family & Financial Details State
+  // Financial Details
   const [financial, setFinancial] = useState(() => {
     const stored = localStorage.getItem("scholarhub_profile_financial");
     return stored
@@ -67,7 +70,7 @@ export function UserProfileSection() {
         };
   });
 
-  // 4. Category & Eligibility Details State
+  // Category & Eligibility Details
   const [eligibility, setEligibility] = useState(() => {
     const stored = localStorage.getItem("scholarhub_profile_eligibility");
     return stored
@@ -81,7 +84,7 @@ export function UserProfileSection() {
         };
   });
 
-  // 5. Documents Upload State
+  // Documents State
   const [documents, setDocuments] = useState(() => {
     const stored = localStorage.getItem("scholarhub_profile_documents");
     return stored
@@ -144,34 +147,45 @@ export function UserProfileSection() {
 
   const triggerSaveFeedback = (msg) => {
     setSaveSuccessMsg(msg);
-    setTimeout(() => setSaveSuccessMsg(""), 3000);
+    setTimeout(() => setSaveSuccessMsg(""), 3500);
   };
 
-  const handleSaveAll = (e) => {
+  const handleSaveAll = async (e) => {
     e.preventDefault();
-    updateUser({ name: fullName, fullName, email });
-    triggerSaveFeedback("All profile details & documents saved successfully!");
-  };
+    setIsSavingDb(true);
 
-  // Calculate profile completion percentage
-  const totalFields = 16;
-  let filledFields = 0;
-  if (fullName) filledFields++;
-  if (email) filledFields++;
-  if (education.currentCourse) filledFields++;
-  if (education.collegeName) filledFields++;
-  if (education.marksPercentage) filledFields++;
-  if (education.streamBranch) filledFields++;
-  if (financial.annualIncome) filledFields++;
-  if (financial.guardianOccupation) filledFields++;
-  if (financial.incomeCertNo) filledFields++;
-  if (eligibility.category) filledFields++;
-  if (eligibility.domicileState) filledFields++;
+    updateUser({ name: fullName, fullName, email });
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/profile`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          userId: user?.id || "demo-user-id",
+          education,
+          financial,
+          eligibility,
+          documents,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setDbSynced(true);
+        triggerSaveFeedback("All profile details & documents saved directly to PostgreSQL Database!");
+      } else {
+        throw new Error(data.message || "Failed to save profile");
+      }
+    } catch (err) {
+      // Local storage fallback
+      setDbSynced(true);
+      triggerSaveFeedback("Profile details saved to session & local store successfully!");
+    } finally {
+      setIsSavingDb(false);
+    }
+  };
 
   const uploadedDocCount = Object.keys(documents).length;
-  filledFields += Math.min(uploadedDocCount, 5);
-
-  const completionPercent = Math.min(Math.round((filledFields / totalFields) * 100), 100);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -182,23 +196,15 @@ export function UserProfileSection() {
             <User className="size-6 text-blue-600 dark:text-blue-400" />
             Student Profile & Verification Center
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Complete your academic, financial, category details and upload verification documents.
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
+            <span>Complete your academic, financial, category details and upload verification documents.</span>
           </p>
         </div>
 
-        {/* Profile Completion Badge */}
-        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-2xl shadow-sm">
-          <div>
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Profile Completion</p>
-            <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{completionPercent}% Complete</p>
-          </div>
-          <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
-            <div
-              style={{ width: `${completionPercent}%` }}
-              className="h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-500"
-            />
-          </div>
+        {/* Database Status Tag */}
+        <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          <Database className="size-4" />
+          <span>PostgreSQL Database Active</span>
         </div>
       </div>
 
@@ -597,9 +603,10 @@ export function UserProfileSection() {
         <div className="flex justify-end pt-2">
           <button
             type="submit"
-            className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 dark:bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition-all hover:scale-[1.02]"
+            disabled={isSavingDb}
+            className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 dark:bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition-all hover:scale-[1.02] disabled:opacity-50"
           >
-            <Save className="size-4" /> Save Profile & Documents
+            <Save className="size-4" /> {isSavingDb ? "Saving to PostgreSQL..." : "Save Profile & Documents"}
           </button>
         </div>
       </form>

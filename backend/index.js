@@ -4,6 +4,8 @@ import dotenv from "dotenv";
 
 import authRoutes from "./src/routes/authRoutes.js";
 import aiRoutes from "./src/routes/aiRoutes.js";
+import profileRoutes from "./src/routes/profileRoutes.js";
+import scholarshipRoutes from "./src/routes/scholarshipRoutes.js";
 import { testEmailConnection } from "./src/services/emailService.js";
 
 import {
@@ -41,6 +43,8 @@ app.get("/api/health", (req, res) => {
 
 app.use("/", authRoutes);
 app.use("/", aiRoutes);
+app.use("/", profileRoutes);
+app.use("/", scholarshipRoutes);
 
 // --------------------------------------------------
 // Start Server
@@ -51,7 +55,7 @@ async function startServer() {
     // Check PostgreSQL connection first.
     await testDatabaseConnection();
 
-    // Create required database tables/indexes.
+    // Create required database tables/indexes & seed government schemes.
     await initializeDatabase();
 
     // Test Gmail SMTP connection.
@@ -63,11 +67,13 @@ async function startServer() {
         `ScholarHub backend running on http://localhost:${PORT}`
       );
 
-      console.log("Authentication & AI routes:");
+      console.log("Authentication, Profile, Scholarships & AI routes:");
       console.log(`POST http://localhost:${PORT}/register`);
       console.log(`POST http://localhost:${PORT}/login`);
+      console.log(`GET  http://localhost:${PORT}/api/scholarships`);
+      console.log(`POST http://localhost:${PORT}/api/scholarships/apply`);
+      console.log(`POST http://localhost:${PORT}/api/profile`);
       console.log(`POST http://localhost:${PORT}/api/ai/chat`);
-      console.log(`POST http://localhost:${PORT}/api/ai/essay`);
     });
   } catch (error) {
     console.error(
