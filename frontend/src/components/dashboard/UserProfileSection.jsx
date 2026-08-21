@@ -3,74 +3,67 @@ import {
   User,
   GraduationCap,
   IndianRupee,
-  ShieldAlert,
-  FileCheck,
-  Upload,
-  CheckCircle2,
+  ShieldCheck,
   Save,
-  Trash2,
-  FileText,
+  CheckCircle2,
   Database,
+  Info,
 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
-
-const DOCUMENT_LIST = [
-  { id: "aadhaar", label: "Aadhaar / Identity Proof", required: true },
-  { id: "income", label: "Income Certificate", required: true },
-  { id: "caste", label: "Caste Certificate", required: false },
-  { id: "domicile", label: "Domicile Certificate", required: true },
-  { id: "marksheet", label: "Marksheet (Previous Semester / 10th / 12th)", required: true },
-  { id: "collegeId", label: "College / School ID Card", required: true },
-  { id: "bonafide", label: "Bonafide Student Certificate", required: true },
-  { id: "bankPassbook", label: "Bank Passbook / Account Details", required: true },
-  { id: "disability", label: "Disability Certificate (if applicable)", required: false },
-  { id: "photo", label: "Passport-size Photo", required: true },
-  { id: "prevScholarship", label: "Previous Scholarship Details / Receipt", required: false },
-];
 
 const BACKEND_URL = "http://localhost:5000";
 
 export function UserProfileSection() {
   const { user, updateUser } = useAuth();
-  const [activeSection, setActiveSection] = useState("education");
+  const [activeSection, setActiveSection] = useState("personal"); // personal, education, financial, eligibility
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
   const [isSavingDb, setIsSavingDb] = useState(false);
-  const [dbSynced, setDbSynced] = useState(false);
 
-  // Personal Profile
-  const [fullName, setFullName] = useState(user?.fullName || user?.name || "Student");
-  const [email, setEmail] = useState(user?.email || "student@scholarhub.edu");
+  // 1. Personal Identity State
+  const [personal, setPersonal] = useState(() => {
+    const stored = localStorage.getItem("scholarhub_profile_personal");
+    return stored
+      ? JSON.parse(stored)
+      : {
+          fullName: user?.fullName || user?.name || "Student User",
+          email: user?.email || "student@scholarhub.edu",
+          phone: "9876543210",
+          gender: "Male",
+          dob: "2004-05-15",
+          age: "21",
+        };
+  });
 
-  // Education Details
+  // 2. Education Details State
   const [education, setEducation] = useState(() => {
     const stored = localStorage.getItem("scholarhub_profile_education");
     return stored
       ? JSON.parse(stored)
       : {
-          currentCourse: "B.Tech",
-          qualification: "Undergraduate",
+          currentCourse: "B.Tech Computer Science",
+          qualification: "Undergraduate (UG)",
           collegeName: "National Institute of Technology",
-          yearSemester: "3rd Year / 5th Semester",
-          marksPercentage: "85%",
-          passingYear: "2026",
-          streamBranch: "Computer Science & Engineering",
+          yearSemester: "3rd Year (Sem 6)",
+          marksPercentage: "78%",
+          passingYear: "2027",
+          streamBranch: "Engineering & Technology",
         };
   });
 
-  // Financial Details
+  // 3. Family & Financial State
   const [financial, setFinancial] = useState(() => {
     const stored = localStorage.getItem("scholarhub_profile_financial");
     return stored
       ? JSON.parse(stored)
       : {
-          annualIncome: "450000",
-          guardianOccupation: "Government Service",
-          incomeCertNo: "INC/2026/88921",
-          incomeIssuingAuth: "Tehsildar / District Revenue Office",
+          annualIncome: "200000",
+          guardianOccupation: "Agriculture / Farming",
+          incomeCertNo: "MH-INC-2026-88492",
+          incomeIssuingAuth: "Tahsildar Revenue Office",
         };
   });
 
-  // Category & Eligibility Details
+  // 4. Category & Quota Eligibility State
   const [eligibility, setEligibility] = useState(() => {
     const stored = localStorage.getItem("scholarhub_profile_eligibility");
     return stored
@@ -84,17 +77,9 @@ export function UserProfileSection() {
         };
   });
 
-  // Documents State
-  const [documents, setDocuments] = useState(() => {
-    const stored = localStorage.getItem("scholarhub_profile_documents");
-    return stored
-      ? JSON.parse(stored)
-      : {
-          aadhaar: { fileName: "aadhaar_card.pdf", status: "Verified" },
-          income: { fileName: "income_cert_2026.pdf", status: "Verified" },
-          marksheet: { fileName: "sem4_marksheet.pdf", status: "Verified" },
-        };
-  });
+  useEffect(() => {
+    localStorage.setItem("scholarhub_profile_personal", JSON.stringify(personal));
+  }, [personal]);
 
   useEffect(() => {
     localStorage.setItem("scholarhub_profile_education", JSON.stringify(education));
@@ -108,41 +93,24 @@ export function UserProfileSection() {
     localStorage.setItem("scholarhub_profile_eligibility", JSON.stringify(eligibility));
   }, [eligibility]);
 
-  useEffect(() => {
-    localStorage.setItem("scholarhub_profile_documents", JSON.stringify(documents));
-  }, [documents]);
-
-  const handleEducationChange = (e) => {
-    setEducation((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handlePersonalChange = (e) => {
+    const { name, value } = e.target;
+    setPersonal((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleFinancialChange = (e) => {
-    setFinancial((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  const handleEdChange = (e) => {
+    const { name, value } = e.target;
+    setEducation((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleFinChange = (e) => {
+    const { name, value } = e.target;
+    setFinancial((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleEligibilityChange = (e) => {
-    setEligibility((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
-
-  const handleFileUpload = (docId, file) => {
-    if (!file) return;
-    setDocuments((prev) => ({
-      ...prev,
-      [docId]: {
-        fileName: file.name,
-        status: "Uploaded",
-        uploadedAt: new Date().toLocaleDateString(),
-      },
-    }));
-    triggerSaveFeedback(`Uploaded ${file.name} successfully!`);
-  };
-
-  const handleRemoveDocument = (docId) => {
-    setDocuments((prev) => {
-      const next = { ...prev };
-      delete next[docId];
-      return next;
-    });
+    const { name, value } = e.target;
+    setEligibility((prev) => ({ ...prev, [name]: value }));
   };
 
   const triggerSaveFeedback = (msg) => {
@@ -154,7 +122,11 @@ export function UserProfileSection() {
     e.preventDefault();
     setIsSavingDb(true);
 
-    updateUser({ name: fullName, fullName, email });
+    updateUser({
+      name: personal.fullName,
+      fullName: personal.fullName,
+      email: personal.email,
+    });
 
     try {
       const response = await fetch(`${BACKEND_URL}/api/profile`, {
@@ -162,116 +134,156 @@ export function UserProfileSection() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: user?.id || "demo-user-id",
+          personal,
           education,
           financial,
           eligibility,
-          documents,
         }),
       });
 
       const data = await response.json();
       if (data.success) {
-        setDbSynced(true);
-        triggerSaveFeedback("All profile details & documents saved directly to PostgreSQL Database!");
+        triggerSaveFeedback("All details saved to PostgreSQL Database & local session!");
       } else {
-        throw new Error(data.message || "Failed to save profile");
+        throw new Error(data.message || "Save error");
       }
-    } catch (err) {
-      // Local storage fallback
-      setDbSynced(true);
-      triggerSaveFeedback("Profile details saved to session & local store successfully!");
+    } catch {
+      triggerSaveFeedback("All profile details saved to local session successfully!");
     } finally {
       setIsSavingDb(false);
     }
   };
 
-  const uploadedDocCount = Object.keys(documents).length;
+  // Calculate details completion percentage
+  const totalFields = 13;
+  let filledFields = 0;
+  if (personal.fullName) filledFields++;
+  if (personal.email) filledFields++;
+  if (personal.gender) filledFields++;
+  if (education.currentCourse) filledFields++;
+  if (education.collegeName) filledFields++;
+  if (education.marksPercentage) filledFields++;
+  if (education.streamBranch) filledFields++;
+  if (education.yearSemester) filledFields++;
+  if (financial.annualIncome) filledFields++;
+  if (financial.guardianOccupation) filledFields++;
+  if (eligibility.category) filledFields++;
+  if (eligibility.domicileState) filledFields++;
+  if (eligibility.specialCriteria) filledFields++;
+
+  const completionPercent = Math.min(Math.round((filledFields / totalFields) * 100), 100);
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header Banner */}
+      {/* Header Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <User className="size-6 text-blue-600 dark:text-blue-400" />
-            Student Profile & Verification Center
+            Student Details & Eligibility Profile
           </h1>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center gap-1.5">
-            <span>Complete your academic, financial, category details and upload verification documents.</span>
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Fill your academic, financial, category, and domicile details once. ScholarHub matches you with eligible grants automatically.
           </p>
         </div>
 
-        {/* Database Status Tag */}
-        <div className="flex items-center gap-2 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200 dark:border-emerald-800 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-          <Database className="size-4" />
-          <span>PostgreSQL Database Active</span>
+        {/* Details Completion Badge */}
+        <div className="flex items-center gap-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 px-4 py-2 rounded-2xl shadow-sm">
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Details Completion</p>
+            <p className="text-sm font-bold text-blue-600 dark:text-blue-400">{completionPercent}% Complete</p>
+          </div>
+          <div className="h-2 w-20 overflow-hidden rounded-full bg-slate-100 dark:bg-slate-800">
+            <div
+              style={{ width: `${completionPercent}%` }}
+              className="h-full rounded-full bg-blue-600 dark:bg-blue-500 transition-all duration-500"
+            />
+          </div>
         </div>
       </div>
 
+      {/* No Document Upload Disclaimer Banner */}
+      <div className="flex items-start gap-3 rounded-2xl bg-blue-50/80 dark:bg-blue-950/40 p-4 text-xs text-blue-900 dark:text-blue-200 border border-blue-200/80 dark:border-blue-900/60 shadow-sm">
+        <ShieldCheck className="size-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+        <div className="leading-relaxed">
+          <p className="font-semibold text-blue-950 dark:text-blue-100 flex items-center gap-1.5">
+            Zero Document Upload Requirement
+            <span className="rounded-full bg-blue-200 dark:bg-blue-900 px-2 py-0.5 text-[10px] font-bold text-blue-800 dark:text-blue-200">
+              Simplified Flow
+            </span>
+          </p>
+          <p className="mt-1 text-blue-800 dark:text-blue-300">
+            Eligibility is evaluated purely on self-reported profile data. Official physical or scanned documents (e.g. income certificates, caste certificates, semester marksheets) will only be requested directly by scholarship providers during the external grant verification and disbursement process.
+          </p>
+        </div>
+      </div>
+
+      {/* Save Success Alert */}
       {saveSuccessMsg && (
-        <div className="flex items-center gap-2 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 p-4 text-xs font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 shadow-sm animate-rise-in">
-          <CheckCircle2 className="size-4" /> {saveSuccessMsg}
+        <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/80 p-3 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-2 animate-rise-in">
+          <CheckCircle2 className="size-4 shrink-0" />
+          <span>{saveSuccessMsg}</span>
         </div>
       )}
 
-      {/* Navigation Sub-Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
+      {/* Sub-Section Navigation Tabs */}
+      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
         <button
           type="button"
-          onClick={() => setActiveSection("education")}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
-            activeSection === "education"
-              ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 dark:bg-blue-500"
+          onClick={() => setActiveSection("personal")}
+          className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+            activeSection === "personal"
+              ? "bg-blue-600 text-white shadow-md dark:bg-blue-500"
               : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
           }`}
         >
-          <GraduationCap className="size-4" /> 1. Education Details
+          <User className="size-3.5" /> Personal Identity
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveSection("education")}
+          className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
+            activeSection === "education"
+              ? "bg-blue-600 text-white shadow-md dark:bg-blue-500"
+              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
+          }`}
+        >
+          <GraduationCap className="size-3.5" /> Academic Details
         </button>
 
         <button
           type="button"
           onClick={() => setActiveSection("financial")}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
+          className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
             activeSection === "financial"
-              ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 dark:bg-blue-500"
+              ? "bg-blue-600 text-white shadow-md dark:bg-blue-500"
               : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
           }`}
         >
-          <IndianRupee className="size-4" /> 2. Family & Financial
+          <IndianRupee className="size-3.5" /> Financial & Income
         </button>
 
         <button
           type="button"
           onClick={() => setActiveSection("eligibility")}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
+          className={`flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-semibold transition-all ${
             activeSection === "eligibility"
-              ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 dark:bg-blue-500"
+              ? "bg-blue-600 text-white shadow-md dark:bg-blue-500"
               : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
           }`}
         >
-          <ShieldAlert className="size-4" /> 3. Category & Eligibility
-        </button>
-
-        <button
-          type="button"
-          onClick={() => setActiveSection("documents")}
-          className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-semibold transition-all ${
-            activeSection === "documents"
-              ? "bg-blue-600 text-white shadow-md shadow-blue-500/20 dark:bg-blue-500"
-              : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
-          }`}
-        >
-          <FileCheck className="size-4" /> 4. Documents Vault ({uploadedDocCount}/{DOCUMENT_LIST.length})
+          <ShieldCheck className="size-3.5" /> Category & Quotas
         </button>
       </div>
 
       <form onSubmit={handleSaveAll} className="space-y-6">
-        {/* SECTION 1: EDUCATION DETAILS */}
-        {activeSection === "education" && (
+        {/* SECTION 1: PERSONAL IDENTITY */}
+        {activeSection === "personal" && (
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <GraduationCap className="size-5 text-blue-600 dark:text-blue-400" />
-              Academic & Educational History
+              <User className="size-5 text-blue-600 dark:text-blue-400" />
+              Personal & Contact Information
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -279,8 +291,9 @@ export function UserProfileSection() {
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Full Name</label>
                 <input
                   type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
+                  name="fullName"
+                  value={personal.fullName}
+                  onChange={handlePersonalChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 />
               </div>
@@ -289,95 +302,45 @@ export function UserProfileSection() {
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Email Address</label>
                 <input
                   type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  name="email"
+                  value={personal.email}
+                  onChange={handlePersonalChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Current Course / Class</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Mobile Phone Number</label>
                 <input
                   type="text"
-                  name="currentCourse"
-                  placeholder="e.g. B.Tech / B.Sc / Class 12"
-                  value={education.currentCourse}
-                  onChange={handleEducationChange}
+                  name="phone"
+                  value={personal.phone}
+                  onChange={handlePersonalChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Highest Qualification</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Gender</label>
                 <select
-                  name="qualification"
-                  value={education.qualification}
-                  onChange={handleEducationChange}
+                  name="gender"
+                  value={personal.gender}
+                  onChange={handlePersonalChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 >
-                  <option value="Higher Secondary (10+2)">Higher Secondary (10+2)</option>
-                  <option value="Undergraduate">Undergraduate (B.E/B.Tech/B.Sc/B.Com)</option>
-                  <option value="Postgraduate">Postgraduate (M.E/M.Tech/M.Sc/MBA)</option>
-                  <option value="Doctorate / PhD">Doctorate / PhD</option>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other / Prefer not to say</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">College / School Name</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Date of Birth</label>
                 <input
-                  type="text"
-                  name="collegeName"
-                  placeholder="Official name of your institution"
-                  value={education.collegeName}
-                  onChange={handleEducationChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Academic Stream / Branch</label>
-                <input
-                  type="text"
-                  name="streamBranch"
-                  placeholder="e.g. Computer Science, Mechanical, Science"
-                  value={education.streamBranch}
-                  onChange={handleEducationChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Current Year / Semester</label>
-                <input
-                  type="text"
-                  name="yearSemester"
-                  placeholder="e.g. 3rd Year / 5th Semester"
-                  value={education.yearSemester}
-                  onChange={handleEducationChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Previous Marks / Percentage (%)</label>
-                <input
-                  type="text"
-                  name="marksPercentage"
-                  placeholder="e.g. 85% or 8.5 CGPA"
-                  value={education.marksPercentage}
-                  onChange={handleEducationChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Expected Passing Year</label>
-                <input
-                  type="text"
-                  name="passingYear"
-                  placeholder="e.g. 2026"
-                  value={education.passingYear}
-                  onChange={handleEducationChange}
+                  type="date"
+                  name="dob"
+                  value={personal.dob}
+                  onChange={handlePersonalChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 />
               </div>
@@ -385,12 +348,98 @@ export function UserProfileSection() {
           </div>
         )}
 
-        {/* SECTION 2: FAMILY & FINANCIAL DETAILS */}
+        {/* SECTION 2: ACADEMIC DETAILS */}
+        {activeSection === "education" && (
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <GraduationCap className="size-5 text-blue-600 dark:text-blue-400" />
+              Academic Performance & Institution
+            </h3>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Current Course / Degree</label>
+                <input
+                  type="text"
+                  name="currentCourse"
+                  value={education.currentCourse}
+                  onChange={handleEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Qualification Level</label>
+                <select
+                  name="qualification"
+                  value={education.qualification}
+                  onChange={handleEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                >
+                  <option value="Higher Secondary (10+2)">Higher Secondary (10+2)</option>
+                  <option value="Undergraduate (UG)">Undergraduate (UG)</option>
+                  <option value="Postgraduate (PG)">Postgraduate (PG)</option>
+                  <option value="Doctorate (PhD)">Doctorate (PhD)</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">College / University Name</label>
+                <input
+                  type="text"
+                  name="collegeName"
+                  value={education.collegeName}
+                  onChange={handleEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Year / Semester of Study</label>
+                <input
+                  type="text"
+                  name="yearSemester"
+                  value={education.yearSemester}
+                  onChange={handleEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Previous Semester / Class Marks (%) or CGPA</label>
+                <input
+                  type="text"
+                  name="marksPercentage"
+                  value={education.marksPercentage}
+                  onChange={handleEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Stream / Branch</label>
+                <select
+                  name="streamBranch"
+                  value={education.streamBranch}
+                  onChange={handleEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                >
+                  <option value="Engineering & Technology">Engineering & Technology</option>
+                  <option value="Science / STEM">Science / STEM</option>
+                  <option value="Arts & Commerce">Arts & Commerce</option>
+                  <option value="Medical & Healthcare">Medical & Healthcare</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SECTION 3: FINANCIAL & INCOME */}
         {activeSection === "financial" && (
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <IndianRupee className="size-5 text-emerald-600 dark:text-emerald-400" />
-              Family & Financial Credentials
+              <IndianRupee className="size-5 text-blue-600 dark:text-blue-400" />
+              Family Income & Financial Eligibility
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -399,38 +448,30 @@ export function UserProfileSection() {
                 <input
                   type="number"
                   name="annualIncome"
-                  placeholder="e.g. 350000"
                   value={financial.annualIncome}
-                  onChange={handleFinancialChange}
+                  onChange={handleFinChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 />
               </div>
 
               <div>
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Parent / Guardian Occupation</label>
-                <select
+                <input
+                  type="text"
                   name="guardianOccupation"
                   value={financial.guardianOccupation}
-                  onChange={handleFinancialChange}
+                  onChange={handleFinChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                >
-                  <option value="Agriculture / Farming">Agriculture / Farming</option>
-                  <option value="Government Service">Government Service</option>
-                  <option value="Private Sector Employee">Private Sector Employee</option>
-                  <option value="Business / Self-Employed">Business / Self-Employed</option>
-                  <option value="Daily Wage / Worker">Daily Wage / Worker</option>
-                  <option value="Other">Other</option>
-                </select>
+                />
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Income Certificate Number</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Income Certificate Serial Number</label>
                 <input
                   type="text"
                   name="incomeCertNo"
-                  placeholder="Certificate Serial / Ref No."
                   value={financial.incomeCertNo}
-                  onChange={handleFinancialChange}
+                  onChange={handleFinChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 />
               </div>
@@ -440,9 +481,8 @@ export function UserProfileSection() {
                 <input
                   type="text"
                   name="incomeIssuingAuth"
-                  placeholder="e.g. Tehsildar / District Magistrate"
                   value={financial.incomeIssuingAuth}
-                  onChange={handleFinancialChange}
+                  onChange={handleFinChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 />
               </div>
@@ -450,12 +490,12 @@ export function UserProfileSection() {
           </div>
         )}
 
-        {/* SECTION 3: CATEGORY & ELIGIBILITY DETAILS */}
+        {/* SECTION 4: CATEGORY & QUOTAS */}
         {activeSection === "eligibility" && (
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <ShieldAlert className="size-5 text-amber-500" />
-              Category & Social Quota Credentials
+              <ShieldCheck className="size-5 text-blue-600 dark:text-blue-400" />
+              Social Category, Domicile & Reservation Quotas
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -467,8 +507,8 @@ export function UserProfileSection() {
                   onChange={handleEligibilityChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 >
-                  <option value="General">General / Open</option>
-                  <option value="OBC">OBC (Other Backward Classes)</option>
+                  <option value="General">General</option>
+                  <option value="OBC">OBC (Other Backward Class)</option>
                   <option value="SC">SC (Scheduled Caste)</option>
                   <option value="ST">ST (Scheduled Tribe)</option>
                   <option value="EWS">EWS (Economically Weaker Section)</option>
@@ -476,27 +516,24 @@ export function UserProfileSection() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Domicile / Home State</label>
-                <input
-                  type="text"
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Domicile State</label>
+                <select
                   name="domicileState"
-                  placeholder="e.g. Maharashtra, Delhi, Karnataka"
                   value={eligibility.domicileState}
                   onChange={handleEligibilityChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Minority Category Status</label>
-                <select
-                  name="isMinority"
-                  value={eligibility.isMinority}
-                  onChange={handleEligibilityChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 >
-                  <option value="No">No</option>
-                  <option value="Yes">Yes (Religious / Linguistic Minority)</option>
+                  <option value="Maharashtra">Maharashtra</option>
+                  <option value="Delhi">Delhi</option>
+                  <option value="Karnataka">Karnataka</option>
+                  <option value="Tamil Nadu">Tamil Nadu</option>
+                  <option value="Uttar Pradesh">Uttar Pradesh</option>
+                  <option value="Gujarat">Gujarat</option>
+                  <option value="Rajasthan">Rajasthan</option>
+                  <option value="West Bengal">West Bengal</option>
+                  <option value="Telangana">Telangana</option>
+                  <option value="Madhya Pradesh">Madhya Pradesh</option>
+                  <option value="Other State">Other State / All India</option>
                 </select>
               </div>
 
@@ -509,104 +546,40 @@ export function UserProfileSection() {
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 >
                   <option value="No">No</option>
-                  <option value="Yes">Yes (&ge; 40% Disability Certificate)</option>
+                  <option value="Yes">Yes (Person with Disability)</option>
                 </select>
               </div>
 
-              <div className="sm:col-span-2">
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Special Criteria / Achievements</label>
-                <input
-                  type="text"
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Special Eligibility Criteria / Quota</label>
+                <select
                   name="specialCriteria"
-                  placeholder="e.g. Single Girl Child, First-Generation Learner, National Sports Level"
                   value={eligibility.specialCriteria}
                   onChange={handleEligibilityChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
+                >
+                  <option value="First-Generation Learner">First-Generation Learner</option>
+                  <option value="Single Girl Child">Single Girl Child</option>
+                  <option value="Rural Background">Rural / Remote District Resident</option>
+                  <option value="National Sports Level">National / State Level Sports Athlete</option>
+                  <option value="None">None / General</option>
+                </select>
               </div>
-            </div>
-          </div>
-        )}
-
-        {/* SECTION 4: DOCUMENTS VAULT & UPLOAD */}
-        {activeSection === "documents" && (
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
-            <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
-              <div>
-                <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <FileCheck className="size-5 text-blue-600 dark:text-blue-400" />
-                  Verification Documents Vault
-                </h3>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                  Upload PDF or Image files (Max 5MB per file) for direct application verification.
-                </p>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {DOCUMENT_LIST.map((doc) => {
-                const uploaded = documents[doc.id];
-                return (
-                  <div
-                    key={doc.id}
-                    className="flex items-center justify-between rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 p-4 transition-all hover:bg-slate-100 dark:hover:bg-slate-800/80"
-                  >
-                    <div className="min-w-0 flex-1 pr-3">
-                      <p className="text-xs font-semibold text-slate-900 dark:text-white flex items-center gap-1.5">
-                        {doc.label}
-                        {doc.required && <span className="text-rose-500">*</span>}
-                      </p>
-
-                      {uploaded ? (
-                        <div className="mt-1 flex items-center gap-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
-                          <FileText className="size-3.5" />
-                          <span className="truncate max-w-[160px]">{uploaded.fileName}</span>
-                          <span className="rounded bg-emerald-100 dark:bg-emerald-950 px-1.5 py-0.2 text-[10px] font-bold">
-                            {uploaded.status}
-                          </span>
-                        </div>
-                      ) : (
-                        <p className="mt-1 text-[11px] text-slate-400">Not uploaded yet</p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 shrink-0">
-                      {uploaded ? (
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveDocument(doc.id)}
-                          title="Delete file"
-                          className="rounded-lg p-2 text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
-                        >
-                          <Trash2 className="size-4" />
-                        </button>
-                      ) : (
-                        <label className="flex cursor-pointer items-center gap-1.5 rounded-xl bg-blue-600 dark:bg-blue-500 px-3.5 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors">
-                          <Upload className="size-3.5" /> Upload
-                          <input
-                            type="file"
-                            accept=".pdf,.jpg,.jpeg,.png"
-                            className="hidden"
-                            onChange={(e) => handleFileUpload(doc.id, e.target.files[0])}
-                          />
-                        </label>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
             </div>
           </div>
         )}
 
         {/* Save Button Footer */}
-        <div className="flex justify-end pt-2">
+        <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            Changes directly update your real-time scholarship matches across the dashboard.
+          </p>
           <button
             type="submit"
             disabled={isSavingDb}
             className="flex items-center justify-center gap-2 rounded-xl bg-blue-600 dark:bg-blue-500 px-8 py-3 text-sm font-semibold text-white shadow-md hover:bg-blue-700 transition-all hover:scale-[1.02] disabled:opacity-50"
           >
-            <Save className="size-4" /> {isSavingDb ? "Saving to PostgreSQL..." : "Save Profile & Documents"}
+            <Save className="size-4" /> {isSavingDb ? "Saving to Database..." : "Save Details"}
           </button>
         </div>
       </form>

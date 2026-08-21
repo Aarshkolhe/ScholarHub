@@ -13,7 +13,10 @@ __v0_jsx-dev-runtime.ts
 !.env.example
 !*.env.example
 
-# Common ignores
+# Common ignores & Build Output
 node_modules
 .next/
 .DS_Store
+dist/
+frontend/dist/
+*.log
