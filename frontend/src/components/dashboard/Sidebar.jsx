@@ -33,13 +33,18 @@ function NavItem({ label, icon: Icon, active, onClick }) {
       type="button"
       onClick={onClick}
       className={cn(
-        "group flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-1",
+        "group flex w-full items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-1 outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
         active
-          ? "bg-blue-50 text-blue-600 font-semibold dark:bg-blue-950/60 dark:text-blue-400"
-          : "text-slate-600 hover:bg-slate-100 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/80 dark:hover:text-slate-100"
+          ? "bg-blue-50/80 text-blue-600 font-semibold dark:bg-blue-950/70 dark:text-blue-400 border-l-4 border-blue-600 dark:border-blue-400 shadow-xs"
+          : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/70 dark:hover:text-slate-100"
       )}
     >
-      <Icon className="size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110" />
+      <Icon
+        className={cn(
+          "size-[18px] shrink-0 transition-transform duration-200 group-hover:scale-110",
+          active ? "text-blue-600 dark:text-blue-400" : "text-slate-500 dark:text-slate-400"
+        )}
+      />
       <span className="truncate">{label}</span>
     </button>
   );
@@ -86,20 +91,20 @@ export function Sidebar({
 
   return (
     <>
-      {/* Mobile Backdrop Overlay */}
+      {/* Mobile Backdrop Overlay (< 1024px) */}
       {isOpen && (
         <div
           onClick={onClose}
-          className="fixed inset-0 z-40 bg-slate-900/50 backdrop-blur-xs lg:hidden animate-fade-in"
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm lg:hidden transition-opacity duration-300 animate-fade-in"
           aria-hidden="true"
         />
       )}
 
-      {/* Main Collapsible Sidebar */}
+      {/* Main Collapsible Sidebar Container */}
       <aside
         className={cn(
           "sticky top-0 h-screen shrink-0 bg-white dark:bg-slate-900 transition-all duration-300 ease-in-out z-40",
-          // Mobile styling (Fixed Drawer)
+          // Mobile styling (Fixed drawer overlay) vs Desktop (Push/rescale layout)
           "fixed inset-y-0 left-0 lg:sticky",
           isOpen
             ? "w-64 border-r border-slate-200 dark:border-slate-800 opacity-100 pointer-events-auto translate-x-0 shadow-2xl lg:shadow-none"
@@ -123,7 +128,7 @@ export function Sidebar({
               onClick={onClose}
               title="Close sidebar"
               aria-label="Close sidebar"
-              className="flex size-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+              className="flex size-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-700 dark:hover:text-slate-200 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
             >
               <X className="size-4.5" />
             </button>
@@ -168,12 +173,12 @@ export function Sidebar({
             />
           </nav>
 
-          {/* Dynamic Details Strength Card */}
+          {/* Details Strength Card */}
           <div className="p-3 shrink-0">
             <button
               type="button"
               onClick={() => handleSelect("Details")}
-              className="w-full text-left rounded-2xl bg-blue-600 dark:bg-blue-700 p-4 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all hover:scale-[1.02]"
+              className="w-full text-left rounded-2xl bg-blue-600 dark:bg-blue-700 p-4 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all hover:scale-[1.02] outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
             >
               <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-100">
                 Details Strength

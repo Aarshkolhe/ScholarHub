@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { User, Settings, LogOut, ChevronDown, Check } from "lucide-react";
+import { User, ClipboardList, Settings, LogOut, ChevronDown, Check, Menu } from "lucide-react";
 import {
   LatestNotificationsTicker,
   NotificationsBell,
@@ -7,7 +7,7 @@ import {
 import ThemeToggle from "./ThemeToggle";
 import useAuth from "../../hooks/useAuth";
 
-export function Topbar({ onSelectTab }) {
+export function Topbar({ onSelectTab, onToggleSidebar, isSidebarOpen = false }) {
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const containerRef = useRef(null);
@@ -48,7 +48,18 @@ export function Topbar({ onSelectTab }) {
   };
 
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-4 border-b border-slate-200 bg-white/80 dark:border-slate-800 dark:bg-slate-900/80 px-6 py-3.5 backdrop-blur transition-colors">
+    <header className="sticky top-0 z-20 flex items-center gap-3 sm:gap-4 border-b border-slate-200 bg-white/80 dark:border-slate-800 dark:bg-slate-900/80 px-4 sm:px-6 py-3.5 backdrop-blur transition-colors">
+      {/* Sidebar Collapsible Toggle Button */}
+      <button
+        type="button"
+        onClick={onToggleSidebar}
+        title={isSidebarOpen ? "Collapse sidebar" : "Open sidebar"}
+        aria-label="Toggle navigation menu"
+        className="flex size-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-all shrink-0 hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+      >
+        <Menu className="size-5" />
+      </button>
+
       <LatestNotificationsTicker />
 
       <div className="ml-auto flex shrink-0 items-center gap-3 sm:gap-4">
@@ -101,6 +112,15 @@ export function Topbar({ onSelectTab }) {
                 >
                   <User className="size-4 text-blue-600 dark:text-blue-400" />
                   My Profile
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => handleNavigate("Details")}
+                  className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                >
+                  <ClipboardList className="size-4 text-indigo-500" />
+                  Eligibility Details
                 </button>
 
                 <button

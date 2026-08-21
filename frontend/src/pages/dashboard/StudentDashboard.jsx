@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { SearchScholarshipView } from "../../components/dashboard/SearchScholarshipView";
 import { UserProfileSection } from "../../components/dashboard/UserProfileSection";
+import { StudentProfileOverview } from "../../components/dashboard/StudentProfileOverview";
 import { AiAssistantHub } from "../../components/dashboard/AiAssistantHub";
 import { Sidebar } from "../../components/dashboard/Sidebar";
 import { Topbar } from "../../components/dashboard/Topbar";
@@ -13,6 +14,8 @@ export function StudentDashboard() {
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("Dashboard");
   const [searchQuery, setSearchQuery] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const [savedCount, setSavedCount] = useState(0);
   const [appliedCount, setAppliedCount] = useState(0);
 
@@ -36,7 +39,7 @@ export function StudentDashboard() {
       if (savedFin.annualIncome) {
         setElIncome(savedFin.annualIncome.toString());
       }
-    } catch (e) {}
+    } catch {}
   }, [activeTab, user]);
 
   const handleCalculateEligibility = (e) => {
@@ -60,21 +63,29 @@ export function StudentDashboard() {
   const showAiAssistant = activeTab === "Dashboard";
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
-      <div className="sticky top-0 hidden h-screen lg:block">
-        <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
-      </div>
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+      {/* Fixed Collapsible Sidebar */}
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+      />
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      {/* Right Content Column - Resizes horizontally & holds independent vertical scroll */}
+      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out">
         <Topbar
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onSelectTab={setActiveTab}
+          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+          isSidebarOpen={sidebarOpen}
           showSearchBar={showSearchBar}
           showAiAssistant={showAiAssistant}
         />
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+        {/* Independent Scroll Container for Dashboard View */}
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8 max-w-7xl w-full mx-auto transition-all duration-300">
           {/* TAB 1: MAIN DASHBOARD */}
           {activeTab === "Dashboard" && (
             <div className="space-y-6 animate-fade-in">
@@ -130,41 +141,35 @@ export function StudentDashboard() {
           )}
 
           {/* TAB 3: DEDICATED AI ASSISTANT HUB */}
-          {activeTab === "AI" && <AiAssistantHub onSelectTab={setActiveTab} />}
+          {activeTab === "AI" && <AiAssistantHub />}
 
           {/* TAB 4: ELIGIBILITY CHECKER */}
           {activeTab === "Eligibility" && (
             <div className="animate-fade-in space-y-6">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4">
-                <div>
-                  <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                    <ShieldCheck className="text-blue-600 dark:text-blue-400" />
-                    AI Eligibility Checker
-                  </h1>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-                    Calculate your match score and grant eligibility in seconds based on your active profile.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setActiveTab("Dashboard")}
-                  className="text-xs font-semibold text-blue-600 dark:text-blue-400 hover:underline"
-                >
-                  &larr; Back to Dashboard
-                </button>
+              <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
+                <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                  <ShieldCheck className="size-6 text-blue-600 dark:text-blue-400" />
+                  Scholarship Eligibility Engine
+                </h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                  Test your qualification match score against active grants using your academic and financial criteria.
+                </p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Input Form */}
                 <form onSubmit={handleCalculateEligibility} className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4">
-                  <h3 className="font-semibold text-base text-slate-900 dark:text-white">Academic & Income Inputs</h3>
-                  
+                  <h3 className="font-bold text-base text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
+                    Eligibility Criteria Inputs
+                  </h3>
+
                   <div>
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Previous Score (%) / CGPA</label>
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Previous Semester / Class Score (%)</label>
                     <input
                       type="number"
                       value={elGpa}
                       onChange={(e) => setElGpa(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                     />
                   </div>
 
@@ -174,50 +179,52 @@ export function StudentDashboard() {
                       type="number"
                       value={elIncome}
                       onChange={(e) => setElIncome(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                     />
                   </div>
 
                   <div>
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Course Stream</label>
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Course Stream / Discipline</label>
                     <select
                       value={elCategory}
                       onChange={(e) => setElCategory(e.target.value)}
-                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                     >
-                      <option value="STEM">Science / STEM</option>
-                      <option value="Engineering">Engineering & Technology</option>
+                      <option value="STEM">Engineering / STEM</option>
+                      <option value="Medical">Medical & Healthcare</option>
                       <option value="General">Arts & Commerce</option>
                     </select>
                   </div>
 
                   <button
                     type="submit"
-                    className="w-full rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-semibold py-2.5 text-sm shadow-md hover:bg-blue-700 transition-colors"
+                    className="w-full rounded-xl bg-blue-600 dark:bg-blue-500 text-white font-semibold py-3 text-xs shadow-md hover:bg-blue-700 transition-colors"
                   >
-                    Calculate Match Score
+                    Calculate Qualification Score
                   </button>
                 </form>
 
                 {/* Score Output */}
                 <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm flex flex-col justify-between">
                   <div>
-                    <h3 className="font-semibold text-base text-slate-900 dark:text-white">Calculated Match Results</h3>
+                    <h3 className="font-bold text-base text-slate-900 dark:text-white border-b border-slate-100 dark:border-slate-800 pb-3">
+                      Match Results
+                    </h3>
                     {elResult ? (
-                      <div className="mt-6 text-center">
-                        <div className="inline-flex size-24 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 font-display text-3xl font-bold border-4 border-blue-500">
+                      <div className="mt-6 text-center space-y-3">
+                        <div className="inline-flex size-24 items-center justify-center rounded-full bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 font-display text-3xl font-bold border-4 border-blue-500 shadow-md">
                           {elResult.score}%
                         </div>
-                        <p className="mt-4 font-bold text-slate-900 dark:text-white">
+                        <p className="font-bold text-sm text-slate-900 dark:text-white">
                           {elResult.eligible ? "High Qualification Match" : "Standard Qualification Match"}
                         </p>
-                        <p className="mt-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed px-4">
+                        <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed px-4">
                           {elResult.recommendation}
                         </p>
                       </div>
                     ) : (
                       <div className="py-16 text-center text-xs text-slate-400">
-                        Click "Calculate Match Score" to evaluate your eligibility across active grants.
+                        Click &quot;Calculate Qualification Score&quot; to evaluate your eligibility across active grants.
                       </div>
                     )}
                   </div>
@@ -234,10 +241,13 @@ export function StudentDashboard() {
             </div>
           )}
 
-          {/* TAB 5: PROFILE MANAGEMENT */}
-          {activeTab === "Profile" && <UserProfileSection />}
+          {/* TAB 5: STUDENT PROFILE OVERVIEW */}
+          {activeTab === "Profile" && <StudentProfileOverview onNavigateTab={setActiveTab} />}
 
-          {/* TAB 6: SETTINGS */}
+          {/* TAB 6: ELIGIBILITY DETAILS FORM */}
+          {activeTab === "Details" && <UserProfileSection />}
+
+          {/* TAB 7: SETTINGS */}
           {activeTab === "Settings" && (
             <div className="animate-fade-in space-y-6 max-w-2xl">
               <h1 className="text-2xl font-bold text-slate-900 dark:text-white border-b border-slate-200 dark:border-slate-800 pb-4">
@@ -254,7 +264,7 @@ export function StudentDashboard() {
                 <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900 dark:text-white">AI Matching System</h3>
-                    <p className="text-xs text-slate-500">Allow AI assistant to auto-evaluate profile documents</p>
+                    <p className="text-xs text-slate-500">Allow AI assistant to auto-evaluate profile criteria</p>
                   </div>
                   <input type="checkbox" defaultChecked className="size-4 accent-blue-600" />
                 </div>

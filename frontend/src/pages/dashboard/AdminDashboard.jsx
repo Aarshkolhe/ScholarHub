@@ -1,10 +1,12 @@
-import { Search, Users, GraduationCap, FileCheck, AlertCircle } from "lucide-react";
+import { useState } from "react";
+import { Users, GraduationCap, FileCheck, AlertCircle } from "lucide-react";
 import Sidebar from "../../components/dashboard/Sidebar";
 import Topbar from "../../components/dashboard/Topbar";
 import useAuth from "../../hooks/useAuth";
 
 export function AdminDashboard() {
   const { user } = useAuth();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const name = user?.fullName || user?.name || "Admin User";
 
   const adminStats = [
@@ -15,15 +17,20 @@ export function AdminDashboard() {
   ];
 
   return (
-    <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
-      <div className="sticky top-0 hidden h-screen lg:block">
-        <Sidebar />
-      </div>
+    <div className="flex h-screen w-screen overflow-hidden bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
+      <Sidebar
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
 
-      <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar onSelectTab={(tab) => console.log("Admin tab selected:", tab)} />
+      <div className="flex h-screen min-w-0 flex-1 flex-col overflow-hidden transition-all duration-300 ease-in-out">
+        <Topbar
+          onToggleSidebar={() => setSidebarOpen((prev) => !prev)}
+          isSidebarOpen={sidebarOpen}
+          onSelectTab={(tab) => console.log("Admin tab selected:", tab)}
+        />
 
-        <main className="flex-1 space-y-6 px-6 py-6 max-w-7xl w-full mx-auto">
+        <main className="flex-1 overflow-y-auto px-6 py-6 max-w-7xl w-full mx-auto space-y-6">
           <div className="animate-rise-in">
             <h1 className="font-display text-2xl font-bold text-slate-900 dark:text-white">
               Admin Portal Overview

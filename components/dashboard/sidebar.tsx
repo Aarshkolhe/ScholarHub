@@ -8,6 +8,7 @@ import {
   Bookmark,
   Bot,
   Bell,
+  ClipboardList,
   User,
   Settings,
   LogOut,
@@ -27,6 +28,7 @@ const mainNav = [
 
 const secondaryNav = [
   { label: "Profile", icon: User },
+  { label: "Details", icon: ClipboardList },
   { label: "Settings", icon: Settings },
   { label: "Logout", icon: LogOut },
 ]
@@ -45,9 +47,9 @@ function NavItem({
       href="#"
       aria-current={active ? "page" : undefined}
       className={cn(
-        "group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-1",
+        "group flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-200 hover:translate-x-1",
         active
-          ? "bg-sidebar-accent text-sidebar-accent-foreground"
+          ? "bg-sidebar-accent text-sidebar-accent-foreground font-semibold border-l-4 border-primary"
           : "text-sidebar-foreground/70 hover:bg-sidebar-accent/60 hover:text-sidebar-accent-foreground",
       )}
     >
@@ -60,7 +62,7 @@ function NavItem({
 export function Sidebar() {
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-sidebar-border bg-sidebar">
-      <div className="flex items-center gap-2.5 px-5 py-5">
+      <div className="flex items-center gap-2.5 px-5 py-5 border-b border-sidebar-border">
         <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
           <GraduationCap className="size-5" />
         </span>
@@ -84,7 +86,7 @@ export function Sidebar() {
       <div className="p-3">
         <div className="rounded-2xl bg-primary p-4 text-primary-foreground">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-foreground/70">
-            Profile Strength
+            Details Strength
           </p>
           <p className="mt-1 font-display text-2xl font-bold">90%</p>
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-primary-foreground/25">
