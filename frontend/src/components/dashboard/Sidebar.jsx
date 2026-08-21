@@ -21,7 +21,6 @@ const mainNav = [
   { id: "Dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "Search", label: "Search Scholarships", icon: Search },
   { id: "Recommended", label: "Recommended", icon: Sparkles },
-  { id: "Eligibility", label: "Eligibility Checker", icon: ShieldCheck },
   { id: "Saved", label: "Saved Scholarships", icon: Bookmark },
   { id: "AI", label: "AI Assistant", icon: Bot },
   { id: "Notifications", label: "Notifications", icon: Bell },

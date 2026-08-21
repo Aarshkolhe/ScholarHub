@@ -19,13 +19,15 @@ export function ScholarshipRowItem({
         <div className="flex items-center gap-2 flex-wrap text-xs">
           {/* Match Score Badge */}
           <span
-            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-bold ${
-              scholarship.isEligible
+            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold shadow-xs ${
+              scholarship.matchScore >= 75
+                ? "bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/30"
+                : scholarship.matchScore >= 50
                 ? "bg-blue-500/15 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-500/30"
                 : "bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-500/30"
             }`}
           >
-            {scholarship.isEligible ? `${scholarship.matchScore}% Match` : `Not Eligible (${scholarship.matchScore}%)`}
+            <span>✨</span> {scholarship.matchScore}% Match
           </span>
 
           {/* Govt Scheme Badge */}

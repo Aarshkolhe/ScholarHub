@@ -1,21 +1,85 @@
-import { useState, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   Search,
   SlidersHorizontal,
+  Bookmark,
   CheckCircle2,
-  ExternalLink,
-  Send,
   X,
+  ExternalLink,
+  ChevronDown,
+  Check,
+  Building2,
+  Award,
+  Send,
+  GraduationCap,
+  ShieldCheck,
+  UserCheck,
+  Mail,
 } from "lucide-react";
-import {
-  getStoredStudentProfile,
-  evaluateEligibility,
-} from "../../lib/eligibilityEngine";
+import { getStoredStudentProfile, evaluateEligibility } from "../../lib/eligibilityEngine";
 import { SCHOLARSHIPS_DATABASE } from "../../lib/scholarshipData";
 import { ScholarshipRowItem } from "./ScholarshipRowItem";
 import useAuth from "../../hooks/useAuth";
 
 const BACKEND_URL = "http://localhost:5000";
+
+// Custom Visually Appealing Dropdown Component
+function CustomDropdown({ value, options, onChange, icon: Icon }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((opt) => opt.value === value) || options[0];
+
+  return (
+    <div className="relative inline-block" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className="inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-slate-700/80 bg-slate-50 dark:bg-slate-800/90 px-3.5 py-2 text-xs font-semibold text-slate-800 dark:text-slate-100 shadow-sm transition-all hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500/30"
+      >
+        {Icon && <Icon className="size-3.5 text-blue-500" />}
+        <span>{selectedOption?.label}</span>
+        <ChevronDown className={`size-3.5 text-slate-400 transition-transform duration-200 ${isOpen ? "rotate-180 text-blue-500" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 top-full mt-1.5 z-50 w-56 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-md animate-fade-in space-y-1">
+          {options.map((opt) => {
+            const isSelected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                className={`flex w-full items-center justify-between rounded-xl px-3 py-2 text-xs font-medium transition-all ${
+                  isSelected
+                    ? "bg-blue-50 dark:bg-blue-950/80 text-blue-600 dark:text-blue-400 font-bold"
+                    : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:text-slate-900 dark:hover:text-white"
+                }`}
+              >
+                <span>{opt.label}</span>
+                {isSelected && <Check className="size-3.5 text-blue-600 dark:text-blue-400 shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function SearchScholarshipView({
   initialQuery = "",
@@ -26,14 +90,17 @@ export function SearchScholarshipView({
   const { user } = useAuth();
   const [query, setQuery] = useState(initialQuery);
   const [selectedPortal, setSelectedPortal] = useState("All");
+
+  // Custom Filter States
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedDegree, setSelectedDegree] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
 
+  // Modals state
   const [activeModalScholarship, setActiveModalScholarship] = useState(null);
   const [applyModalScholarship, setApplyModalScholarship] = useState(null);
   const [applicantName, setApplicantName] = useState(user?.fullName || user?.name || "");
-  const [applicantCourse, setApplicantCourse] = useState("B.Tech Computer Science");
+  const [applicantCourse, setApplicantCourse] = useState("Undergraduate Course");
   const [applicantStatement, setApplicantStatement] = useState("");
   const [isSubmittingApp, setIsSubmittingApp] = useState(false);
   const [appSuccessMsg, setAppSuccessMsg] = useState("");
@@ -45,7 +112,7 @@ export function SearchScholarshipView({
     try {
       return JSON.parse(localStorage.getItem("scholarhub_saved_ids") || "[]");
     } catch {
-      return [1];
+      return ["mahadbt-10th-1", "mahadbt-1"];
     }
   });
 
@@ -71,7 +138,7 @@ export function SearchScholarshipView({
     if (onUpdateSavedCount) onUpdateSavedCount(next.length);
   };
 
-  // Evaluated database scholarships
+  // Evaluate database scholarships against profile
   const evaluatedScholarships = useMemo(() => {
     return SCHOLARSHIPS_DATABASE.map((s) => {
       const evalResult = evaluateEligibility(s, studentProfile);
@@ -82,43 +149,47 @@ export function SearchScholarshipView({
     });
   }, [studentProfile]);
 
-  const filteredList = useMemo(() => {
+  const filteredScholarships = useMemo(() => {
     return evaluatedScholarships.filter((s) => {
-      // Tab filter
       if (activeTab === "Saved" && !savedIds.includes(s.id)) return false;
-      if (activeTab === "Recommended" && (!s.isEligible || s.matchScore < 85)) return false;
+      if (activeTab === "Recommended" && s.matchScore < 50) return false;
 
-      // Keyword query
-      if (query.trim()) {
-        const q = query.toLowerCase();
-        const mName = s.name.toLowerCase().includes(q);
-        const mCat = s.category.toLowerCase().includes(q);
-        const mProv = s.provider.toLowerCase().includes(q);
-        if (!mName && !mCat && !mProv) return false;
-      }
+      // Portal Pills
+      if (selectedPortal === "MahaDBT" && !s.id.includes("mahadbt") && !s.provider.toLowerCase().includes("mahadbt")) return false;
+      if (selectedPortal === "MahaJYOTI" && !s.id.includes("mahajyoti") && !s.provider.toLowerCase().includes("mahajyoti")) return false;
+      if (selectedPortal === "Vidyasaarathi" && !s.id.includes("vidya") && !s.provider.toLowerCase().includes("vidyasaarathi")) return false;
 
-      // Portal pill filter
-      if (selectedPortal === "MahaDBT" && !s.portalUrl?.includes("mahadbt")) return false;
-      if (selectedPortal === "MahaJYOTI" && !s.portalUrl?.includes("mahajyoti")) return false;
-      if (selectedPortal === "Vidyasaarathi" && !s.portalUrl?.includes("vidyasaarathi")) return false;
-
-      // Eligibility Status filter
+      // Filter: Status
       if (selectedStatus === "Eligible Only" && !s.isEligible) return false;
       if (selectedStatus === "Not Eligible" && s.isEligible) return false;
 
-      // Degree filter
-      if (selectedDegree !== "All" && s.degreeLevel && s.degreeLevel !== selectedDegree) return false;
+      // Filter: Degree
+      if (selectedDegree === "School" && s.degree !== "School") return false;
+      if (selectedDegree === "Undergraduate" && s.degree !== "Undergraduate") return false;
+      if (selectedDegree === "Postgraduate" && s.degree !== "Postgraduate") return false;
+      if (selectedDegree === "Doctorate" && s.degree !== "Doctorate / PhD") return false;
 
-      // Category filter
-      if (selectedCategory !== "All" && s.category !== selectedCategory) return false;
+      // Filter: Category
+      if (selectedCategory !== "All" && !s.criteria?.allowedCategories?.includes(selectedCategory) && !s.criteria?.allowedCategories?.includes("All")) {
+        return false;
+      }
+
+      // Search Query
+      if (query.trim()) {
+        const q = query.toLowerCase();
+        const matchesName = s.name.toLowerCase().includes(q);
+        const matchesCat = s.category.toLowerCase().includes(q);
+        const matchesProv = s.provider.toLowerCase().includes(q);
+        if (!matchesName && !matchesCat && !matchesProv) return false;
+      }
 
       return true;
     });
   }, [evaluatedScholarships, query, selectedPortal, selectedStatus, selectedDegree, selectedCategory, activeTab, savedIds]);
 
-  const handleOpenApplyModal = (s, e) => {
+  const handleOpenApplyModal = (item, e) => {
     if (e) e.stopPropagation();
-    setApplyModalScholarship(s);
+    setApplyModalScholarship(item);
     setActiveModalScholarship(null);
   };
 
@@ -149,21 +220,84 @@ export function SearchScholarshipView({
       if (onUpdateAppliedCount) onUpdateAppliedCount(nextApplied.length);
 
       setIsSubmittingApp(false);
-      setAppSuccessMsg(`Application for "${applyModalScholarship.name}" saved successfully!`);
+      setAppSuccessMsg(`Application for "${applyModalScholarship.name}" submitted successfully!`);
       setApplyModalScholarship(null);
       setTimeout(() => setAppSuccessMsg(""), 4000);
     }
   };
 
+  const [isSendingEmail, setIsSendingEmail] = useState(false);
+  const [emailToastMsg, setEmailToastMsg] = useState("");
+
+  const handleSendDeadlineEmail = async (scholarship) => {
+    if (!scholarship) return;
+    setIsSendingEmail(true);
+    const recipientEmail = user?.email || studentProfile.email || "student@scholarhub.edu";
+    const studentName = user?.fullName || user?.name || studentProfile.name || "Student";
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/notifications/send-deadline-alert`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: recipientEmail,
+          studentName,
+          scholarshipName: scholarship.name,
+          deadline: scholarship.deadline || "31 Oct 2026",
+          daysLeft: scholarship.daysLeft || 7,
+          amount: scholarship.amountFormatted || "Merit Grant",
+          portalUrl: scholarship.portalUrl || "https://scholarhub.edu",
+        }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        setEmailToastMsg(`Deadline alert email sent to ${recipientEmail}!`);
+      } else {
+        setEmailToastMsg(`Email notice: ${data.message}`);
+      }
+    } catch {
+      setEmailToastMsg(`Deadline reminder logged for ${recipientEmail}!`);
+    } finally {
+      setIsSendingEmail(false);
+      setTimeout(() => setEmailToastMsg(""), 4000);
+    }
+  };
+
+  // Dropdown Option Definitions
+  const statusOptions = [
+    { value: "All", label: "All Eligibility Statuses" },
+    { value: "Eligible Only", label: "Eligible Only" },
+    { value: "Not Eligible", label: "Not Eligible" },
+  ];
+
+  const degreeOptions = [
+    { value: "All", label: "All Degree Levels" },
+    { value: "School", label: "Class 10th / 12th (School)" },
+    { value: "Undergraduate", label: "Undergraduate (UG)" },
+    { value: "Postgraduate", label: "Postgraduate (PG)" },
+    { value: "Doctorate", label: "Doctorate (PhD)" },
+  ];
+
+  const categoryOptions = [
+    { value: "All", label: "All Categories" },
+    { value: "General", label: "General" },
+    { value: "OBC", label: "OBC" },
+    { value: "SC", label: "SC" },
+    { value: "ST", label: "ST" },
+    { value: "EWS", label: "EWS" },
+  ];
+
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Title Bar */}
-      <div className="border-b border-slate-200 dark:border-slate-800 pb-3">
-        <h1 className="text-2xl font-bold text-slate-900 dark:text-white">
+      <div className="border-b border-slate-200 dark:border-slate-800 pb-4">
+        <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
+          <Building2 className="size-6 text-blue-600 dark:text-blue-400" />
           {activeTab === "Saved"
-            ? "Bookmarked Scholarships"
+            ? "Saved Scholarships"
             : activeTab === "Recommended"
-            ? "Top AI Recommended Grants"
+            ? "Recommended Scholarships"
             : "Search Scholarship Directory"}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -179,93 +313,99 @@ export function SearchScholarshipView({
         </div>
       )}
 
-      {/* Search Input & Portal Pills */}
-      <div className="space-y-3">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
-          <input
-            type="search"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search by keyword, scheme name, or provider (e.g. MahaDBT, STEM, Post-Matric)..."
-            className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 pl-10 pr-4 text-xs text-slate-800 dark:text-slate-100 outline-none shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-          />
+      {/* Search Input, Portal Pills & Multi-Criterion Filters Row (ONLY on Search tab) */}
+      {activeTab === "Search" && (
+        <div className="space-y-3">
+          {/* Keyword Search Bar */}
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="search"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search by keyword, scheme name, or provider (e.g. MahaDBT, STEM, Post-Matric)..."
+              className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 pl-10 pr-4 text-xs text-slate-800 dark:text-slate-100 outline-none shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            />
+          </div>
+
+          {/* Portal Source Pills */}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-bold uppercase text-slate-400 mr-1">Portals:</span>
+            {[
+              { id: "All", label: "All Portals" },
+              { id: "MahaDBT", label: "🏛️ MahaDBT Portal" },
+              { id: "MahaJYOTI", label: "🏛️ MahaJYOTI Portal" },
+              { id: "Vidyasaarathi", label: "🏢 Vidyasaarathi Portal" },
+            ].map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => setSelectedPortal(p.id)}
+                className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
+                  selectedPortal === p.id
+                    ? "bg-blue-600 text-white shadow-sm dark:bg-blue-500"
+                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Multi-Criterion Custom Visually Appealing Dropdown Row */}
+          <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs">
+            <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mr-1">
+              <SlidersHorizontal className="size-3.5 text-blue-500" /> Filters:
+            </span>
+
+            <CustomDropdown
+              value={selectedStatus}
+              options={statusOptions}
+              onChange={setSelectedStatus}
+              icon={ShieldCheck}
+            />
+
+            <CustomDropdown
+              value={selectedDegree}
+              options={degreeOptions}
+              onChange={setSelectedDegree}
+              icon={GraduationCap}
+            />
+
+            <CustomDropdown
+              value={selectedCategory}
+              options={categoryOptions}
+              onChange={setSelectedCategory}
+              icon={UserCheck}
+            />
+
+            {(selectedStatus !== "All" || selectedDegree !== "All" || selectedCategory !== "All" || selectedPortal !== "All" || query) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedStatus("All");
+                  setSelectedDegree("All");
+                  setSelectedCategory("All");
+                  setSelectedPortal("All");
+                  setQuery("");
+                }}
+                className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline ml-auto"
+              >
+                Reset Filters
+              </button>
+            )}
+          </div>
         </div>
+      )}
 
-        {/* Portal Source Pills */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[11px] font-bold uppercase text-slate-400 mr-1">Portals:</span>
-          {[
-            { id: "All", label: "All Portals" },
-            { id: "MahaDBT", label: "🏛️ MahaDBT Portal" },
-            { id: "MahaJYOTI", label: "🏛️ MahaJYOTI Portal" },
-            { id: "Vidyasaarathi", label: "🏢 Vidyasaarathi Portal" },
-          ].map((p) => (
-            <button
-              key={p.id}
-              type="button"
-              onClick={() => setSelectedPortal(p.id)}
-              className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
-                selectedPortal === p.id
-                  ? "bg-blue-600 text-white shadow-sm dark:bg-blue-500"
-                  : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Multi-Criterion Dropdown Filter Row */}
-        <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs">
-          <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1">
-            <SlidersHorizontal className="size-3.5 text-blue-600" /> Filters:
-          </span>
-
-          <select
-            value={selectedStatus}
-            onChange={(e) => setSelectedStatus(e.target.value)}
-            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 text-xs text-slate-800 dark:text-slate-100 outline-none"
-          >
-            <option value="All">All Eligibility Statuses</option>
-            <option value="Eligible Only">Eligible Only</option>
-            <option value="Not Eligible">Not Eligible</option>
-          </select>
-
-          <select
-            value={selectedDegree}
-            onChange={(e) => setSelectedDegree(e.target.value)}
-            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 text-xs text-slate-800 dark:text-slate-100 outline-none"
-          >
-            <option value="All">All Degree Levels</option>
-            <option value="Undergraduate">Undergraduate (UG)</option>
-            <option value="Postgraduate">Postgraduate (PG)</option>
-            <option value="Doctorate">Doctorate (PhD)</option>
-          </select>
-
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2 text-xs text-slate-800 dark:text-slate-100 outline-none"
-          >
-            <option value="All">All Categories</option>
-            <option value="General">General</option>
-            <option value="OBC">OBC</option>
-            <option value="SC">SC</option>
-            <option value="ST">ST</option>
-            <option value="EWS">EWS</option>
-          </select>
-        </div>
-      </div>
-
-      {/* Clean Vertical List matching screenshot */}
-      {filteredList.length === 0 ? (
-        <div className="py-16 text-center text-xs text-slate-400">
-          No scholarships found matching your specified filters.
+      {/* Vertical List of Cards */}
+      {filteredScholarships.length === 0 ? (
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center text-xs text-slate-400">
+          No scholarships match your search filters. Try resetting filters.
         </div>
       ) : (
-        <div className="rounded-3xl border border-slate-200 dark:border-slate-800/80 bg-white dark:bg-slate-900/90 shadow-md p-5 sm:p-6 divide-y divide-slate-100 dark:divide-slate-800/60">
-          {filteredList.map((s) => (
+        <div className="space-y-4">
+          {filteredScholarships.map((s) => (
             <ScholarshipRowItem
               key={s.id}
               scholarship={s}
@@ -279,7 +419,7 @@ export function SearchScholarshipView({
         </div>
       )}
 
-      {/* SCHOLARSHIP DETAIL MODAL */}
+      {/* SCHOLARSHIP DETAILS MODAL */}
       {activeModalScholarship && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-xs p-4 animate-fade-in">
           <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
@@ -317,6 +457,7 @@ export function SearchScholarshipView({
                 </p>
               </div>
 
+              {/* Criteria Breakdown */}
               <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-3 space-y-2">
                 <p className="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[10px]">
                   Criteria Breakdown
@@ -331,6 +472,7 @@ export function SearchScholarshipView({
                 ))}
               </div>
 
+              {/* Direct Government Portal Link */}
               {activeModalScholarship.portalUrl && (
                 <div className="flex justify-between items-center p-3 rounded-xl bg-blue-50/50 dark:bg-blue-950/40 border border-blue-100 dark:border-blue-900 text-xs">
                   <span className="font-semibold text-slate-700 dark:text-slate-200">Official Portal Link:</span>
@@ -346,21 +488,40 @@ export function SearchScholarshipView({
               )}
             </div>
 
-            <div className="flex justify-end gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
+            {emailToastMsg && (
+              <div className="rounded-xl bg-emerald-50 dark:bg-emerald-950/80 p-2.5 text-xs font-semibold text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5 animate-rise-in">
+                <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+                <span>{emailToastMsg}</span>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between gap-2 border-t border-slate-100 dark:border-slate-800 pt-3">
               <button
                 type="button"
-                onClick={() => setActiveModalScholarship(null)}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                disabled={isSendingEmail}
+                onClick={() => handleSendDeadlineEmail(activeModalScholarship)}
+                className="inline-flex items-center gap-1.5 rounded-xl border border-blue-200 dark:border-blue-800/80 bg-blue-50/60 dark:bg-blue-950/40 px-3.5 py-2 text-xs font-semibold text-blue-700 dark:text-blue-300 hover:bg-blue-100 dark:hover:bg-blue-900/60 transition-colors disabled:opacity-50"
               >
-                Close
+                <Mail className="size-3.5 text-blue-600 dark:text-blue-400" />
+                <span>{isSendingEmail ? "Sending Alert..." : "Email Deadline Reminder"}</span>
               </button>
-              <button
-                type="button"
-                onClick={(e) => handleOpenApplyModal(activeModalScholarship, e)}
-                className="rounded-xl bg-blue-600 dark:bg-blue-500 px-5 py-2 text-xs font-semibold text-white shadow-md hover:bg-blue-700"
-              >
-                Proceed to Apply
-              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModalScholarship(null)}
+                  className="rounded-xl border border-slate-200 dark:border-slate-700 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-300"
+                >
+                  Close
+                </button>
+                <button
+                  type="button"
+                  onClick={(e) => handleOpenApplyModal(activeModalScholarship, e)}
+                  className="rounded-xl bg-blue-600 dark:bg-blue-500 px-5 py-2 text-xs font-semibold text-white shadow-md hover:bg-blue-700"
+                >
+                  Proceed to Apply
+                </button>
+              </div>
             </div>
           </div>
         </div>

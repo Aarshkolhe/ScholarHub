@@ -6,6 +6,7 @@ import authRoutes from "./src/routes/authRoutes.js";
 import aiRoutes from "./src/routes/aiRoutes.js";
 import profileRoutes from "./src/routes/profileRoutes.js";
 import scholarshipRoutes from "./src/routes/scholarshipRoutes.js";
+import notificationRoutes from "./src/routes/notificationRoutes.js";
 import { testEmailConnection } from "./src/services/emailService.js";
 
 import {
@@ -45,6 +46,7 @@ app.use("/", authRoutes);
 app.use("/", aiRoutes);
 app.use("/", profileRoutes);
 app.use("/", scholarshipRoutes);
+app.use("/", notificationRoutes);
 
 // --------------------------------------------------
 // Start Server

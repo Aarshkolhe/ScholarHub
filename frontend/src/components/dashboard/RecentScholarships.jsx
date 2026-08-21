@@ -143,46 +143,23 @@ export function RecentScholarships({
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-4">
         <div>
           <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>🏛️</span> Official Government & National Scholarships
+            <span>🎓</span> List of Scholarships
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
             {filteredScholarships.length} verified government & portal opportunities matched to your profile
           </p>
         </div>
 
-        {/* Filter Pills */}
-        <div className="flex flex-wrap items-center gap-2 text-xs">
-          {[
-            { id: "All", label: "All" },
-            { id: "Govt Schemes", label: "🏛️ Govt Schemes" },
-            { id: "STEM", label: "STEM" },
-            { id: "Technology", label: "Technology" },
-            { id: "Engineering", label: "Engineering" },
-          ].map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-all ${
-                filter === f.id
-                  ? "bg-blue-600 text-white shadow-sm font-semibold"
-                  : "bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
-
-          {onViewAllClick && (
-            <button
-              type="button"
-              onClick={onViewAllClick}
-              className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline ml-1"
-            >
-              View All &rarr;
-            </button>
-          )}
-        </div>
+        {/* View All Action Link */}
+        {onViewAllClick && (
+          <button
+            type="button"
+            onClick={onViewAllClick}
+            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            View All &rarr;
+          </button>
+        )}
       </div>
 
       {/* Application Success Toast */}

@@ -1,10 +1,10 @@
 import { Star, Clock, UserCheck, Bookmark, Send } from "lucide-react";
 
-export function StatCards({ savedCount = 1, appliedCount = 0, onSelectStatFilter }) {
+export function StatCards({ recommendedCount = 5, savedCount = 1, appliedCount = 0, onSelectStatFilter }) {
   const stats = [
     {
       id: "recommended",
-      value: "5",
+      value: String(recommendedCount),
       label: "Recommended Grants",
       icon: Star,
       tint: "bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400",
@@ -45,7 +45,7 @@ export function StatCards({ savedCount = 1, appliedCount = 0, onSelectStatFilter
             key={stat.id}
             onClick={() => onSelectStatFilter && onSelectStatFilter(stat.id)}
             style={{ animationDelay: `${i * 90}ms` }}
-            className="group animate-rise-in rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer"
+            className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all duration-300 ease-out hover:scale-[1.025] hover:shadow-xl cursor-pointer"
           >
             <div className="flex items-center justify-between">
               <span

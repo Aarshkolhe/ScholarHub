@@ -75,8 +75,12 @@ export function Topbar({ onSelectTab, onToggleSidebar, isSidebarOpen = false }) 
             aria-label="User Profile Menu"
             className="flex items-center gap-2.5 rounded-full p-1 sm:px-2.5 sm:py-1.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800 outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
-            <span className="flex size-9 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/60 text-sm font-bold text-blue-600 dark:text-blue-300 ring-2 ring-blue-500/20">
-              {initials}
+            <span className="flex size-9 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/60 text-sm font-bold text-blue-600 dark:text-blue-300 ring-2 ring-blue-500/20 overflow-hidden shrink-0">
+              {user?.avatar ? (
+                <img src={user.avatar} alt={displayName} className="size-full object-cover" />
+              ) : (
+                initials
+              )}
             </span>
             <div className="hidden text-left leading-tight sm:block">
               <p className="text-sm font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1">

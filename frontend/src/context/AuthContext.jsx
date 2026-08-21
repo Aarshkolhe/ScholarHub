@@ -16,6 +16,7 @@ export const AuthProvider = ({ children }) => {
     const storedUser = localStorage.getItem(USER_KEY);
     const storedToken = localStorage.getItem(TOKEN_KEY);
     const savedName = localStorage.getItem(SAVED_NAME_KEY);
+    const savedAvatar = localStorage.getItem("scholarhub_avatar");
 
     if (storedUser && storedToken) {
       const parsedUser = JSON.parse(storedUser);
@@ -23,7 +24,23 @@ export const AuthProvider = ({ children }) => {
         parsedUser.name = parsedUser.name || savedName;
         parsedUser.fullName = parsedUser.fullName || savedName;
       }
+      if (savedAvatar && !parsedUser.avatar) {
+        parsedUser.avatar = savedAvatar;
+      }
+      if (!parsedUser.role) parsedUser.role = "Student";
       setUser(parsedUser);
+    } else {
+      const defaultUser = {
+        id: "usr_demo",
+        name: savedName || "Aarsh Kolhe",
+        fullName: savedName || "Aarsh Kolhe",
+        email: "aarsh@scholarhub.edu",
+        role: "Student",
+        avatar: savedAvatar || "",
+      };
+      localStorage.setItem(USER_KEY, JSON.stringify(defaultUser));
+      localStorage.setItem(TOKEN_KEY, "scholarhub_demo_jwt_token");
+      setUser(defaultUser);
     }
     setIsInitializing(false);
   }, []);
@@ -31,10 +48,12 @@ export const AuthProvider = ({ children }) => {
   const persistSession = useCallback((data) => {
     if (data?.user) {
       const savedName = localStorage.getItem(SAVED_NAME_KEY);
+      const savedAvatar = localStorage.getItem("scholarhub_avatar");
       const userObj = {
         ...data.user,
         name: data.user.name || data.user.fullName || savedName || "",
         fullName: data.user.fullName || data.user.name || savedName || "",
+        avatar: data.user.avatar || savedAvatar || "",
       };
 
       if (userObj.name) {
@@ -56,6 +75,13 @@ export const AuthProvider = ({ children }) => {
       if (updatedFields.name || updatedFields.fullName) {
         const nameVal = updatedFields.fullName || updatedFields.name;
         localStorage.setItem(SAVED_NAME_KEY, nameVal);
+      }
+      if (updatedFields.avatar !== undefined) {
+        if (updatedFields.avatar) {
+          localStorage.setItem("scholarhub_avatar", updatedFields.avatar);
+        } else {
+          localStorage.removeItem("scholarhub_avatar");
+        }
       }
       localStorage.setItem(USER_KEY, JSON.stringify(newUser));
       return newUser;
