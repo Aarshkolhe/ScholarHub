@@ -131,7 +131,7 @@
     <header class="w-full top-0 sticky z-50 bg-surface/90 backdrop-blur-md border-b border-outline-variant">
         <div class="flex justify-between items-center h-16 max-w-7xl mx-auto px-margin-desktop">
             <div class="flex items-center gap-8">
-                <a class="font-headline-lg text-headline-lg text-primary flex items-center font-bold" href="/">
+                <a class="font-headline-lg text-headline-lg text-primary flex items-center font-bold" href="/landing">
                     <span class="material-symbols-outlined mr-2 text-primary text-2xl">school</span>
                     ScholarHub
                 </a>
@@ -167,15 +167,22 @@
                         Discover and apply for scholarships tailored to your unique profile. Our intelligent matching system makes funding your education simpler than ever.
                     </p>
 
-                    <form action="{% if session.get('user_id') %}/dashboard{% else %}/register{% endif %}" method="GET" class="glass-card p-3 sm:p-4 rounded-2xl max-w-2xl mx-auto flex flex-col sm:flex-row gap-3 shadow-lg relative z-20">
-                        <div class="relative flex-grow">
-                            <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">person</span>
-                            <input name="name" class="w-full pl-12 pr-4 py-3.5 rounded-xl border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest text-on-surface font-body-base transition-all h-full min-h-[48px]" placeholder="Enter your name..." type="text"/>
+                    <div class="max-w-2xl mx-auto">
+                        <form action="{% if session.get('user_id') %}/dashboard{% else %}/register{% endif %}" method="GET" class="glass-card p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row gap-3 shadow-lg relative z-20">
+                            <div class="relative flex-grow">
+                                <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline">person</span>
+                                <input id="nameInput" name="name" value="{{ session.get('user_name', '') }}" class="w-full pl-12 pr-12 py-3.5 rounded-xl border-outline-variant focus:border-primary focus:ring-2 focus:ring-primary/20 bg-surface-container-lowest text-on-surface font-body-base transition-all h-full min-h-[48px]" placeholder="Enter your name..." type="text"/>
+                                <span id="greenTick" class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-xl {% if not session.get('user_name') %}hidden{% endif %}">check_circle</span>
+                            </div>
+                            <button type="submit" class="bg-primary text-on-primary font-body-semibold text-body-semibold px-8 py-3.5 rounded-xl hover:bg-on-primary-fixed-variant transition-all shadow-md flex items-center justify-center whitespace-nowrap min-h-[48px]">
+                                Go to Dashboard
+                            </button>
+                        </form>
+                        <div id="savedBadge" class="mt-2.5 flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-600 {% if not session.get('user_name') %}hidden{% endif %}">
+                            <span class="material-symbols-outlined text-base text-emerald-500">check_circle</span>
+                            Name saved! Click "Go to Dashboard" to proceed.
                         </div>
-                        <button type="submit" class="bg-primary text-on-primary font-body-semibold text-body-semibold px-8 py-3.5 rounded-xl hover:bg-on-primary-fixed-variant transition-all shadow-md flex items-center justify-center whitespace-nowrap min-h-[48px]">
-                            Get Started
-                        </button>
-                    </form>
+                    </div>
 
                     <div class="mt-8 flex flex-wrap justify-center items-center gap-6 text-on-surface-variant font-caption text-caption">
                         <div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[18px]">check_circle</span> Free to Use</div>
@@ -229,6 +236,22 @@
 
     <script>
         (function () {
+            const nameInput = document.getElementById('nameInput');
+            const greenTick = document.getElementById('greenTick');
+            const savedBadge = document.getElementById('savedBadge');
+            
+            if (nameInput) {
+                nameInput.addEventListener('input', function() {
+                    if (this.value.trim().length > 0) {
+                        greenTick.classList.remove('hidden');
+                        savedBadge.classList.remove('hidden');
+                    } else {
+                        greenTick.classList.add('hidden');
+                        savedBadge.classList.add('hidden');
+                    }
+                });
+            }
+
             const canvas = document.getElementById('particleCanvas');
             const ctx = canvas.getContext('2d');
             const hero = document.getElementById('heroSection');

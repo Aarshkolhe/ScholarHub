@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   LayoutDashboard,
   Search,
@@ -15,13 +16,13 @@ import { cn } from "../../lib/utils";
 import useAuth from "../../hooks/useAuth";
 
 const mainNav = [
-  { label: "Dashboard", icon: LayoutDashboard, active: true },
-  { label: "Search Scholarships", icon: Search },
-  { label: "Recommended", icon: Sparkles },
-  { label: "Eligibility Checker", icon: ShieldCheck },
-  { label: "Saved Scholarships", icon: Bookmark },
-  { label: "AI Assistant", icon: Bot },
-  { label: "Notifications", icon: Bell },
+  { id: "Dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "Search", label: "Search Scholarships", icon: Search },
+  { id: "Recommended", label: "Recommended", icon: Sparkles },
+  { id: "Eligibility", label: "Eligibility Checker", icon: ShieldCheck },
+  { id: "Saved", label: "Saved Scholarships", icon: Bookmark },
+  { id: "AI", label: "AI Assistant", icon: Bot },
+  { id: "Notifications", label: "Notifications", icon: Bell },
 ];
 
 function NavItem({ label, icon: Icon, active, onClick }) {
@@ -42,8 +43,12 @@ function NavItem({ label, icon: Icon, active, onClick }) {
   );
 }
 
-export function Sidebar() {
-  const { signOut, user } = useAuth();
+export function Sidebar({ activeTab = "Dashboard", onTabChange }) {
+  const { signOut } = useAuth();
+
+  const handleSelect = (id) => {
+    if (onTabChange) onTabChange(id);
+  };
 
   return (
     <aside className="flex h-full w-64 shrink-0 flex-col border-r border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 transition-colors">
@@ -58,13 +63,29 @@ export function Sidebar() {
 
       <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-3">
         {mainNav.map((item) => (
-          <NavItem key={item.label} {...item} />
+          <NavItem
+            key={item.id}
+            label={item.label}
+            icon={item.icon}
+            active={activeTab === item.id}
+            onClick={() => handleSelect(item.id)}
+          />
         ))}
 
         <div className="my-3 h-px bg-slate-100 dark:bg-slate-800" />
 
-        <NavItem label="Profile" icon={User} />
-        <NavItem label="Settings" icon={Settings} />
+        <NavItem
+          label="Profile"
+          icon={User}
+          active={activeTab === "Profile"}
+          onClick={() => handleSelect("Profile")}
+        />
+        <NavItem
+          label="Settings"
+          icon={Settings}
+          active={activeTab === "Settings"}
+          onClick={() => handleSelect("Settings")}
+        />
         <NavItem
           label="Logout"
           icon={LogOut}
@@ -73,15 +94,19 @@ export function Sidebar() {
       </nav>
 
       <div className="p-3">
-        <div className="rounded-2xl bg-blue-600 dark:bg-blue-700 p-4 text-white shadow-lg shadow-blue-600/20">
+        <button
+          type="button"
+          onClick={() => handleSelect("Profile")}
+          className="w-full text-left rounded-2xl bg-blue-600 dark:bg-blue-700 p-4 text-white shadow-lg shadow-blue-600/20 hover:bg-blue-700 transition-all hover:scale-[1.02]"
+        >
           <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-100">
             Profile Strength
           </p>
           <p className="mt-1 font-display text-2xl font-bold">90%</p>
           <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-white/30">
-            <div className="h-full w-[90%] animate-grow-bar rounded-full bg-white" />
+            <div className="h-full w-[90%] rounded-full bg-white" />
           </div>
-        </div>
+        </button>
       </div>
     </aside>
   );

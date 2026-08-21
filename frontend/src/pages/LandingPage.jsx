@@ -3,12 +3,37 @@ import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import ThemeToggle from "../components/dashboard/ThemeToggle";
 
+const SAVED_NAME_KEY = "scholarhub_saved_landing_name";
+
 export default function LandingPage() {
-  const { user, isAuthenticated, signOut } = useAuth();
+  const { user, isAuthenticated, signOut, updateUser } = useAuth();
   const navigate = useNavigate();
-  const [userName, setUserName] = useState("");
   const canvasRef = useRef(null);
   const heroRef = useRef(null);
+
+  // Initialize input state from user profile or saved local storage name
+  const [userName, setUserName] = useState(() => {
+    return user?.fullName || user?.name || localStorage.getItem(SAVED_NAME_KEY) || "";
+  });
+
+  // Synchronize when user session updates
+  useEffect(() => {
+    const existingName = user?.fullName || user?.name || localStorage.getItem(SAVED_NAME_KEY);
+    if (existingName) {
+      setUserName(existingName);
+    }
+  }, [user]);
+
+  const isNameSaved = Boolean(userName.trim());
+
+  const handleNameChange = (e) => {
+    const val = e.target.value;
+    setUserName(val);
+    if (val.trim()) {
+      localStorage.setItem(SAVED_NAME_KEY, val.trim());
+      updateUser({ name: val.trim(), fullName: val.trim() });
+    }
+  };
 
   // Particle Canvas Interactive Physics Engine
   useEffect(() => {
@@ -147,8 +172,12 @@ export default function LandingPage() {
 
   const handleNameSubmit = (e) => {
     e.preventDefault();
-    // Step 2 -> Step 3: Navigates to Dashboard
-    const queryParam = userName.trim() ? `?q=${encodeURIComponent(userName.trim())}` : "";
+    const trimmedName = userName.trim();
+    if (trimmedName) {
+      localStorage.setItem(SAVED_NAME_KEY, trimmedName);
+      updateUser({ name: trimmedName, fullName: trimmedName });
+    }
+    const queryParam = trimmedName ? `?q=${encodeURIComponent(trimmedName)}` : "";
     navigate(`/dashboard${queryParam}`);
   };
 
@@ -213,31 +242,50 @@ export default function LandingPage() {
                 Discover and apply for scholarships tailored to your unique profile. Our intelligent matching system makes funding your education simpler than ever.
               </p>
 
-              {/* User Name / Search Form */}
-              <form
-                onSubmit={handleNameSubmit}
-                className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 p-3 sm:p-4 rounded-2xl max-w-2xl mx-auto flex flex-col sm:flex-row gap-3 shadow-lg relative z-20"
-              >
-                <div className="relative flex-grow">
-                  <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#737686] dark:text-slate-400">
-                    person
-                  </span>
-                  <input
-                    name="name"
-                    value={userName}
-                    onChange={(e) => setUserName(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3.5 rounded-xl border border-[#c3c6d7] dark:border-slate-700 focus:border-[#004ac6] dark:focus:border-blue-500 focus:ring-2 focus:ring-[#004ac6]/20 bg-white dark:bg-slate-800 text-[#191c1e] dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm transition-all h-full min-h-[48px] outline-none"
-                    placeholder="Enter your name..."
-                    type="text"
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="bg-[#004ac6] dark:bg-blue-600 text-white font-semibold text-sm px-8 py-3.5 rounded-xl hover:bg-[#003ea8] dark:hover:bg-blue-700 transition-all shadow-md flex items-center justify-center whitespace-nowrap min-h-[48px]"
+              {/* Saved User Name Form with Green Tick */}
+              <div className="max-w-2xl mx-auto">
+                <form
+                  onSubmit={handleNameSubmit}
+                  className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row gap-3 shadow-lg relative z-20"
                 >
-                  Go to Dashboard
-                </button>
-              </form>
+                  <div className="relative flex-grow">
+                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#737686] dark:text-slate-400">
+                      person
+                    </span>
+                    <input
+                      name="name"
+                      value={userName}
+                      onChange={handleNameChange}
+                      className={`w-full pl-12 ${
+                        isNameSaved ? "pr-12" : "pr-4"
+                      } py-3.5 rounded-xl border border-[#c3c6d7] dark:border-slate-700 focus:border-[#004ac6] dark:focus:border-blue-500 focus:ring-2 focus:ring-[#004ac6]/20 bg-white dark:bg-slate-800 text-[#191c1e] dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm transition-all h-full min-h-[48px] outline-none`}
+                      placeholder="Enter your name..."
+                      type="text"
+                    />
+                    {isNameSaved && (
+                      <span
+                        className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-xl animate-fade-in"
+                        title="Name already saved"
+                      >
+                        check_circle
+                      </span>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    className="bg-[#004ac6] dark:bg-blue-600 text-white font-semibold text-sm px-8 py-3.5 rounded-xl hover:bg-[#003ea8] dark:hover:bg-blue-700 transition-all shadow-md flex items-center justify-center whitespace-nowrap min-h-[48px]"
+                  >
+                    Go to Dashboard
+                  </button>
+                </form>
+
+                {isNameSaved && (
+                  <div className="mt-2.5 flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 animate-fade-in">
+                    <span className="material-symbols-outlined text-base text-emerald-500">check_circle</span>
+                    Name saved! Click "Go to Dashboard" to proceed.
+                  </div>
+                )}
+              </div>
 
               {/* Cleaned Trust Badges */}
               <div className="mt-8 flex flex-wrap justify-center items-center gap-6 text-[#434655] dark:text-slate-400 text-xs">

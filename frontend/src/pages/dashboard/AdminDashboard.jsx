@@ -21,7 +21,7 @@ export function AdminDashboard() {
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar />
+        <Topbar onSelectTab={(tab) => console.log("Admin tab selected:", tab)} />
 
         <main className="flex-1 space-y-6 px-6 py-6 max-w-7xl w-full mx-auto">
           <div className="animate-rise-in">

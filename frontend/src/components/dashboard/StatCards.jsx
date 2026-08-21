@@ -1,56 +1,66 @@
-import { Star, Clock, UserCheck, Bookmark } from "lucide-react";
+import { Star, Clock, UserCheck, Bookmark, Send } from "lucide-react";
 
-const stats = [
-  {
-    value: "5",
-    label: "Recommended (Top 5)",
-    icon: Star,
-    tint: "bg-amber-100 text-amber-600",
-    anim: "animate-icon-twinkle",
-  },
-  {
-    value: "3",
-    label: "Upcoming Deadlines",
-    icon: Clock,
-    tint: "bg-rose-100 text-rose-600",
-    anim: "animate-icon-tick",
-  },
-  {
-    value: "90%",
-    label: "Profile Completion",
-    icon: UserCheck,
-    tint: "bg-blue-100 text-blue-600",
-    anim: "animate-icon-float",
-  },
-  {
-    value: "12",
-    label: "Saved Scholarships",
-    icon: Bookmark,
-    tint: "bg-violet-100 text-violet-600",
-    anim: "animate-icon-bounce",
-  },
-];
+export function StatCards({ savedCount = 1, appliedCount = 0, onSelectStatFilter }) {
+  const stats = [
+    {
+      id: "recommended",
+      value: "5",
+      label: "Recommended Grants",
+      icon: Star,
+      tint: "bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400",
+      anim: "animate-icon-twinkle",
+    },
+    {
+      id: "applied",
+      value: String(appliedCount),
+      label: "Applications Submitted",
+      icon: Send,
+      tint: "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400",
+      anim: "animate-icon-float",
+    },
+    {
+      id: "profile",
+      value: "90%",
+      label: "Profile Completion",
+      icon: UserCheck,
+      tint: "bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400",
+      anim: "animate-icon-tick",
+    },
+    {
+      id: "saved",
+      value: String(savedCount),
+      label: "Saved Scholarships",
+      icon: Bookmark,
+      tint: "bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400",
+      anim: "animate-icon-bounce",
+    },
+  ];
 
-export function StatCards() {
   return (
     <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
       {stats.map((stat, i) => {
         const Icon = stat.icon;
         return (
           <div
-            key={stat.label}
+            key={stat.id}
+            onClick={() => onSelectStatFilter && onSelectStatFilter(stat.id)}
             style={{ animationDelay: `${i * 90}ms` }}
-            className="group animate-rise-in rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/5"
+            className="group animate-rise-in rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-blue-500/5 cursor-pointer"
           >
-            <span
-              className={`flex size-10 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 ${stat.tint}`}
-            >
-              <Icon className={`size-5 ${stat.anim}`} />
-            </span>
+            <div className="flex items-center justify-between">
+              <span
+                className={`flex size-10 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-110 group-hover:rotate-6 ${stat.tint}`}
+              >
+                <Icon className={`size-5 ${stat.anim}`} />
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-slate-400 opacity-0 transition-opacity group-hover:opacity-100">
+                View &rarr;
+              </span>
+            </div>
             <p className="mt-4 font-display text-3xl font-bold text-slate-900 dark:text-white">
               {stat.value}
             </p>
-            <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">{stat.label}</p>
+            <p className="mt-1 text-xs sm:text-sm text-slate-500 dark:text-slate-400">{stat.label}</p>
           </div>
         );
       })}
