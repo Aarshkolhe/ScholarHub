@@ -134,14 +134,14 @@ const AMOUNT_RANGES = [
   { label: "Above ₹60,000", value: "above60" },
 ];
 
-export function SearchScholarshipView({ initialQuery = "", onUpdateSavedCount, onUpdateAppliedCount }) {
+export function SearchScholarshipView({ initialQuery = "", activeTab = "Search", onUpdateSavedCount, onUpdateAppliedCount }) {
   const { user } = useAuth();
   const [searchTerm, setSearchTerm] = useState(initialQuery);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedDegree, setSelectedDegree] = useState("All Degrees");
   const [selectedAmount, setSelectedAmount] = useState("all");
-  const [minScoreFilter, setMinScoreFilter] = useState("all"); // "all", "70", "80"
-  const [sortBy, setSortBy] = useState("match"); // "match", "amount", "deadline"
+  const [minScoreFilter, setMinScoreFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("match");
 
   const [savedIds, setSavedIds] = useState(() => {
     const stored = localStorage.getItem("scholarhub_saved_ids");
@@ -203,7 +203,13 @@ export function SearchScholarshipView({ initialQuery = "", onUpdateSavedCount, o
 
   // Filter & Sort Logic
   const filteredScholarships = SCHOLARSHIP_DATABASE.filter((item) => {
-    const query = searchTerm.toLowerCase().trim();
+    // If in Saved tab, only show bookmarked items
+    if (activeTab === "Saved" && !savedIds.includes(item.id)) return false;
+
+    // If in Recommended tab, only show match >= 90%
+    if (activeTab === "Recommended" && item.match < 90) return false;
+
+    const query = activeTab === "Search" ? searchTerm.toLowerCase().trim() : "";
     const matchesSearch =
       !query ||
       item.name.toLowerCase().includes(query) ||
@@ -249,11 +255,17 @@ export function SearchScholarshipView({ initialQuery = "", onUpdateSavedCount, o
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <Search className="size-6 text-blue-600 dark:text-blue-400" />
-            Search & Discover Scholarships
+            {activeTab === "Saved" && <Bookmark className="size-6 text-amber-500" />}
+            {activeTab === "Recommended" && <Award className="size-6 text-blue-600 dark:text-blue-400" />}
+            {activeTab === "Search" && <Search className="size-6 text-blue-600 dark:text-blue-400" />}
+            {activeTab === "Saved" ? "Saved Scholarships" : activeTab === "Recommended" ? "Recommended Scholarships (Top Matches)" : "Search Scholarships"}
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Browse through active funding opportunities filtered by your preferences.
+            {activeTab === "Saved"
+              ? "Your bookmarked scholarships ready for application."
+              : activeTab === "Recommended"
+              ? "High-match scholarships tailored to your academic profile."
+              : "Browse through active funding opportunities filtered by your preferences."}
           </p>
         </div>
 
@@ -262,25 +274,27 @@ export function SearchScholarshipView({ initialQuery = "", onUpdateSavedCount, o
           onClick={clearAllFilters}
           className="self-start sm:self-auto rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors"
         >
-          Reset All Filters
+          Reset Filters
         </button>
       </div>
 
-      {/* Main Search Bar & Quick Filters */}
+      {/* Main Filters Container: Search bar ONLY visible when activeTab === 'Search' */}
       <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-sm space-y-4">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-          <input
-            type="search"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search by scholarship title, provider, field, or degree..."
-            className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-3 pl-11 pr-4 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-          />
-        </div>
+        {activeTab === "Search" && (
+          <div className="relative">
+            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+            <input
+              type="search"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Search by scholarship title, provider, field, or degree..."
+              className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 py-3 pl-11 pr-4 text-sm text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+            />
+          </div>
+        )}
 
         {/* Filter Toolbar */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
           {/* Category */}
           <div>
             <label className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Category</label>
@@ -349,7 +363,7 @@ export function SearchScholarshipView({ initialQuery = "", onUpdateSavedCount, o
       {/* Scholarship Cards Grid */}
       {filteredScholarships.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center text-sm text-slate-500 dark:text-slate-400">
-          No scholarships found matching your filter parameters.
+          No scholarships found matching your selection.
           <div className="mt-3">
             <button
               type="button"

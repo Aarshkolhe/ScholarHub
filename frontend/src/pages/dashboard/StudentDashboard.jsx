@@ -63,6 +63,12 @@ export function StudentDashboard() {
     });
   };
 
+  // Searchbar ONLY on Dashboard and Search tabs
+  const showSearchBar = activeTab === "Dashboard" || activeTab === "Search";
+
+  // AI Assistant ONLY on Dashboard tab
+  const showAiAssistant = activeTab === "Dashboard";
+
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
       <div className="sticky top-0 hidden h-screen lg:block">
@@ -73,24 +79,32 @@ export function StudentDashboard() {
         <Topbar onSelectTab={setActiveTab} />
 
         <main className="flex-1 space-y-6 px-6 py-6 max-w-7xl w-full mx-auto">
-          {/* Header Search & AI Pill */}
-          <div className="flex items-center gap-3">
-            <div className="relative min-w-0 flex-1">
-              <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  if (activeTab !== "Dashboard" && activeTab !== "Search") setActiveTab("Search");
-                }}
-                placeholder="Search scholarships by keyword, field, or organization..."
-                aria-label="Search scholarships"
-                className="w-full rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-100 outline-none shadow-sm transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
-              />
+          {/* Header Bar Area */}
+          {(showSearchBar || showAiAssistant) ? (
+            <div className="flex items-center justify-between gap-3">
+              {showSearchBar ? (
+                <div className="relative min-w-0 flex-1">
+                  <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => {
+                      setSearchQuery(e.target.value);
+                      if (activeTab !== "Dashboard" && activeTab !== "Search") setActiveTab("Search");
+                    }}
+                    placeholder="Search scholarships by keyword, field, or organization..."
+                    aria-label="Search scholarships"
+                    className="w-full rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-100 outline-none shadow-sm transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                  />
+                </div>
+              ) : (
+                <div className="flex-1 font-semibold text-slate-700 dark:text-slate-300 text-sm">
+                  ScholarHub Portal / <span className="text-blue-600 dark:text-blue-400">{activeTab}</span>
+                </div>
+              )}
+              {showAiAssistant && <AiAssistantPill />}
             </div>
-            <AiAssistantPill />
-          </div>
+          ) : null}
 
           {/* TAB 1: OVERVIEW DASHBOARD */}
           {activeTab === "Dashboard" && (
@@ -126,10 +140,11 @@ export function StudentDashboard() {
             </>
           )}
 
-          {/* TAB 2: SEARCH SCHOLARSHIPS (DEDICATED SEARCH VIEW) */}
+          {/* TAB 2: SEARCH / RECOMMENDED / SAVED VIEWS */}
           {(activeTab === "Search" || activeTab === "Recommended" || activeTab === "Saved") && (
             <SearchScholarshipView
               initialQuery={searchQuery}
+              activeTab={activeTab}
               onUpdateSavedCount={setSavedCount}
               onUpdateAppliedCount={setAppliedCount}
             />
