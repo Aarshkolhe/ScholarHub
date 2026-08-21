@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { FiAlertCircle, FiArrowLeft, FiMail } from "react-icons/fi";
+import { FiAlertCircle, FiArrowLeft } from "react-icons/fi";
 import InputField from "./InputField";
 import PrimaryButton from "./PrimaryButton";
 import { forgotPassword } from "../../services/authService";
@@ -56,14 +56,14 @@ const ForgotPasswordForm = ({ defaultEmail = "", onOtpSent, onBackToLogin }) => 
       {serverError && (
         <div
           role="alert"
-          className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600 animate-fade-in"
+          className="flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/50 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 animate-fade-in"
         >
           <FiAlertCircle className="shrink-0" size={16} />
           <span>{serverError}</span>
         </div>
       )}
 
-      <p className="text-xs leading-relaxed text-slate-500">
+      <p className="text-xs leading-relaxed text-slate-500 dark:text-slate-400">
         Enter your registered email address below and we'll send you a 6-digit OTP to reset your password.
       </p>
 
@@ -95,7 +95,7 @@ const ForgotPasswordForm = ({ defaultEmail = "", onOtpSent, onBackToLogin }) => 
           type="button"
           onClick={onBackToLogin}
           disabled={isSubmitting}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 transition-colors"
+          className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
         >
           <FiArrowLeft size={14} />
           Back to Sign In

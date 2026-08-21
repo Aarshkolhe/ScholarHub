@@ -18,7 +18,6 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
 
   const inputRefs = useRef([]);
 
-  // Auto-countdown for resend timer
   useEffect(() => {
     if (resendTimer <= 0) return;
     const interval = setInterval(() => {
@@ -27,7 +26,6 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
     return () => clearInterval(interval);
   }, [resendTimer]);
 
-  // Focus first input box on load
   useEffect(() => {
     if (inputRefs.current[0]) {
       inputRefs.current[0].focus();
@@ -39,12 +37,10 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
 
     const newOtp = [...otpDigits];
 
-    // Handle single digit input
     if (value.length <= 1) {
       newOtp[index] = value;
       setOtpDigits(newOtp);
 
-      // Auto-focus next input box
       if (value && index < OTP_LENGTH - 1) {
         inputRefs.current[index + 1]?.focus();
       }
@@ -52,7 +48,6 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
   };
 
   const handleKeyDown = (index, e) => {
-    // Navigate backwards on Backspace
     if (e.key === "Backspace") {
       if (!otpDigits[index] && index > 0) {
         inputRefs.current[index - 1]?.focus();
@@ -73,7 +68,6 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
 
     setOtpDigits(newOtp);
 
-    // Focus last pasted or next index
     const focusIndex = Math.min(digits.length, OTP_LENGTH - 1);
     inputRefs.current[focusIndex]?.focus();
   };
@@ -145,7 +139,7 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
       {serverError && (
         <div
           role="alert"
-          className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600 animate-fade-in"
+          className="flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/50 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 animate-fade-in"
         >
           <FiAlertCircle className="shrink-0" size={16} />
           <span>{serverError}</span>
@@ -155,7 +149,7 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
       {successMsg && (
         <div
           role="status"
-          className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700 animate-fade-in"
+          className="flex items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/50 px-4 py-2.5 text-sm text-emerald-700 dark:text-emerald-400 animate-fade-in"
         >
           <FiCheckCircle className="shrink-0" size={16} />
           <span>{successMsg}</span>
@@ -163,10 +157,10 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
       )}
 
       <div className="text-center">
-        <p className="text-xs text-slate-500">
+        <p className="text-xs text-slate-500 dark:text-slate-400">
           Enter the 6-digit code sent to
         </p>
-        <p className="text-sm font-semibold text-slate-800 truncate mt-0.5">
+        <p className="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate mt-0.5">
           {email}
         </p>
       </div>
@@ -185,8 +179,8 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
             onKeyDown={(e) => handleKeyDown(index, e)}
             className={`w-11 h-12 rounded-xl border text-center text-xl font-bold transition-all outline-none focus:ring-4 ${
               digit
-                ? "border-blue-500 bg-blue-50/50 text-blue-700 focus:ring-blue-100"
-                : "border-slate-200 bg-white text-slate-800 focus:border-blue-500 focus:ring-blue-100"
+                ? "border-blue-500 bg-blue-50/50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 focus:ring-blue-100 dark:focus:ring-blue-900/40"
+                : "border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 focus:border-blue-500 focus:ring-blue-100 dark:focus:ring-blue-900/40"
             }`}
           />
         ))}
@@ -206,7 +200,7 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
           type="button"
           onClick={handleResend}
           disabled={resendTimer > 0 || isResending}
-          className="inline-flex items-center gap-1.5 font-medium text-blue-600 hover:text-blue-700 disabled:text-slate-400 transition-colors"
+          className="inline-flex items-center gap-1.5 font-medium text-blue-600 dark:text-blue-400 hover:text-blue-700 disabled:text-slate-400 dark:disabled:text-slate-600 transition-colors"
         >
           <FiRefreshCw size={13} className={isResending ? "animate-spin" : ""} />
           {resendTimer > 0
@@ -218,7 +212,7 @@ const VerifyOtpForm = ({ email, onOtpVerified, onBackToForgot }) => {
           type="button"
           onClick={onBackToForgot}
           disabled={isSubmitting}
-          className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-700 transition-colors mt-1"
+          className="inline-flex items-center gap-1.5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors mt-1"
         >
           <FiArrowLeft size={14} />
           Change email address

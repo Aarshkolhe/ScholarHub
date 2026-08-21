@@ -10,12 +10,7 @@ import { useAuthCharacter } from "./AuthCharacterContext";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-const ROLE_ROUTES = {
-  Student: "/student/dashboard",
-  Admin: "/admin/dashboard",
-};
-
-const LoginForm = ({ onRegister, onForgotPassword }) => {
+const LoginForm = ({ defaultEmail = "", onRegister, onForgotPassword }) => {
   const navigate = useNavigate();
   const { signIn } = useAuth();
   const { reactCorrect, reactWrong } = useAuthCharacter();
@@ -29,6 +24,7 @@ const LoginForm = ({ onRegister, onForgotPassword }) => {
     formState: { errors },
   } = useForm({
     mode: "onTouched",
+    defaultValues: { email: defaultEmail },
   });
 
   const onSubmit = async (values) => {
@@ -41,13 +37,8 @@ const LoginForm = ({ onRegister, onForgotPassword }) => {
 
     if (result.success) {
       reactCorrect();
-
-      const role = result.data?.user?.role;
-
-      navigate(ROLE_ROUTES[role] || "/", {
-        replace: true,
-      });
-
+      // Redirect to Step 2: Landing Page
+      navigate("/landing", { replace: true });
       return;
     }
 
@@ -69,13 +60,9 @@ const LoginForm = ({ onRegister, onForgotPassword }) => {
       {serverError && (
         <div
           role="alert"
-          className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600 animate-fade-in"
+          className="flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/50 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 animate-fade-in"
         >
-          <FiAlertCircle
-            className="shrink-0"
-            size={16}
-          />
-
+          <FiAlertCircle className="shrink-0" size={16} />
           <span>{serverError}</span>
         </div>
       )}
@@ -112,7 +99,7 @@ const LoginForm = ({ onRegister, onForgotPassword }) => {
         <button
           type="button"
           onClick={onForgotPassword}
-          className="text-xs font-medium text-blue-600 transition-colors hover:text-blue-700 hover:underline"
+          className="text-xs font-medium text-blue-600 dark:text-blue-400 transition-colors hover:text-blue-700 hover:underline"
         >
           Forgot password?
         </button>
@@ -127,14 +114,14 @@ const LoginForm = ({ onRegister, onForgotPassword }) => {
       </PrimaryButton>
 
       <div className="flex items-center gap-2">
-        <div className="h-px flex-1 bg-slate-200" />
-        <span className="text-xs text-slate-400">
+        <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
+        <span className="text-xs text-slate-400 dark:text-slate-500">
           OR
         </span>
-        <div className="h-px flex-1 bg-slate-200" />
+        <div className="h-px flex-1 bg-slate-200 dark:bg-slate-800" />
       </div>
 
-      <p className="flex items-center justify-center gap-1 text-xs text-slate-400">
+      <p className="flex items-center justify-center gap-1 text-xs text-slate-400 dark:text-slate-500">
         <FiMail size={13} />
         Don't have an account?
       </p>

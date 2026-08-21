@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useLocation } from "react-router-dom";
 import { Search } from "lucide-react";
 import Sidebar from "../../components/dashboard/Sidebar";
 import Topbar from "../../components/dashboard/Topbar";
@@ -8,7 +10,14 @@ import useAuth from "../../hooks/useAuth";
 
 export function StudentDashboard() {
   const { user } = useAuth();
-  const firstName = (user?.fullName || user?.name || "Riya").split(" ")[0];
+  const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+
+  const initialQuery = queryParams.get("q") || queryParams.get("name") || "";
+  const [searchQuery, setSearchQuery] = useState(initialQuery);
+
+  const displayName = user?.fullName || user?.name || "Student";
+  const firstName = displayName.split(" ")[0];
 
   return (
     <div className="flex min-h-screen bg-slate-50 dark:bg-slate-950 font-sans text-slate-900 dark:text-slate-100 transition-colors">
@@ -25,6 +34,8 @@ export function StudentDashboard() {
               <Search className="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
               <input
                 type="search"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search scholarships by keyword, field, or organization..."
                 aria-label="Search scholarships"
                 className="w-full rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-2.5 pl-10 pr-4 text-sm text-slate-800 dark:text-slate-100 outline-none shadow-sm transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
@@ -46,7 +57,7 @@ export function StudentDashboard() {
           </div>
 
           <StatCards />
-          <RecentScholarships />
+          <RecentScholarships searchQuery={searchQuery} />
         </main>
       </div>
     </div>

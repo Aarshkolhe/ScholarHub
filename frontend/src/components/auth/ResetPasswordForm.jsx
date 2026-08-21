@@ -63,7 +63,7 @@ const ResetPasswordForm = ({ email, otp, onPasswordResetComplete }) => {
       {serverError && (
         <div
           role="alert"
-          className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2.5 text-sm text-red-600 animate-fade-in"
+          className="flex items-center gap-2 rounded-xl border border-red-200 dark:border-red-900 bg-red-50 dark:bg-red-950/50 px-4 py-2.5 text-sm text-red-600 dark:text-red-400 animate-fade-in"
         >
           <FiAlertCircle className="shrink-0" size={16} />
           <span>{serverError}</span>
@@ -73,14 +73,14 @@ const ResetPasswordForm = ({ email, otp, onPasswordResetComplete }) => {
       {successMsg && (
         <div
           role="status"
-          className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm text-emerald-700 animate-fade-in"
+          className="flex items-center gap-2 rounded-xl border border-emerald-200 dark:border-emerald-900 bg-emerald-50 dark:bg-emerald-950/50 px-4 py-2.5 text-sm text-emerald-700 dark:text-emerald-400 animate-fade-in"
         >
           <FiCheckCircle className="shrink-0" size={16} />
           <span>{successMsg}</span>
         </div>
       )}
 
-      <p className="text-xs text-slate-500">
+      <p className="text-xs text-slate-500 dark:text-slate-400">
         Choose a strong password containing at least 8 characters.
       </p>
 
