@@ -15,6 +15,8 @@ import {
   ShieldCheck,
   UserCheck,
   Mail,
+  ArrowUpDown,
+  Layers,
 } from "lucide-react";
 import { getStoredStudentProfile, evaluateEligibility } from "../../lib/eligibilityEngine";
 import { SCHOLARSHIPS_DATABASE } from "../../lib/scholarshipData";
@@ -53,7 +55,7 @@ function CustomDropdown({ value, options, onChange, icon: Icon }) {
       </button>
 
       {isOpen && (
-        <div className="absolute left-0 top-full mt-1.5 z-50 w-56 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-md animate-fade-in space-y-1">
+        <div className="absolute left-0 top-full mt-1.5 z-50 w-60 rounded-2xl border border-slate-200 dark:border-slate-700 bg-white/95 dark:bg-slate-900/95 p-1.5 shadow-2xl backdrop-blur-md animate-fade-in space-y-1">
           {options.map((opt) => {
             const isSelected = opt.value === value;
             return (
@@ -95,6 +97,8 @@ export function SearchScholarshipView({
   const [selectedStatus, setSelectedStatus] = useState("All");
   const [selectedDegree, setSelectedDegree] = useState("All");
   const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedFunding, setSelectedFunding] = useState("All");
+  const [selectedSort, setSelectedSort] = useState("default");
 
   // Modals state
   const [activeModalScholarship, setActiveModalScholarship] = useState(null);
@@ -188,14 +192,14 @@ export function SearchScholarshipView({
   }, [studentProfile]);
 
   const filteredScholarships = useMemo(() => {
-    return evaluatedScholarships.filter((s) => {
+    const list = evaluatedScholarships.filter((s) => {
       // 1. Saved Tab Filter
       if (activeTab === "Saved" && !savedIds.includes(s.id)) return false;
 
       // 2. Recommended Tab Filter
       if (activeTab === "Recommended" && s.matchScore < 50) return false;
 
-      // 3. Portal Source Filter (Only filter if a specific portal is clicked)
+      // 3. Portal Source Filter
       if (selectedPortal !== "All") {
         const pKey = selectedPortal.toLowerCase();
         const prov = (s.provider || "").toLowerCase();
@@ -205,11 +209,12 @@ export function SearchScholarshipView({
         if (!matchesPortal) return false;
       }
 
-      // 4. Status Filter
-      if (selectedStatus === "Eligible Only" && !s.isEligible) return false;
-      if (selectedStatus === "Not Eligible" && s.isEligible) return false;
+      // 4. Status / Eligibility Filter
+      if (selectedStatus === "Eligible Only" && (s.eligibilityPercent < 75 && !s.isEligible)) return false;
+      if (selectedStatus === "Moderate" && (s.eligibilityPercent < 50 || s.eligibilityPercent >= 75)) return false;
+      if (selectedStatus === "Not Eligible" && (s.eligibilityPercent >= 50 && s.isEligible)) return false;
 
-      // 5. Degree Filter (Only filter if specific degree is selected)
+      // 5. Degree Filter
       if (selectedDegree && selectedDegree !== "All") {
         const d = selectedDegree.toLowerCase();
         const sDeg = (s.degree || "").toLowerCase();
@@ -221,7 +226,7 @@ export function SearchScholarshipView({
         if (!matchesDegree) return false;
       }
 
-      // 6. Category Filter (Only filter if specific category is selected)
+      // 6. Category Filter
       if (selectedCategory && selectedCategory !== "All") {
         const c = selectedCategory.toLowerCase();
         const sCat = (s.category || "").toLowerCase();
@@ -233,7 +238,11 @@ export function SearchScholarshipView({
         if (!matchesCategory) return false;
       }
 
-      // 7. Text Query Search
+      // 7. Funding Type Filter
+      if (selectedFunding === "Govt" && !s.isGovt) return false;
+      if (selectedFunding === "Corporate" && s.isGovt) return false;
+
+      // 8. Text Query Search
       if (query.trim()) {
         const q = query.toLowerCase().trim();
         const matchesName = (s.name || "").toLowerCase().includes(q);
@@ -246,7 +255,35 @@ export function SearchScholarshipView({
 
       return true;
     });
-  }, [evaluatedScholarships, query, selectedPortal, selectedStatus, selectedDegree, selectedCategory, activeTab, savedIds]);
+
+    // Apply Sorting
+    return [...list].sort((a, b) => {
+      if (selectedSort === "eligibility-desc") {
+        return (b.eligibilityPercent || 0) - (a.eligibilityPercent || 0);
+      }
+      if (selectedSort === "amount-desc") {
+        return (b.amount || 0) - (a.amount || 0);
+      }
+      if (selectedSort === "deadline-asc") {
+        return (a.daysLeft || 999) - (b.daysLeft || 999);
+      }
+      if (selectedSort === "name-asc") {
+        return a.name.localeCompare(b.name);
+      }
+      return 0;
+    });
+  }, [
+    evaluatedScholarships,
+    query,
+    selectedPortal,
+    selectedStatus,
+    selectedDegree,
+    selectedCategory,
+    selectedFunding,
+    selectedSort,
+    activeTab,
+    savedIds,
+  ]);
 
   const handleOpenApplyModal = (item, e) => {
     if (e) e.stopPropagation();
@@ -333,9 +370,10 @@ export function SearchScholarshipView({
 
   // Dropdown Option Definitions
   const statusOptions = [
-    { value: "All", label: "All Eligibility Statuses" },
-    { value: "Eligible Only", label: "Eligible Only" },
-    { value: "Not Eligible", label: "Not Eligible" },
+    { value: "All", label: "All Statuses" },
+    { value: "Eligible Only", label: "High Match (≥75%)" },
+    { value: "Moderate", label: "Moderate (50-74%)" },
+    { value: "Not Eligible", label: "Low Match (<50%)" },
   ];
 
   const degreeOptions = [
@@ -348,12 +386,46 @@ export function SearchScholarshipView({
 
   const categoryOptions = [
     { value: "All", label: "All Categories" },
-    { value: "General", label: "General" },
+    { value: "General", label: "General / Open" },
     { value: "OBC", label: "OBC" },
     { value: "SC", label: "SC" },
     { value: "ST", label: "ST" },
-    { value: "EWS", label: "EWS" },
+    { value: "EWS", label: "EWS / EBC" },
+    { value: "VJNT", label: "VJNT / SBC" },
   ];
+
+  const fundingOptions = [
+    { value: "All", label: "All Funding" },
+    { value: "Govt", label: "🏛️ Govt Schemes" },
+    { value: "Corporate", label: "🏢 Corporate CSR" },
+  ];
+
+  const sortOptions = [
+    { value: "default", label: "Sort: Default" },
+    { value: "eligibility-desc", label: "Sort: Highest %" },
+    { value: "amount-desc", label: "Sort: Award ₹" },
+    { value: "deadline-asc", label: "Sort: Deadline" },
+    { value: "name-asc", label: "Sort: Name A-Z" },
+  ];
+
+  const hasActiveFilters =
+    selectedStatus !== "All" ||
+    selectedDegree !== "All" ||
+    selectedCategory !== "All" ||
+    selectedFunding !== "All" ||
+    selectedSort !== "default" ||
+    selectedPortal !== "All" ||
+    query.trim() !== "";
+
+  const handleResetFilters = () => {
+    setSelectedStatus("All");
+    setSelectedDegree("All");
+    setSelectedCategory("All");
+    setSelectedFunding("All");
+    setSelectedSort("default");
+    setSelectedPortal("All");
+    setQuery("");
+  };
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -368,7 +440,11 @@ export function SearchScholarshipView({
             : "Search Scholarship Directory"}
         </h1>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Explore government schemes (MahaDBT, MahaJYOTI) and private CSR grants evaluated directly against your student profile.
+          {activeTab === "Search"
+            ? "Browse the complete directory of government schemes and private CSR scholarships. Use filters and keyword search to explore all opportunities with live eligibility match percentages."
+            : activeTab === "Recommended"
+            ? "Scholarships with high match scores based on your current profile."
+            : "Scholarships you have saved or bookmarked for later application."}
         </p>
       </div>
 
@@ -403,6 +479,7 @@ export function SearchScholarshipView({
               { id: "MahaDBT", label: "🏛️ MahaDBT Portal" },
               { id: "MahaJYOTI", label: "🏛️ MahaJYOTI Portal" },
               { id: "Vidyasaarathi", label: "🏢 Vidyasaarathi Portal" },
+              { id: "NSP", label: "🇮🇳 National Portal (NSP)" },
             ].map((p) => (
               <button
                 key={p.id}
@@ -420,8 +497,8 @@ export function SearchScholarshipView({
           </div>
 
           {/* Multi-Criterion Custom Visually Appealing Dropdown Row */}
-          <div className="flex flex-wrap items-center gap-3 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs">
-            <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mr-1">
+          <div className="flex flex-wrap items-center gap-2.5 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs">
+            <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mr-0.5">
               <SlidersHorizontal className="size-3.5 text-blue-500" /> Filters:
             </span>
 
@@ -446,16 +523,24 @@ export function SearchScholarshipView({
               icon={UserCheck}
             />
 
-            {(selectedStatus !== "All" || selectedDegree !== "All" || selectedCategory !== "All" || selectedPortal !== "All" || query) && (
+            <CustomDropdown
+              value={selectedFunding}
+              options={fundingOptions}
+              onChange={setSelectedFunding}
+              icon={Layers}
+            />
+
+            <CustomDropdown
+              value={selectedSort}
+              options={sortOptions}
+              onChange={setSelectedSort}
+              icon={ArrowUpDown}
+            />
+
+            {hasActiveFilters && (
               <button
                 type="button"
-                onClick={() => {
-                  setSelectedStatus("All");
-                  setSelectedDegree("All");
-                  setSelectedCategory("All");
-                  setSelectedPortal("All");
-                  setQuery("");
-                }}
+                onClick={handleResetFilters}
                 className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline ml-auto"
               >
                 Reset Filters
@@ -466,12 +551,12 @@ export function SearchScholarshipView({
       )}
 
       {/* Results Counter Banner */}
-      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-slate-500 dark:text-slate-400 px-1">
         <span className="font-semibold text-slate-700 dark:text-slate-200">
-          Showing {filteredScholarships.length} {activeTab === "Saved" ? "Saved" : activeTab === "Recommended" ? "Recommended" : "Available"} Scholarships
+          Showing {filteredScholarships.length} of {SCHOLARSHIPS_DATABASE.length} {activeTab === "Saved" ? "Saved" : activeTab === "Recommended" ? "Recommended" : "Available"} Scholarships
         </span>
         <span className="text-[11px] font-medium text-slate-400">
-          {activeTab === "Search" && "⚡ Evaluated against your profile"}
+          All scholarships listed • Live eligibility % calculated
         </span>
       </div>
 
@@ -502,21 +587,19 @@ export function SearchScholarshipView({
           <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
-                {activeModalScholarship.isPendingDetails || activeModalScholarship.matchScore === null ? (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                    📋 Details Pending ({activeModalScholarship.missingFields?.join(", ") || "Profile Details"} Missing)
-                  </span>
-                ) : (
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                      activeModalScholarship.isEligible
-                        ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
-                        : "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400"
-                    }`}
-                  >
-                    {activeModalScholarship.isEligible ? "Eligible" : "Not Eligible"} ({activeModalScholarship.matchScore}% Match)
-                  </span>
-                )}
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    (activeModalScholarship.eligibilityPercent ?? activeModalScholarship.matchScore) >= 75
+                      ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
+                      : (activeModalScholarship.eligibilityPercent ?? activeModalScholarship.matchScore) >= 50
+                      ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-800"
+                      : "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border border-rose-300 dark:border-rose-800"
+                  }`}
+                >
+                  {(activeModalScholarship.eligibilityPercent ?? activeModalScholarship.matchScore)}% Eligible (
+                  {activeModalScholarship.isEligible ? "Fully Qualified" : "Partial Criteria Match"}
+                  )
+                </span>
                 <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
                   {activeModalScholarship.name}
                 </h3>

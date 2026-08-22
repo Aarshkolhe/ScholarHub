@@ -319,21 +319,19 @@ export function RecentScholarships({
           <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
-                {activeModalItem.isPendingDetails || activeModalItem.matchScore === null ? (
-                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                    📋 Details Pending ({activeModalItem.missingFields?.join(", ") || "Profile Details"} Missing)
-                  </span>
-                ) : (
-                  <span
-                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                      activeModalItem.isEligible
-                        ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
-                        : "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400"
-                    }`}
-                  >
-                    {activeModalItem.isEligible ? "Eligible" : "Not Eligible"} ({activeModalItem.matchScore}% Match)
-                  </span>
-                )}
+                <span
+                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                    (activeModalItem.eligibilityPercent ?? activeModalItem.matchScore) >= 75
+                      ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 border border-emerald-300 dark:border-emerald-800"
+                      : (activeModalItem.eligibilityPercent ?? activeModalItem.matchScore) >= 50
+                      ? "bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 border border-blue-300 dark:border-blue-800"
+                      : "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400 border border-rose-300 dark:border-rose-800"
+                  }`}
+                >
+                  {(activeModalItem.eligibilityPercent ?? activeModalItem.matchScore)}% Eligible (
+                  {activeModalItem.isEligible ? "Fully Qualified" : "Partial Criteria Match"}
+                  )
+                </span>
                 <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
                   {activeModalItem.name}
                 </h3>

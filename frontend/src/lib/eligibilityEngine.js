@@ -243,6 +243,44 @@ export function getStoredStudentProfile() {
 }
 
 /**
+ * Helper to normalize flat or nested student profile objects.
+ */
+export function normalizeProfile(raw) {
+  if (!raw) return {};
+  const personal = raw.personal || {};
+  const curEd = raw.currentEducation || {};
+  const pastEd = raw.pastEducation || {};
+  const living = raw.livingStatus || {};
+  const financial = raw.financial || {};
+  const eligibility = raw.eligibility || {};
+
+  return {
+    ...raw,
+    phone: raw.phone || personal.phone || "",
+    gender: raw.gender || personal.gender || "",
+    dob: raw.dob || personal.dob || "",
+    age: raw.age || personal.age || "",
+    fullName: raw.fullName || raw.name || personal.fullName || "",
+    email: raw.email || personal.email || "",
+    currentCourse: raw.currentCourse || curEd.currentCourse || "",
+    streamBranch: raw.streamBranch || curEd.streamBranch || "",
+    collegeName: raw.collegeName || curEd.collegeName || "",
+    yearSemester: raw.yearSemester || curEd.yearSemester || "",
+    marksPercentage: raw.marksPercentage || curEd.marksPercentage || "",
+    qualification: raw.qualification || curEd.qualification || "",
+    tenthPercentage: raw.tenthPercentage || pastEd.tenthPercentage || "",
+    twelfthPercentage: raw.twelfthPercentage || pastEd.twelfthPercentage || "",
+    livingType: raw.livingType || living.livingType || "",
+    monthlyLivingCost: raw.monthlyLivingCost || living.monthlyLivingCost || "",
+    annualIncome: raw.annualIncome !== undefined && raw.annualIncome !== null ? raw.annualIncome : (financial.annualIncome !== undefined ? financial.annualIncome : ""),
+    category: raw.category || eligibility.category || "",
+    domicileState: raw.domicileState || eligibility.domicileState || "",
+    isDisability: raw.isDisability || eligibility.isDisability || "No",
+    specialCriteria: raw.specialCriteria || eligibility.specialCriteria || "None",
+  };
+}
+
+/**
  * Calculate the exact functional profile strength (0 - 100%)
  * based on high-impact scholarship matching fields.
  *
@@ -255,7 +293,7 @@ export function getStoredStudentProfile() {
  * 6. 🏛️ Category & Domicile (20%): Social Category (10%), Domicile State (10%)
  */
 export function calculateProfileStrength(profile = null) {
-  const p = profile || getStoredStudentProfile();
+  const p = normalizeProfile(profile || getStoredStudentProfile());
   let score = 0;
 
   // 1. Identity & Contact (15 pts)
@@ -295,7 +333,7 @@ export function calculateProfileStrength(profile = null) {
  * Returns { isEligible, isPendingDetails, matchScore, reasons, criteriaBreakdown, passedChecks, totalChecks }
  */
 export function evaluateEligibility(scholarship, profile = null) {
-  const student = profile || getStoredStudentProfile();
+  const student = normalizeProfile(profile || getStoredStudentProfile());
   const criteria = scholarship.criteria || {};
   const profileStrength = calculateProfileStrength(student);
 
@@ -528,30 +566,30 @@ export function evaluateEligibility(scholarship, profile = null) {
     }
   }
 
-  // 30% Activation Threshold logic:
-  // If the profile strength is below 30% or if this scholarship lacks critical input, flag as pending.
-  const isPendingDetails = profileStrength < 30 || missingFields.length > 0;
-  const isEligible = !isPendingDetails && reasons.length === 0;
+  // Calculate explicit eligibility and match percentage (0% to 100%)
+  const isPendingDetails = profileStrength < 20 && missingFields.length > 0;
+  const isEligible = reasons.length === 0 && missingFields.length === 0;
 
-  // Dynamic match percentage calculation:
-  // When details are pending -> null (renders clean Details Pending badge, no bogus numbers)
-  // When activated & eligible -> 90-99% Match
-  // When activated & partially matched -> 30-65% Match
-  let matchScore = null;
-  if (!isPendingDetails) {
+  // Numeric percentage calculation:
+  // If totalChecks is 0, scheme is universal/open to all -> 100%
+  // Otherwise, exact ratio of passed checks vs total applicable criteria checks
+  let eligibilityPercent = 100;
+  if (totalChecks > 0) {
     if (isEligible) {
-      matchScore = 90 + Math.min(Math.round((passedChecks / Math.max(totalChecks, 1)) * 9), 9);
+      eligibilityPercent = 100;
     } else {
-      const fraction = totalChecks > 0 ? passedChecks / totalChecks : 0;
-      matchScore = Math.max(30, Math.round(fraction * 70));
+      eligibilityPercent = Math.max(0, Math.round((passedChecks / totalChecks) * 100));
     }
   }
+
+  const matchScore = eligibilityPercent;
 
   return {
     isEligible,
     isPendingDetails,
     missingFields,
     matchScore,
+    eligibilityPercent,
     reasons,
     criteriaBreakdown,
     passedChecks,

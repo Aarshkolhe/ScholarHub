@@ -17,24 +17,34 @@ export function ScholarshipRowItem({
       <div className="space-y-1.5 min-w-0 flex-1">
         {/* Badges & Provider Line */}
         <div className="flex items-center gap-2 flex-wrap text-xs">
-          {/* Match Score Badge or Details Pending Badge */}
-          {scholarship.isPendingDetails || scholarship.matchScore === null ? (
-            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30 shadow-xs">
-              <span>📋</span> Details Pending
-            </span>
-          ) : (
-            <span
-              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold shadow-xs ${
-                scholarship.matchScore >= 75
-                  ? "bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/30"
-                  : scholarship.matchScore >= 50
-                  ? "bg-blue-500/15 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-500/30"
-                  : "bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-500/30"
-              }`}
-            >
-              <span>✨</span> {scholarship.matchScore}% Match
-            </span>
-          )}
+          {/* Prominent Eligibility Percentage Badge */}
+          {(() => {
+            const score = typeof scholarship.eligibilityPercent === "number"
+              ? scholarship.eligibilityPercent
+              : typeof scholarship.matchScore === "number"
+              ? scholarship.matchScore
+              : 100;
+
+            if (score >= 75) {
+              return (
+                <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold shadow-xs bg-emerald-500/15 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-300 border border-emerald-500/30">
+                  <span>✓</span> {score}% Eligible
+                </span>
+              );
+            }
+            if (score >= 50) {
+              return (
+                <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold shadow-xs bg-blue-500/15 text-blue-700 dark:bg-blue-500/20 dark:text-blue-300 border border-blue-500/30">
+                  <span>⚡</span> {score}% Eligible
+                </span>
+              );
+            }
+            return (
+              <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold shadow-xs bg-rose-500/15 text-rose-700 dark:bg-rose-500/20 dark:text-rose-300 border border-rose-500/30">
+                <span>✕</span> {score}% Eligible
+              </span>
+            );
+          })()}
 
           {/* Govt Scheme Badge */}
           {scholarship.isGovt ? (
