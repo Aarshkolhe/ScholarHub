@@ -19,8 +19,16 @@ const BACKEND_URL = "http://localhost:5000";
 
 export function AiAssistantHub() {
   const { user } = useAuth();
+  const [profileVersion, setProfileVersion] = useState(0);
+
+  useEffect(() => {
+    const handleProfileUpdate = () => setProfileVersion((v) => v + 1);
+    window.addEventListener("scholarhub_profile_updated", handleProfileUpdate);
+    return () => window.removeEventListener("scholarhub_profile_updated", handleProfileUpdate);
+  }, []);
+
   const firstName = (user?.fullName || user?.name || "Student").split(" ")[0];
-  const studentProfile = useMemo(() => getStoredStudentProfile(), [user]);
+  const studentProfile = useMemo(() => getStoredStudentProfile(), [user, profileVersion]);
 
   const [chatInput, setChatInput] = useState("");
   const [isAiLoading, setIsAiLoading] = useState(false);
@@ -39,7 +47,7 @@ export function AiAssistantHub() {
       ? `I have evaluated your profile (${studentProfile.category || "General"}, ${
           studentProfile.domicileState || "State"
         }, ₹${parseFloat(studentProfile.annualIncome || 0).toLocaleString("en-IN")} Income).`
-      : "Complete your profile in the Eligibility Details tab to receive personalized grant suggestions."
+      : "Complete your profile in the Streamlined Details tab to receive personalized grant suggestions."
   } Ask me any questions about matching schemes, eligibility criteria, required documents, or application guidelines.`;
 
   const [messages, setMessages] = useState([

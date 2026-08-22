@@ -263,53 +263,123 @@ export function StudentProfileOverview({ onNavigateTab }) {
         </div>
       </div>
 
-      {/* Two Column Detailed Section */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Academic Details */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4">
+      {/* Four Detailed Credential Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+        {/* 1. Current Academic Details */}
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <GraduationCap className="size-4 text-blue-600 dark:text-blue-400" />
-              Academic Credentials
+              Current Academic Credentials
             </h3>
             <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/80 px-2 py-0.5 rounded-full">
-              {profile.marksPercentage ? "Completed" : "Pending Details"}
+              {profile.marksPercentage ? "Profile Set" : "Pending"}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-xs">
+          <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
-              <p className="text-slate-400 font-medium">Degree Level</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.degreeLevel || profile.qualification || "Not Specified"}</p>
+              <p className="text-slate-400 font-medium">Current Course</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.currentCourse || "Not Specified"}</p>
             </div>
             <div>
-              <p className="text-slate-400 font-medium">Current Stream</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.currentStream || profile.streamBranch || "Not Specified"}</p>
+              <p className="text-slate-400 font-medium">Stream / Branch</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.streamBranch || "Not Specified"}</p>
             </div>
+            <div>
+              <p className="text-slate-400 font-medium">College Name</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5 truncate">{profile.collegeName || "Not Specified"}</p>
+            </div>
+            <div>
+              <p className="text-slate-400 font-medium">Year / Sem</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.yearSemester || "Not Specified"}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* 2. Past Academic Scores */}
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Award className="size-4 text-amber-500" />
+              Past Education Merit
+            </h3>
+            <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-full">
+              {profile.tenthPercentage || profile.twelfthPercentage ? "Merit Active" : "Unspecified"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
               <p className="text-slate-400 font-medium">Class 10th Score</p>
               <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.tenthPercentage || "Not Specified"}</p>
             </div>
             <div>
-              <p className="text-slate-400 font-medium">Class 12th Score</p>
+              <p className="text-slate-400 font-medium">Class 12th / Diploma Score</p>
               <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.twelfthPercentage || "Not Specified"}</p>
+            </div>
+            <div>
+              <p className="text-slate-400 font-medium">10th-Merit Grant Match</p>
+              <p className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                {profile.tenthPercentage ? "✓ MahaDBT / MahaJYOTI" : "Fill details"}
+              </p>
+            </div>
+            <div>
+              <p className="text-slate-400 font-medium">12th-Merit Grant Match</p>
+              <p className="font-bold text-emerald-600 dark:text-emerald-400 mt-0.5">
+                {profile.twelfthPercentage ? "✓ NSP / Vidyasaarathi" : "Fill details"}
+              </p>
             </div>
           </div>
         </div>
 
-        {/* Socio-Economic & Eligibility Status */}
-        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4">
+        {/* 3. Living Status & Accommodation */}
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+              <Clock className="size-4 text-indigo-500" />
+              Living & Accommodation Status
+            </h3>
+            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/80 px-2 py-0.5 rounded-full">
+              {profile.livingType || "Day Scholar"}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 text-xs">
+            <div>
+              <p className="text-slate-400 font-medium">Accommodation Type</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.livingType || "Day Scholar at Home"}</p>
+            </div>
+            <div>
+              <p className="text-slate-400 font-medium">Monthly Living Cost</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                {profile.monthlyLivingCost ? `₹${parseFloat(profile.monthlyLivingCost).toLocaleString("en-IN")}` : "None"}
+              </p>
+            </div>
+            <div className="col-span-2">
+              <p className="text-slate-400 font-medium">Hostel Grant Status</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
+                {profile.livingType === "Hostel" || profile.livingType === "PG / Rented Accommodation"
+                  ? "✓ Eligible for Dr. Punjabrao Deshmukh Hostel Allowance (₹30,000/yr)"
+                  : "Day Scholar (Hostel allowance grants inactive)"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* 4. Socio-Economic & Quotas */}
+        <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm space-y-4">
           <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
               <ShieldCheck className="size-4 text-emerald-600 dark:text-emerald-400" />
-              Socio-Economic Verification
+              Socio-Economic & Quotas
             </h3>
             <span className="text-[10px] font-bold text-blue-600 bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 rounded-full">
               {profile.category || profile.annualIncome ? "Profile Set" : "Unspecified"}
             </span>
           </div>
 
-          <div className="grid grid-cols-2 gap-4 text-xs">
+          <div className="grid grid-cols-2 gap-3 text-xs">
             <div>
               <p className="text-slate-400 font-medium">Social Category</p>
               <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.category || "Not Specified"}</p>
@@ -326,7 +396,7 @@ export function StudentProfileOverview({ onNavigateTab }) {
             </div>
             <div>
               <p className="text-slate-400 font-medium">Disability Status</p>
-              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.isDisability === "Yes" ? "Yes (PwD)" : "None"}</p>
+              <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">{profile.isDisability === "Yes" ? "Yes (PwD)" : "No (General)"}</p>
             </div>
           </div>
         </div>

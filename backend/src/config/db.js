@@ -66,6 +66,10 @@ export async function initializeDatabase() {
       marks_percentage TEXT,
       passing_year TEXT,
       stream_branch TEXT,
+      tenth_percentage TEXT,
+      twelfth_percentage TEXT,
+      living_type VARCHAR(50) DEFAULT 'Day Scholar at Home',
+      monthly_living_cost NUMERIC,
       annual_income NUMERIC,
       guardian_occupation TEXT,
       income_cert_no TEXT,
@@ -77,6 +81,11 @@ export async function initializeDatabase() {
       special_criteria TEXT,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+
+    ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS tenth_percentage TEXT;
+    ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS twelfth_percentage TEXT;
+    ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS living_type VARCHAR(50) DEFAULT 'Day Scholar at Home';
+    ALTER TABLE student_profiles ADD COLUMN IF NOT EXISTS monthly_living_cost NUMERIC;
 
     -- Student Documents Table
     CREATE TABLE IF NOT EXISTS student_documents (

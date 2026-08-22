@@ -31,28 +31,32 @@ export async function getProfile(req, res) {
 
 // 2. Save / Update Profile Details in PostgreSQL
 export async function saveProfile(req, res) {
-  const { userId, education, financial, eligibility, documents } = req.body;
+  const { userId, personal, education, currentEducation, pastEducation, livingStatus, financial, eligibility, documents } = req.body;
 
   if (!userId) {
     return res.status(400).json({ success: false, message: "User ID is required" });
   }
 
   try {
-    const ed = education || {};
+    const curEd = currentEducation || education || {};
+    const pastEd = pastEducation || education || {};
+    const livStat = livingStatus || {};
     const fin = financial || {};
     const el = eligibility || {};
 
     const annualIncome = fin.annualIncome ? parseFloat(fin.annualIncome) : null;
+    const monthlyLivingCost = livStat.monthlyLivingCost ? parseFloat(livStat.monthlyLivingCost) : null;
 
     // Upsert into student_profiles table
     await pool.query(
       `INSERT INTO student_profiles (
         user_id, current_course, qualification, college_name, year_semester,
-        marks_percentage, passing_year, stream_branch, annual_income,
+        marks_percentage, passing_year, stream_branch, tenth_percentage, twelfth_percentage,
+        living_type, monthly_living_cost, annual_income,
         guardian_occupation, income_cert_no, income_issuing_auth, category,
         domicile_state, is_minority, is_disability, special_criteria, updated_at
       ) VALUES (
-        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, CURRENT_TIMESTAMP
+        $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18, $19, $20, $21, CURRENT_TIMESTAMP
       ) ON CONFLICT (user_id) DO UPDATE SET
         current_course = EXCLUDED.current_course,
         qualification = EXCLUDED.qualification,
@@ -61,6 +65,10 @@ export async function saveProfile(req, res) {
         marks_percentage = EXCLUDED.marks_percentage,
         passing_year = EXCLUDED.passing_year,
         stream_branch = EXCLUDED.stream_branch,
+        tenth_percentage = EXCLUDED.tenth_percentage,
+        twelfth_percentage = EXCLUDED.twelfth_percentage,
+        living_type = EXCLUDED.living_type,
+        monthly_living_cost = EXCLUDED.monthly_living_cost,
         annual_income = EXCLUDED.annual_income,
         guardian_occupation = EXCLUDED.guardian_occupation,
         income_cert_no = EXCLUDED.income_cert_no,
@@ -73,13 +81,17 @@ export async function saveProfile(req, res) {
         updated_at = CURRENT_TIMESTAMP`,
       [
         userId,
-        ed.currentCourse || null,
-        ed.qualification || null,
-        ed.collegeName || null,
-        ed.yearSemester || null,
-        ed.marksPercentage || null,
-        ed.passingYear || null,
-        ed.streamBranch || null,
+        curEd.currentCourse || null,
+        curEd.qualification || null,
+        curEd.collegeName || null,
+        curEd.yearSemester || null,
+        curEd.marksPercentage || null,
+        curEd.passingYear || null,
+        curEd.streamBranch || null,
+        pastEd.tenthPercentage || null,
+        pastEd.twelfthPercentage || null,
+        livStat.livingType || "Day Scholar at Home",
+        monthlyLivingCost,
         annualIncome,
         fin.guardianOccupation || null,
         fin.incomeCertNo || null,

@@ -123,7 +123,7 @@ export function StudentDashboard() {
     }
     setSavedCount(loaded.savedIds.length);
     setAppliedCount(loaded.appliedIds.length);
-    setModeToast("⚡ Simulation Demo Profile Loaded: Aarsh Kolhe (B.Tech CS @ NIT, 78% marks, ₹2L income, OBC, Maharashtra)");
+    setModeToast("⚡ Simulation Demo Profile Loaded: Aarsh Kolhe (B.Tech CS @ NIT, 78% marks, 10th: 88.4%, 12th: 85.2%, Hostel, ₹2L income, OBC, Maharashtra)");
     setTimeout(() => setModeToast(""), 5000);
   };
 
@@ -517,7 +517,7 @@ export function StudentDashboard() {
                       </div>
 
                       <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
-                        In standard Real-Time mode, student profiles start completely clean. In Simulation Mode, you can prefill a complete demo student profile (Aarsh Kolhe — B.Tech CS @ NIT, 78% marks, ₹2L income, OBC, Maharashtra domicile) with 1 click to test matching rules, % badges, and AI counselor prompts:
+                        In standard Real-Time mode, student profiles start completely clean. In Simulation Mode, you can prefill a complete demo student profile (Aarsh Kolhe — B.Tech CS @ NIT, 78% marks, 10th: 88.4%, 12th: 85.2%, Hostel, ₹2L income, OBC, Maharashtra domicile) with 1 click to test matching rules, % badges, and AI counselor prompts:
                       </p>
 
                       {/* Action Buttons */}
@@ -525,7 +525,7 @@ export function StudentDashboard() {
                         <button
                           type="button"
                           onClick={handleLoadSimulationData}
-                          className="rounded-xl bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white px-3.5 py-2 text-xs font-bold shadow-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5"
+                          className="rounded-xl bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white px-3.5 py-2 text-xs font-bold shadow-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
                         >
                           <Zap className="size-3.5" />
                           <span>Load Simulation Demo Profile</span>
@@ -534,7 +534,7 @@ export function StudentDashboard() {
                         <button
                           type="button"
                           onClick={handleClearSimulationData}
-                          className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs transition-colors flex items-center gap-1.5"
+                          className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
                         >
                           <Trash2 className="size-3.5" />
                           <span>Clear / Reset Profile Data</span>
@@ -544,7 +544,7 @@ export function StudentDashboard() {
                       {/* Active Profile Snapshot Preview */}
                       {(() => {
                         const prof = getStoredStudentProfile();
-                        const hasData = Boolean(prof.name || prof.collegeName || prof.annualIncome);
+                        const hasData = Boolean(prof.name || prof.collegeName || prof.annualIncome || prof.tenthPercentage);
                         return (
                           <div className="mt-3 rounded-lg bg-white/80 dark:bg-slate-900/80 border border-amber-200/60 dark:border-amber-800/40 p-3 text-xs">
                             <div className="flex items-center justify-between mb-2">
@@ -572,15 +572,15 @@ export function StudentDashboard() {
                                 <strong className="text-slate-800 dark:text-slate-100">{prof.collegeName || "—"}</strong>
                               </div>
                               <div>
-                                <span className="text-slate-400 font-medium">Score / Income:</span>{" "}
+                                <span className="text-slate-400 font-medium">10th / 12th / CGPA:</span>{" "}
                                 <strong className="text-slate-800 dark:text-slate-100">
-                                  {prof.marksPercentage || "—"} / {prof.annualIncome ? `₹${parseFloat(prof.annualIncome).toLocaleString("en-IN")}` : "—"}
+                                  {prof.tenthPercentage || "—"} | {prof.twelfthPercentage || "—"} | {prof.marksPercentage || "—"}
                                 </strong>
                               </div>
                               <div>
-                                <span className="text-slate-400 font-medium">Category / State:</span>{" "}
+                                <span className="text-slate-400 font-medium">Living / Cat / State:</span>{" "}
                                 <strong className="text-slate-800 dark:text-slate-100">
-                                  {prof.category || "—"} ({prof.domicileState || "—"})
+                                  {prof.livingType || "—"} | {prof.category || "—"} ({prof.domicileState || "—"})
                                 </strong>
                               </div>
                             </div>

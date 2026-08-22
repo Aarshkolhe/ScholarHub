@@ -4,7 +4,7 @@
  * Operates purely on self-reported profile data with zero file upload overhead.
  */
 
-import { SCHOLARSHIPS_DATABASE } from "./scholarshipData";
+import { SCHOLARSHIPS_DATABASE } from "./scholarshipData.js";
 
 export const SIMULATION_DEMO_PROFILE = {
   user: {
@@ -22,33 +22,32 @@ export const SIMULATION_DEMO_PROFILE = {
     dob: "2004-05-15",
     age: "21",
   },
-  education: {
+  currentEducation: {
     currentCourse: "B.Tech Computer Science",
-    qualification: "Undergraduate (UG)",
+    streamBranch: "Engineering & Technology",
     collegeName: "National Institute of Technology",
     yearSemester: "3rd Year (Sem 6)",
     marksPercentage: "78%",
-    passingYear: "2027",
-    streamBranch: "Engineering & Technology",
+    qualification: "Undergraduate (UG)",
+  },
+  pastEducation: {
     tenthPercentage: "88.4%",
     twelfthPercentage: "85.2%",
-    degreeLevel: "Undergraduate",
-    currentStream: "Engineering",
+  },
+  livingStatus: {
+    livingType: "Hostel",
+    monthlyLivingCost: "6000",
   },
   financial: {
     annualIncome: "200000",
-    guardianOccupation: "Agriculture / Farming",
-    incomeCertNo: "MH-INC-2026-88492",
-    incomeIssuingAuth: "Tahsildar Revenue Office",
   },
   eligibility: {
     category: "OBC",
-    isMinority: "No",
-    isDisability: "No",
     domicileState: "Maharashtra",
-    specialCriteria: "First-Generation Learner",
+    isDisability: "No",
+    specialCriteria: "None",
   },
-  savedIds: ["mahadbt-10th-1", "mahadbt-1"],
+  savedIds: ["mahadbt-10th-1", "mahadbt-1", "mahadbt-2"],
   appliedIds: ["mahadbt-10th-1"],
 };
 
@@ -57,22 +56,42 @@ export const SIMULATION_DEMO_PROFILE = {
  */
 export function loadSimulationProfile() {
   const uid = "_usr_sim_demo";
+
+  // Global keys
   localStorage.setItem("scholarhub_user", JSON.stringify(SIMULATION_DEMO_PROFILE.user));
   localStorage.setItem("scholarhub_profile_personal", JSON.stringify(SIMULATION_DEMO_PROFILE.personal));
-  localStorage.setItem("scholarhub_profile_education", JSON.stringify(SIMULATION_DEMO_PROFILE.education));
+  localStorage.setItem("scholarhub_profile_current_education", JSON.stringify(SIMULATION_DEMO_PROFILE.currentEducation));
+  localStorage.setItem("scholarhub_profile_past_education", JSON.stringify(SIMULATION_DEMO_PROFILE.pastEducation));
+  localStorage.setItem("scholarhub_profile_living_status", JSON.stringify(SIMULATION_DEMO_PROFILE.livingStatus));
   localStorage.setItem("scholarhub_profile_financial", JSON.stringify(SIMULATION_DEMO_PROFILE.financial));
   localStorage.setItem("scholarhub_profile_eligibility", JSON.stringify(SIMULATION_DEMO_PROFILE.eligibility));
+  localStorage.setItem("scholarhub_profile_education", JSON.stringify({
+    ...SIMULATION_DEMO_PROFILE.currentEducation,
+    ...SIMULATION_DEMO_PROFILE.pastEducation,
+  }));
   localStorage.setItem("scholarhub_saved_landing_name", SIMULATION_DEMO_PROFILE.personal.fullName);
   localStorage.setItem("scholarhub_saved_ids", JSON.stringify(SIMULATION_DEMO_PROFILE.savedIds));
   localStorage.setItem("scholarhub_applied_ids", JSON.stringify(SIMULATION_DEMO_PROFILE.appliedIds));
 
+  // Scoped keys
   localStorage.setItem(`scholarhub_profile_personal${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.personal));
-  localStorage.setItem(`scholarhub_profile_education${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.education));
+  localStorage.setItem(`scholarhub_profile_current_education${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.currentEducation));
+  localStorage.setItem(`scholarhub_profile_past_education${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.pastEducation));
+  localStorage.setItem(`scholarhub_profile_living_status${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.livingStatus));
   localStorage.setItem(`scholarhub_profile_financial${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.financial));
   localStorage.setItem(`scholarhub_profile_eligibility${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.eligibility));
+  localStorage.setItem(`scholarhub_profile_education${uid}`, JSON.stringify({
+    ...SIMULATION_DEMO_PROFILE.currentEducation,
+    ...SIMULATION_DEMO_PROFILE.pastEducation,
+  }));
   localStorage.setItem(`scholarhub_saved_landing_name${uid}`, SIMULATION_DEMO_PROFILE.personal.fullName);
   localStorage.setItem(`scholarhub_saved_ids${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.savedIds));
   localStorage.setItem(`scholarhub_applied_ids${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.appliedIds));
+
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new Event("scholarhub_profile_updated"));
+  }
+
   return SIMULATION_DEMO_PROFILE;
 }
 
@@ -88,6 +107,9 @@ export function clearProfileData() {
   const uid = user.id ? `_${user.id}` : "";
 
   localStorage.removeItem("scholarhub_profile_personal");
+  localStorage.removeItem("scholarhub_profile_current_education");
+  localStorage.removeItem("scholarhub_profile_past_education");
+  localStorage.removeItem("scholarhub_profile_living_status");
   localStorage.removeItem("scholarhub_profile_education");
   localStorage.removeItem("scholarhub_profile_financial");
   localStorage.removeItem("scholarhub_profile_eligibility");
@@ -98,6 +120,9 @@ export function clearProfileData() {
 
   if (uid) {
     localStorage.removeItem(`scholarhub_profile_personal${uid}`);
+    localStorage.removeItem(`scholarhub_profile_current_education${uid}`);
+    localStorage.removeItem(`scholarhub_profile_past_education${uid}`);
+    localStorage.removeItem(`scholarhub_profile_living_status${uid}`);
     localStorage.removeItem(`scholarhub_profile_education${uid}`);
     localStorage.removeItem(`scholarhub_profile_financial${uid}`);
     localStorage.removeItem(`scholarhub_profile_eligibility${uid}`);
@@ -114,7 +139,6 @@ export function clearProfileData() {
 
 /**
  * Retrieve the current merged student profile from localStorage.
- * In standard mode, defaults are completely clean/empty until entered by user or loaded in simulation.
  */
 export function getStoredStudentProfile() {
   let user = {};
@@ -125,8 +149,19 @@ export function getStoredStudentProfile() {
 
   const uid = user.id ? `_${user.id}` : "";
 
-  // If user is authenticated, read ONLY their scoped storage. Never leak global/unscoped storage.
-  const educationStr = uid
+  const personalStr = uid
+    ? localStorage.getItem(`scholarhub_profile_personal${uid}`)
+    : localStorage.getItem("scholarhub_profile_personal");
+  const curEdStr = uid
+    ? localStorage.getItem(`scholarhub_profile_current_education${uid}`)
+    : localStorage.getItem("scholarhub_profile_current_education");
+  const pastEdStr = uid
+    ? localStorage.getItem(`scholarhub_profile_past_education${uid}`)
+    : localStorage.getItem("scholarhub_profile_past_education");
+  const livingStr = uid
+    ? localStorage.getItem(`scholarhub_profile_living_status${uid}`)
+    : localStorage.getItem("scholarhub_profile_living_status");
+  const legacyEdStr = uid
     ? localStorage.getItem(`scholarhub_profile_education${uid}`)
     : localStorage.getItem("scholarhub_profile_education");
   const financialStr = uid
@@ -135,120 +170,139 @@ export function getStoredStudentProfile() {
   const eligibilityStr = uid
     ? localStorage.getItem(`scholarhub_profile_eligibility${uid}`)
     : localStorage.getItem("scholarhub_profile_eligibility");
-  const personalStr = uid
-    ? localStorage.getItem(`scholarhub_profile_personal${uid}`)
-    : localStorage.getItem("scholarhub_profile_personal");
 
-  const education = educationStr ? JSON.parse(educationStr) : {
-    currentCourse: "",
-    qualification: "",
-    collegeName: "",
-    yearSemester: "",
-    marksPercentage: "",
-    passingYear: "",
-    streamBranch: "",
-    tenthPercentage: "",
-    twelfthPercentage: "",
-    degreeLevel: "",
-    currentStream: "",
-  };
-  const financial = financialStr ? JSON.parse(financialStr) : {
-    annualIncome: "",
-    guardianOccupation: "",
-    incomeCertNo: "",
-    incomeIssuingAuth: "",
-  };
-  const eligibility = eligibilityStr ? JSON.parse(eligibilityStr) : {
-    category: "",
-    isMinority: "No",
-    isDisability: "No",
-    domicileState: "",
-    specialCriteria: "",
-  };
-  const personal = personalStr ? JSON.parse(personalStr) : {
-    gender: "",
-    dob: "",
-    age: "",
-    phone: "",
-  };
+  const legacyEd = legacyEdStr ? JSON.parse(legacyEdStr) : {};
+
+  const currentEducation = curEdStr
+    ? JSON.parse(curEdStr)
+    : {
+        currentCourse: legacyEd.currentCourse || "",
+        streamBranch: legacyEd.streamBranch || legacyEd.currentStream || "",
+        collegeName: legacyEd.collegeName || "",
+        yearSemester: legacyEd.yearSemester || "",
+        marksPercentage: legacyEd.marksPercentage || "",
+        qualification: legacyEd.qualification || legacyEd.degreeLevel || "",
+      };
+
+  const pastEducation = pastEdStr
+    ? JSON.parse(pastEdStr)
+    : {
+        tenthPercentage: legacyEd.tenthPercentage || "",
+        twelfthPercentage: legacyEd.twelfthPercentage || "",
+      };
+
+  const livingStatus = livingStr
+    ? JSON.parse(livingStr)
+    : {
+        livingType: legacyEd.livingType || "Day Scholar at Home",
+        monthlyLivingCost: legacyEd.monthlyLivingCost || "",
+      };
+
+  const financial = financialStr
+    ? JSON.parse(financialStr)
+    : {
+        annualIncome: "",
+      };
+
+  const eligibility = eligibilityStr
+    ? JSON.parse(eligibilityStr)
+    : {
+        category: "",
+        domicileState: "",
+        isDisability: "No",
+        specialCriteria: "None",
+      };
+
+  const personal = personalStr
+    ? JSON.parse(personalStr)
+    : {
+        fullName: user.fullName || user.name || "",
+        email: user.email || "",
+        phone: "",
+        gender: "",
+        dob: "",
+        age: "",
+      };
 
   return {
     ...personal,
-    ...education,
+    ...currentEducation,
+    ...pastEducation,
+    ...livingStatus,
     ...financial,
     ...eligibility,
-    // Authentic user auth identity is definitive
+    personal,
+    currentEducation,
+    pastEducation,
+    livingStatus,
+    financial,
+    eligibility,
     name: user.fullName || user.name || personal.fullName || "",
     email: user.email || personal.email || "",
   };
 }
 
 /**
- * Calculate the exact functional strength / completion percentage (0 - 100%)
- * based on weighted scholarship-matching eligibility domains.
+ * Calculate the exact functional profile strength (0 - 100%)
+ * based on high-impact scholarship matching fields.
  *
  * Domain Breakdown (Total 100%):
- * 1. Personal Verification (10%): Phone, Gender, Date of Birth
- * 2. Academic Performance & Institution (35%): Course, Qualification, College, Year/Sem, Marks % / CGPA
- * 3. Family Financial & Income (25%): Annual Family Income, Occupation, Certificate No / Authority
- * 4. Reservation, Domicile & Quotas (30%): Social Category, Domicile State, Quota / Disability status
- *
- * Base Account metadata (Name/Email) is basic identity and does not falsely inflate eligibility strength.
+ * 1. 👤 Identity & Contact (15%): Phone (5%), Gender (5%), DOB (5%)
+ * 2. 🎓 Current Education (25%): Current Course (6%), Stream (5%), College Name (5%), Year/Sem (4%), Marks/CGPA (5%)
+ * 3. 📚 Past Education (15%): 10th Marks % (8%), 12th/Diploma % (7%)
+ * 4. 🏠 Living Status (10%): Living Type (10%)
+ * 5. 💰 Financial (15%): Annual Family Income (15%)
+ * 6. 🏛️ Category & Domicile (20%): Social Category (10%), Domicile State (10%)
  */
 export function calculateProfileStrength(profile = null) {
   const p = profile || getStoredStudentProfile();
   let score = 0;
 
-  // 1. Personal Verification (10 pts total)
-  if (p.phone && String(p.phone).trim().length >= 8) score += 3.5;
-  if (p.gender && String(p.gender).trim()) score += 3.5;
-  if (p.dob && String(p.dob).trim()) score += 3;
+  // 1. Identity & Contact (15 pts)
+  if (p.phone && String(p.phone).trim().length >= 8) score += 5;
+  if (p.gender && String(p.gender).trim()) score += 5;
+  if (p.dob && String(p.dob).trim()) score += 5;
 
-  // 2. Academic Performance & Institution (35 pts total)
-  if (p.currentCourse && String(p.currentCourse).trim()) score += 7;
-  if (p.qualification && String(p.qualification).trim()) score += 6;
-  if (p.collegeName && String(p.collegeName).trim()) score += 7;
-  if (p.yearSemester && String(p.yearSemester).trim()) score += 5;
-  if (p.marksPercentage && String(p.marksPercentage).trim()) score += 10;
+  // 2. Current Education (25 pts)
+  if (p.currentCourse && String(p.currentCourse).trim()) score += 6;
+  if (p.streamBranch && String(p.streamBranch).trim()) score += 5;
+  if (p.collegeName && String(p.collegeName).trim()) score += 5;
+  if (p.yearSemester && String(p.yearSemester).trim()) score += 4;
+  if (p.marksPercentage && String(p.marksPercentage).trim()) score += 5;
 
-  // 3. Family Financial & Income (25 pts total)
-  if (p.annualIncome && String(p.annualIncome).trim().length > 0) score += 15;
-  if (p.guardianOccupation && String(p.guardianOccupation).trim()) score += 5;
-  if (
-    (p.incomeCertNo && String(p.incomeCertNo).trim()) ||
-    (p.incomeIssuingAuth && String(p.incomeIssuingAuth).trim())
-  ) {
-    score += 5;
+  // 3. Past Education (15 pts)
+  if (p.tenthPercentage && String(p.tenthPercentage).trim()) score += 8;
+  if (p.twelfthPercentage && String(p.twelfthPercentage).trim()) score += 7;
+
+  // 4. Living Status (10 pts)
+  if (p.livingType && String(p.livingType).trim()) score += 10;
+
+  // 5. Financial (15 pts)
+  if (p.annualIncome !== undefined && p.annualIncome !== null && String(p.annualIncome).trim().length > 0) {
+    score += 15;
   }
 
-  // 4. Reservation, Domicile & Quotas (30 pts total)
-  if (p.category && String(p.category).trim()) score += 12;
-  if (p.domicileState && String(p.domicileState).trim()) score += 12;
-  if (
-    (p.isDisability && String(p.isDisability).trim() && String(p.isDisability) !== "No") ||
-    (p.specialCriteria && String(p.specialCriteria).trim() && String(p.specialCriteria) !== "None")
-  ) {
-    score += 6;
-  } else if (p.isDisability || p.specialCriteria) {
-    score += 6;
-  }
+  // 6. Category & Domicile (20 pts)
+  if (p.category && String(p.category).trim()) score += 10;
+  if (p.domicileState && String(p.domicileState).trim()) score += 10;
 
   return Math.min(100, Math.round(score));
 }
 
 /**
  * Compare a scholarship against a student's profile attributes.
- * Returns { isEligible, matchScore, reasons, criteriaBreakdown }
+ * Activates real-time match evaluation once profile passes the 30% activation threshold.
+ * Returns { isEligible, isPendingDetails, matchScore, reasons, criteriaBreakdown, passedChecks, totalChecks }
  */
 export function evaluateEligibility(scholarship, profile = null) {
   const student = profile || getStoredStudentProfile();
   const criteria = scholarship.criteria || {};
+  const profileStrength = calculateProfileStrength(student);
 
   const reasons = [];
   const criteriaBreakdown = [];
   let passedChecks = 0;
   let totalChecks = 0;
-
   const missingFields = [];
 
   // 1. Social Category Check
@@ -257,22 +311,18 @@ export function evaluateEligibility(scholarship, profile = null) {
     const studentCat = (student.category || "").trim();
     if (!studentCat) {
       missingFields.push("Category");
-      reasons.push(
-        `Reserved for ${criteria.allowedCategories.join(", ")} category (not specified in your profile yet).`
-      );
-      criteriaBreakdown.push({ label: "Category Requirement", status: "failed", detail: `Requires ${criteria.allowedCategories.join(", ")} (Profile: Not specified)` });
+      reasons.push(`Reserved for ${criteria.allowedCategories.join(", ")} category (not specified in profile).`);
+      criteriaBreakdown.push({ label: "Category Quota", status: "failed", detail: `Requires ${criteria.allowedCategories.join(", ")}` });
     } else {
       const passed = criteria.allowedCategories.some(
         (c) => c.toLowerCase() === studentCat.toLowerCase()
       );
       if (!passed) {
-        reasons.push(
-          `Reserved for ${criteria.allowedCategories.join(", ")} category (your profile: ${studentCat}).`
-        );
-        criteriaBreakdown.push({ label: "Category Requirement", status: "failed", detail: `Requires ${criteria.allowedCategories.join(", ")} (Yours: ${studentCat})` });
+        reasons.push(`Reserved for ${criteria.allowedCategories.join(", ")} (your category: ${studentCat}).`);
+        criteriaBreakdown.push({ label: "Category Quota", status: "failed", detail: `Requires ${criteria.allowedCategories.join(", ")} (Yours: ${studentCat})` });
       } else {
         passedChecks++;
-        criteriaBreakdown.push({ label: "Category Requirement", status: "passed", detail: `Matched: ${studentCat}` });
+        criteriaBreakdown.push({ label: "Category Quota", status: "passed", detail: `Matched: ${studentCat}` });
       }
     }
   }
@@ -285,18 +335,14 @@ export function evaluateEligibility(scholarship, profile = null) {
 
     if (!rawIncome) {
       missingFields.push("Family Income");
-      reasons.push(
-        `Requires annual family income verification <= ${maxFormatted} (not specified in your profile yet).`
-      );
-      criteriaBreakdown.push({ label: "Income Limit", status: "failed", detail: `Max ${maxFormatted} (Profile: Not specified)` });
+      reasons.push(`Requires annual family income <= ${maxFormatted} (not specified in profile).`);
+      criteriaBreakdown.push({ label: "Income Limit", status: "failed", detail: `Max ${maxFormatted} (Unspecified)` });
     } else {
       const incomeNum = parseFloat(rawIncome.replace(/[^0-9.]/g, "")) || 0;
       const userFormatted = `₹${incomeNum.toLocaleString("en-IN")}`;
 
       if (incomeNum > criteria.maxIncome) {
-        reasons.push(
-          `Family income exceeds ${maxFormatted} limit (your reported income: ${userFormatted}).`
-        );
+        reasons.push(`Income exceeds ${maxFormatted} ceiling (your reported income: ${userFormatted}).`);
         criteriaBreakdown.push({ label: "Income Limit", status: "failed", detail: `Max ${maxFormatted} (Yours: ${userFormatted})` });
       } else {
         passedChecks++;
@@ -305,27 +351,87 @@ export function evaluateEligibility(scholarship, profile = null) {
     }
   }
 
-  // 3. Minimum Percentage / CGPA Check
-  if (criteria.minPercentage) {
+  // 3. Living Status / Hostel Check (e.g. Dr. Punjabrao Deshmukh Hostel Allowance)
+  if (criteria.requiresHostel || (criteria.allowedLivingTypes && criteria.allowedLivingTypes.length > 0)) {
+    totalChecks++;
+    const userLiving = (student.livingType || "").trim();
+    const allowedTypes = criteria.allowedLivingTypes || ["Hostel", "PG / Rented Accommodation"];
+
+    if (!userLiving) {
+      missingFields.push("Living Status");
+      reasons.push(`Requires living status verification: ${allowedTypes.join(" or ")} (not specified in profile).`);
+      criteriaBreakdown.push({ label: "Living / Hostel Status", status: "failed", detail: `Requires ${allowedTypes.join(" / ")}` });
+    } else {
+      const isHostelOrPg = allowedTypes.some((t) => t.toLowerCase() === userLiving.toLowerCase());
+      if (!isHostelOrPg) {
+        reasons.push(`Directly restricted to hostel / PG residents (your profile: ${userLiving}).`);
+        criteriaBreakdown.push({ label: "Living / Hostel Status", status: "failed", detail: `Requires Hostel / PG (Yours: ${userLiving})` });
+      } else {
+        passedChecks++;
+        criteriaBreakdown.push({ label: "Living / Hostel Status", status: "passed", detail: `Matched: ${userLiving}` });
+      }
+    }
+  }
+
+  // 4. Class 10th Marks Check (e.g. MahaDBT 10th Passed Merit Schemes)
+  if (criteria.minTenthPercentage) {
+    totalChecks++;
+    const rawTenth = student.tenthPercentage !== undefined && student.tenthPercentage !== null ? String(student.tenthPercentage).trim() : "";
+
+    if (!rawTenth) {
+      missingFields.push("10th Marks %");
+      reasons.push(`Requires minimum ${criteria.minTenthPercentage}% in 10th Board Exam (not specified in profile).`);
+      criteriaBreakdown.push({ label: "Class 10th Cutoff", status: "failed", detail: `Requires >= ${criteria.minTenthPercentage}% (Unspecified)` });
+    } else {
+      const tenthScore = parseFloat(rawTenth.replace(/[^0-9.]/g, "")) || 0;
+      if (tenthScore < criteria.minTenthPercentage) {
+        reasons.push(`Requires minimum ${criteria.minTenthPercentage}% in 10th (your score: ${tenthScore}%).`);
+        criteriaBreakdown.push({ label: "Class 10th Cutoff", status: "failed", detail: `Requires >= ${criteria.minTenthPercentage}% (Yours: ${tenthScore}%)` });
+      } else {
+        passedChecks++;
+        criteriaBreakdown.push({ label: "Class 10th Cutoff", status: "passed", detail: `Passed: ${tenthScore}% >= ${criteria.minTenthPercentage}%` });
+      }
+    }
+  }
+
+  // 5. Class 12th / Diploma Marks Check
+  if (criteria.minTwelfthPercentage) {
+    totalChecks++;
+    const rawTwelfth = student.twelfthPercentage !== undefined && student.twelfthPercentage !== null ? String(student.twelfthPercentage).trim() : "";
+
+    if (!rawTwelfth) {
+      missingFields.push("12th Marks %");
+      reasons.push(`Requires minimum ${criteria.minTwelfthPercentage}% in 12th / Diploma (not specified in profile).`);
+      criteriaBreakdown.push({ label: "Class 12th Cutoff", status: "failed", detail: `Requires >= ${criteria.minTwelfthPercentage}% (Unspecified)` });
+    } else {
+      const twelfthScore = parseFloat(rawTwelfth.replace(/[^0-9.]/g, "")) || 0;
+      if (twelfthScore < criteria.minTwelfthPercentage) {
+        reasons.push(`Requires minimum ${criteria.minTwelfthPercentage}% in 12th (your score: ${twelfthScore}%).`);
+        criteriaBreakdown.push({ label: "Class 12th Cutoff", status: "failed", detail: `Requires >= ${criteria.minTwelfthPercentage}% (Yours: ${twelfthScore}%)` });
+      } else {
+        passedChecks++;
+        criteriaBreakdown.push({ label: "Class 12th Cutoff", status: "passed", detail: `Passed: ${twelfthScore}% >= ${criteria.minTwelfthPercentage}%` });
+      }
+    }
+  }
+
+  // 6. Current Academic Cutoff (Marks % or CGPA)
+  if (criteria.minPercentage && !criteria.minTenthPercentage && !criteria.minTwelfthPercentage) {
     totalChecks++;
     const rawMarks = student.marksPercentage !== undefined && student.marksPercentage !== null ? String(student.marksPercentage).trim() : "";
 
     if (!rawMarks) {
-      missingFields.push("Academic Marks");
-      reasons.push(
-        `Requires minimum ${criteria.minPercentage}% marks (not specified in your profile yet).`
-      );
-      criteriaBreakdown.push({ label: "Academic Cutoff", status: "failed", detail: `Requires >= ${criteria.minPercentage}% (Profile: Not specified)` });
+      missingFields.push("Academic Marks / CGPA");
+      reasons.push(`Requires minimum ${criteria.minPercentage}% marks (not specified in profile).`);
+      criteriaBreakdown.push({ label: "Academic Cutoff", status: "failed", detail: `Requires >= ${criteria.minPercentage}%` });
     } else {
       let scoreNum = parseFloat(rawMarks.replace(/[^0-9.]/g, "")) || 0;
       if (scoreNum > 0 && scoreNum <= 10) {
-        scoreNum = scoreNum * 9.5; // CGPA to %
+        scoreNum = scoreNum * 9.5; // CGPA conversion
       }
 
       if (scoreNum < criteria.minPercentage) {
-        reasons.push(
-          `Requires minimum ${criteria.minPercentage}% marks (your reported score: ${Math.round(scoreNum)}%).`
-        );
+        reasons.push(`Requires minimum ${criteria.minPercentage}% marks (your score: ${Math.round(scoreNum)}%).`);
         criteriaBreakdown.push({ label: "Academic Cutoff", status: "failed", detail: `Requires >= ${criteria.minPercentage}% (Yours: ${Math.round(scoreNum)}%)` });
       } else {
         passedChecks++;
@@ -334,7 +440,7 @@ export function evaluateEligibility(scholarship, profile = null) {
     }
   }
 
-  // 4. Domicile / State Check
+  // 7. Domicile / State Check
   if (
     criteria.allowedStates &&
     !criteria.allowedStates.includes("All India") &&
@@ -345,25 +451,21 @@ export function evaluateEligibility(scholarship, profile = null) {
 
     if (!studentState) {
       missingFields.push("Domicile State");
-      reasons.push(
-        `Restricted to students domiciled in ${criteria.allowedStates.join(", ")} (not specified in your profile yet).`
-      );
-      criteriaBreakdown.push({ label: "Domicile State", status: "failed", detail: `Requires ${criteria.allowedStates.join(", ")} (Profile: Not specified)` });
+      reasons.push(`Restricted to students domiciled in ${criteria.allowedStates.join(", ")} (not specified in profile).`);
+      criteriaBreakdown.push({ label: "Domicile State", status: "failed", detail: `Requires ${criteria.allowedStates.join(", ")}` });
     } else {
       const passed = criteria.allowedStates.some((s) => s.toLowerCase() === studentState.toLowerCase());
       if (!passed) {
-        reasons.push(
-          `Restricted to students domiciled in ${criteria.allowedStates.join(", ")} (your state: ${studentState}).`
-        );
+        reasons.push(`Restricted to ${criteria.allowedStates.join(", ")} (your state: ${studentState}).`);
         criteriaBreakdown.push({ label: "Domicile State", status: "failed", detail: `Requires ${criteria.allowedStates.join(", ")} (Yours: ${studentState})` });
       } else {
         passedChecks++;
-        criteriaBreakdown.push({ label: "Domicile State", status: "passed", detail: `Matched state: ${studentState}` });
+        criteriaBreakdown.push({ label: "Domicile State", status: "passed", detail: `Matched: ${studentState}` });
       }
     }
   }
 
-  // 5. Gender Check
+  // 8. Gender Check
   if (criteria.gender && criteria.gender !== "All") {
     totalChecks++;
     const studentGender = (student.gender || "").trim().toLowerCase();
@@ -371,8 +473,8 @@ export function evaluateEligibility(scholarship, profile = null) {
 
     if (!studentGender) {
       missingFields.push("Gender");
-      reasons.push(`Requires ${criteria.gender} gender (not specified in your profile yet).`);
-      criteriaBreakdown.push({ label: "Gender Requirement", status: "failed", detail: `Requires ${criteria.gender} (Profile: Not specified)` });
+      reasons.push(`Exclusively open for ${criteria.gender} candidates (not specified in profile).`);
+      criteriaBreakdown.push({ label: "Gender Requirement", status: "failed", detail: `Requires ${criteria.gender}` });
     } else if (studentGender !== targetGender) {
       reasons.push(`Exclusively open for ${criteria.gender} candidates (your profile: ${student.gender}).`);
       criteriaBreakdown.push({ label: "Gender Requirement", status: "failed", detail: `Requires ${criteria.gender} (Yours: ${student.gender})` });
@@ -382,7 +484,7 @@ export function evaluateEligibility(scholarship, profile = null) {
     }
   }
 
-  // 6. Course / Stream Alignment Check
+  // 9. Course & Stream Alignment Check
   if (criteria.allowedStreams && !criteria.allowedStreams.includes("All")) {
     totalChecks++;
     const stream = (student.streamBranch || "").toLowerCase();
@@ -390,10 +492,8 @@ export function evaluateEligibility(scholarship, profile = null) {
 
     if (!stream && !course) {
       missingFields.push("Course / Stream");
-      reasons.push(
-        `Course/Stream must relate to [${criteria.allowedStreams.slice(0, 4).join(", ")}] (not specified in your profile yet).`
-      );
-      criteriaBreakdown.push({ label: "Degree & Stream", status: "failed", detail: `Requires ${criteria.allowedStreams.slice(0, 3).join(", ")} (Profile: Not specified)` });
+      reasons.push(`Course/Stream must relate to [${criteria.allowedStreams.slice(0, 3).join(", ")}] (not specified in profile).`);
+      criteriaBreakdown.push({ label: "Degree & Stream", status: "failed", detail: `Requires ${criteria.allowedStreams.slice(0, 3).join(", ")}` });
     } else {
       const passed = criteria.allowedStreams.some((s) => {
         const sl = s.toLowerCase();
@@ -406,9 +506,7 @@ export function evaluateEligibility(scholarship, profile = null) {
       });
 
       if (!passed) {
-        reasons.push(
-          `Course/Stream must relate to [${criteria.allowedStreams.slice(0, 4).join(", ")}] (your current: ${student.currentCourse || student.streamBranch || "Other"}).`
-        );
+        reasons.push(`Requires stream related to [${criteria.allowedStreams.slice(0, 3).join(", ")}] (your current: ${student.currentCourse || student.streamBranch || "Other"}).`);
         criteriaBreakdown.push({ label: "Degree & Stream", status: "failed", detail: `Requires ${criteria.allowedStreams.slice(0, 3).join(", ")}` });
       } else {
         passedChecks++;
@@ -417,7 +515,7 @@ export function evaluateEligibility(scholarship, profile = null) {
     }
   }
 
-  // 7. Disability (PwD) Criteria
+  // 10. Disability Status (PwD)
   if (criteria.disabilityRequired) {
     totalChecks++;
     const isPwD = (student.isDisability || "").toLowerCase() === "yes";
@@ -430,29 +528,15 @@ export function evaluateEligibility(scholarship, profile = null) {
     }
   }
 
-  // 8. Special Criteria (e.g. First-Gen)
-  if (criteria.specialCriteriaRequired) {
-    totalChecks++;
-    const special = (student.specialCriteria || "").toLowerCase();
-    const required = criteria.specialCriteriaRequired.toLowerCase();
-    if (!special.includes(required)) {
-      reasons.push(
-        `Requires special qualification: "${criteria.specialCriteriaRequired}".`
-      );
-      criteriaBreakdown.push({ label: "Special Criteria", status: "failed", detail: `Requires ${criteria.specialCriteriaRequired}` });
-    } else {
-      passedChecks++;
-      criteriaBreakdown.push({ label: "Special Criteria", status: "passed", detail: `Matched: ${criteria.specialCriteriaRequired}` });
-    }
-  }
-
-  const isPendingDetails = missingFields.length > 0;
+  // 30% Activation Threshold logic:
+  // If the profile strength is below 30% or if this scholarship lacks critical input, flag as pending.
+  const isPendingDetails = profileStrength < 30 || missingFields.length > 0;
   const isEligible = !isPendingDetails && reasons.length === 0;
 
-  // Calculate dynamic match percentage:
-  // If required details are missing -> null (Details Pending, no arbitrary 35%!)
-  // If eligible -> 90-99%
-  // If evaluated with details provided and ineligible -> 30-65%
+  // Dynamic match percentage calculation:
+  // When details are pending -> null (renders clean Details Pending badge, no bogus numbers)
+  // When activated & eligible -> 90-99% Match
+  // When activated & partially matched -> 30-65% Match
   let matchScore = null;
   if (!isPendingDetails) {
     if (isEligible) {

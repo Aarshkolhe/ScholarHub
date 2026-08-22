@@ -99,7 +99,15 @@ export function SearchScholarshipView({
   // Modals state
   const [activeModalScholarship, setActiveModalScholarship] = useState(null);
   const [applyModalScholarship, setApplyModalScholarship] = useState(null);
-  const studentProfile = useMemo(() => getStoredStudentProfile(), [user]);
+  const [profileVersion, setProfileVersion] = useState(0);
+
+  useEffect(() => {
+    const handleProfileUpdate = () => setProfileVersion((v) => v + 1);
+    window.addEventListener("scholarhub_profile_updated", handleProfileUpdate);
+    return () => window.removeEventListener("scholarhub_profile_updated", handleProfileUpdate);
+  }, []);
+
+  const studentProfile = useMemo(() => getStoredStudentProfile(), [user, profileVersion]);
   const [applicantName, setApplicantName] = useState(user?.fullName || user?.name || "");
   const [applicantCourse, setApplicantCourse] = useState(studentProfile.currentCourse || "");
   const [applicantStatement, setApplicantStatement] = useState("");
@@ -148,7 +156,7 @@ export function SearchScholarshipView({
     } catch {}
     setApplicantName(user?.fullName || user?.name || "");
     setApplicantCourse(studentProfile.currentCourse || "");
-  }, [user, studentProfile]);
+  }, [user, studentProfile, profileVersion]);
 
   const toggleSave = (id, e) => {
     if (e) e.stopPropagation();

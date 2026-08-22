@@ -28,11 +28,18 @@ export function RecentScholarships({
 }) {
   const { user } = useAuth();
   const [activeModalItem, setActiveModalItem] = useState(null);
+  const [profileVersion, setProfileVersion] = useState(0);
+
+  useEffect(() => {
+    const handleProfileUpdate = () => setProfileVersion((v) => v + 1);
+    window.addEventListener("scholarhub_profile_updated", handleProfileUpdate);
+    return () => window.removeEventListener("scholarhub_profile_updated", handleProfileUpdate);
+  }, []);
 
   // Application Modal state
-  const studentProfile = useMemo(() => getStoredStudentProfile(), [user]);
+  const studentProfile = useMemo(() => getStoredStudentProfile(), [user, profileVersion]);
   const profileStrength = useMemo(() => calculateProfileStrength(studentProfile), [studentProfile]);
-  const hasFilledDetails = profileStrength > 0;
+  const hasFilledDetails = profileStrength >= 30;
 
   // Evaluate database scholarships against profile
   const evaluatedScholarships = useMemo(() => {
