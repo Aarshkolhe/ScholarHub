@@ -73,13 +73,13 @@ export function UserProfileSection() {
       ? localStorage.getItem(`scholarhub_profile_education${uid}`)
       : localStorage.getItem("scholarhub_profile_education");
     const parsedLegacy = legacyEd ? JSON.parse(legacyEd) : {};
+    const parsedPast = storedPast ? JSON.parse(storedPast) : {};
 
-    return storedPast
-      ? JSON.parse(storedPast)
-      : {
-          tenthPercentage: parsedLegacy.tenthPercentage || "",
-          twelfthPercentage: parsedLegacy.twelfthPercentage || "",
-        };
+    return {
+      tenthPercentage: parsedPast.tenthPercentage || parsedLegacy.tenthPercentage || "",
+      twelfthPercentage: parsedPast.twelfthPercentage || parsedLegacy.twelfthPercentage || "",
+      ugPercentage: parsedPast.ugPercentage || parsedLegacy.ugPercentage || "",
+    };
   });
 
   // 4. Living Status State (🏠 Living Status)
@@ -328,6 +328,7 @@ export function UserProfileSection() {
       fullName: personal.fullName,
       email: personal.email,
     });
+    window.dispatchEvent(new Event("scholarhub_profile_updated"));
 
     try {
       const response = await fetch(`${BACKEND_URL}/api/profile`, {
@@ -608,138 +609,255 @@ export function UserProfileSection() {
         )}
 
         {/* SECTION 2: CURRENT EDUCATION */}
-        {activeSection === "currentEd" && (
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <GraduationCap className="size-5 text-blue-600 dark:text-blue-400" />
-              Current Education & Degree
-            </h3>
+        {activeSection === "currentEd" && (() => {
+          const qual = currentEducation.qualification || "";
+          const isClass10 = qual.includes("Class 10") || qual.includes("Primary");
+          const isClass12 = qual.includes("Class 12");
+          const isSchool = isClass10 || isClass12;
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Current Course / Degree</label>
-                <input
-                  type="text"
-                  name="currentCourse"
-                  placeholder="e.g. B.Tech Computer Science, B.Sc Physics, MBBS, Class 11"
-                  value={currentEducation.currentCourse}
-                  onChange={handleCurrentEdChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
-              </div>
+          return (
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <GraduationCap className="size-5 text-blue-600 dark:text-blue-400" />
+                Current Education & Qualification Level
+              </h3>
 
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Stream / Branch</label>
-                <select
-                  name="streamBranch"
-                  value={currentEducation.streamBranch}
-                  onChange={handleCurrentEdChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                >
-                  <option value="">Select Stream...</option>
-                  <option value="Engineering & Technology">Engineering & Technology</option>
-                  <option value="Science / STEM">Science / STEM</option>
-                  <option value="Arts & Commerce">Arts & Commerce</option>
-                  <option value="Medical & Healthcare">Medical & Healthcare</option>
-                  <option value="School / Junior College">School / Junior College (11th & 12th)</option>
-                  <option value="Diploma / Polytechnic">Diploma / Polytechnic</option>
-                </select>
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* 1. Qualification Level Dropdown (Primary Control) */}
+                <div className="sm:col-span-2 bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                  <label className="text-xs font-bold text-blue-900 dark:text-blue-300">
+                    Qualification / Education Level
+                  </label>
+                  <select
+                    name="qualification"
+                    value={currentEducation.qualification}
+                    onChange={handleCurrentEdChange}
+                    className="mt-1 w-full rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 p-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                  >
+                    <option value="Class 10 / Secondary (SSC)">Class 10 / Secondary School (SSC)</option>
+                    <option value="Class 12 / Senior Secondary (HSC / 10+2)">Class 12 / Senior Secondary (HSC / 10+2 / Junior College)</option>
+                    <option value="Undergraduate (UG)">Undergraduate (UG / B.Tech, B.Sc, B.A, B.Com, MBBS)</option>
+                    <option value="Postgraduate (PG)">Postgraduate (PG / M.Tech, M.Sc, M.A, MBA)</option>
+                    <option value="Diploma / Polytechnic">Diploma / Polytechnic (3-Year Technical)</option>
+                    <option value="Doctorate (PhD)">Doctorate (PhD / Research Fellow)</option>
+                    <option value="Primary / Middle School (Class 1 - 8)">Primary / Middle School (Class 1 - 8)</option>
+                  </select>
+                </div>
 
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">College / University Name</label>
-                <input
-                  type="text"
-                  name="collegeName"
-                  placeholder="e.g. National Institute of Technology"
-                  value={currentEducation.collegeName}
-                  onChange={handleCurrentEdChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
-              </div>
+                {/* 2. School / College Name */}
+                <div>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {isSchool ? "School / Junior College Name" : "College / University Name"}
+                  </label>
+                  <input
+                    type="text"
+                    name="collegeName"
+                    placeholder={
+                      isSchool
+                        ? "e.g. Kendriya Vidyalaya, Saraswati High School, St. Xavier's"
+                        : "e.g. National Institute of Technology, Delhi University"
+                    }
+                    value={currentEducation.collegeName}
+                    onChange={handleCurrentEdChange}
+                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                  />
+                </div>
 
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Year / Semester of Study</label>
-                <input
-                  type="text"
-                  name="yearSemester"
-                  placeholder="e.g. 3rd Year (Sem 6), 1st Year"
-                  value={currentEducation.yearSemester}
-                  onChange={handleCurrentEdChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
-              </div>
+                {/* 3. Class / Course / Degree Name */}
+                <div>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {isClass10
+                      ? "Class / Board Name"
+                      : isClass12
+                      ? "Class & Stream Name"
+                      : "Course / Degree Name"}
+                  </label>
+                  <input
+                    type="text"
+                    name="currentCourse"
+                    placeholder={
+                      isClass10
+                        ? "e.g. Class 10 (SSC Board)"
+                        : isClass12
+                        ? "e.g. Class 12 Science (PCM), Class 11 Arts"
+                        : "e.g. B.Tech Computer Science, B.Sc Physics, MBBS"
+                    }
+                    value={currentEducation.currentCourse}
+                    onChange={handleCurrentEdChange}
+                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                  />
+                </div>
 
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Current Marks (%) or CGPA</label>
-                <input
-                  type="text"
-                  name="marksPercentage"
-                  placeholder="e.g. 78% or 8.5 CGPA"
-                  value={currentEducation.marksPercentage}
-                  onChange={handleCurrentEdChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
-              </div>
+                {/* 4. Stream / Academic Field (Hidden for Class 10 to reduce clutter) */}
+                {!isClass10 && (
+                  <div>
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Stream / Academic Field</label>
+                    <select
+                      name="streamBranch"
+                      value={currentEducation.streamBranch}
+                      onChange={handleCurrentEdChange}
+                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                    >
+                      <option value="">Select Stream...</option>
+                      {isClass12 ? (
+                        <>
+                          <option value="Senior Secondary 10+2 (Science PCM / PCB)">Senior Secondary 10+2 (Science PCM / PCB)</option>
+                          <option value="Senior Secondary 10+2 (Arts & Commerce)">Senior Secondary 10+2 (Arts & Commerce)</option>
+                        </>
+                      ) : (
+                        <>
+                          <option value="Engineering & Technology">Engineering & Technology</option>
+                          <option value="Science / STEM">Science / STEM</option>
+                          <option value="Arts & Humanities">Arts & Humanities</option>
+                          <option value="Commerce & Finance">Commerce & Finance</option>
+                          <option value="Medical & Healthcare">Medical & Healthcare</option>
+                          <option value="Diploma / Polytechnic">Diploma / Polytechnic</option>
+                        </>
+                      )}
+                    </select>
+                  </div>
+                )}
 
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Degree Level</label>
-                <select
-                  name="qualification"
-                  value={currentEducation.qualification}
-                  onChange={handleCurrentEdChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                >
-                  <option value="Undergraduate (UG)">Undergraduate (UG)</option>
-                  <option value="Postgraduate (PG)">Postgraduate (PG)</option>
-                  <option value="Higher Secondary (10+2)">Higher Secondary (10+2 / School)</option>
-                  <option value="Doctorate (PhD)">Doctorate (PhD / Research)</option>
-                  <option value="Diploma / Polytechnic">Diploma / Polytechnic</option>
-                </select>
+                {/* 5. Year / Class / Semester (Only for Class 12 or College) */}
+                {!isClass10 && (
+                  <div>
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                      {isClass12 ? "Class Year" : "Year / Semester of Study"}
+                    </label>
+                    {isClass12 ? (
+                      <select
+                        name="yearSemester"
+                        value={currentEducation.yearSemester}
+                        onChange={handleCurrentEdChange}
+                        className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                      >
+                        <option value="Class 11th">Class 11th</option>
+                        <option value="Class 12th">Class 12th (HSC Board Year)</option>
+                      </select>
+                    ) : (
+                      <input
+                        type="text"
+                        name="yearSemester"
+                        placeholder="e.g. 3rd Year (Sem 6), 1st Year"
+                        value={currentEducation.yearSemester}
+                        onChange={handleCurrentEdChange}
+                        className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                      />
+                    )}
+                  </div>
+                )}
+
+                {/* 6. Current / Previous Marks */}
+                <div>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                    {isClass10
+                      ? "Class 9th / Mid-Term Marks (%)"
+                      : isClass12
+                      ? "Class 11th / Mid-Term Marks (%)"
+                      : "Current Semester / Annual Marks (%) or CGPA"}
+                  </label>
+                  <input
+                    type="text"
+                    name="marksPercentage"
+                    placeholder={isSchool ? "e.g. 85%" : "e.g. 78% or 8.5 CGPA"}
+                    value={currentEducation.marksPercentage}
+                    onChange={handleCurrentEdChange}
+                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* SECTION 3: PAST EDUCATION */}
-        {activeSection === "pastEd" && (
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <BookOpen className="size-5 text-blue-600 dark:text-blue-400" />
-              Past Education Scores (Powers 10th & 12th Merit Grants)
-            </h3>
+        {activeSection === "pastEd" && (() => {
+          const qual = currentEducation.qualification || "";
+          const isClass10 = qual.includes("Class 10") || qual.includes("Primary");
+          const isClass12 = qual.includes("Class 12");
+          const isPG = qual.includes("Postgraduate") || qual.includes("Doctorate");
 
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Matches merit-based cutoff grants like <strong>MahaDBT 10th Scheme</strong>, <strong>MahaJYOTI CET/JEE/NEET Tab Allowance</strong>, and <strong>NMMSS Merit Schemes</strong>.
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">10th Board Marks (%)</label>
-                <input
-                  type="text"
-                  name="tenthPercentage"
-                  placeholder="e.g. 88.4% or 88.4"
-                  value={pastEducation.tenthPercentage}
-                  onChange={handlePastEdChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
+          if (isClass10) {
+            return (
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
+                <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <BookOpen className="size-5 text-blue-600 dark:text-blue-400" />
+                  Past Education Scores
+                </h3>
+                <div className="rounded-xl bg-blue-50 dark:bg-blue-950/40 p-4 border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
+                  <p className="font-bold flex items-center gap-1.5 mb-1">
+                    ℹ️ Class 10 / Secondary Student Profile Active
+                  </p>
+                  <p>
+                    Past 10th and 12th board exam scores are not applicable yet as you are currently in Class 10. Your Class 9th / Current Class 10 marks are evaluated directly for 10th Passed & pre-matric school merit grants.
+                  </p>
+                </div>
               </div>
+            );
+          }
 
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">12th Board / Diploma Marks (%)</label>
-                <input
-                  type="text"
-                  name="twelfthPercentage"
-                  placeholder="e.g. 85.2% or 85.2"
-                  value={pastEducation.twelfthPercentage}
-                  onChange={handlePastEdChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                />
+          return (
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <BookOpen className="size-5 text-blue-600 dark:text-blue-400" />
+                Past Education Scores {isPG ? "(UG Degree, 10th & 12th Scores)" : "(Powers 10th & 12th Merit Grants)"}
+              </h3>
+
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Matches merit-based cutoff grants like <strong>MahaDBT 10th Scheme</strong>, <strong>Postgraduate Research Fellowships</strong>, and <strong>Central Sector Grants</strong>.
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                {/* UG Graduation Marks (For PG / PhD Students) */}
+                {isPG && (
+                  <div className="sm:col-span-2 bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50">
+                    <label className="text-xs font-bold text-blue-900 dark:text-blue-300">
+                      Undergraduate (UG / Graduation) Aggregate Marks (%) or CGPA
+                    </label>
+                    <input
+                      type="text"
+                      name="ugPercentage"
+                      placeholder="e.g. 82% or 8.4 CGPA"
+                      value={pastEducation.ugPercentage}
+                      onChange={handlePastEdChange}
+                      className="mt-1 w-full rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 p-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">10th Board Marks (%)</label>
+                  <input
+                    type="text"
+                    name="tenthPercentage"
+                    placeholder="e.g. 88.4% or 88.4"
+                    value={pastEducation.tenthPercentage}
+                    onChange={handlePastEdChange}
+                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                  />
+                </div>
+
+                {!isClass12 ? (
+                  <div>
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">12th Board / Diploma Marks (%)</label>
+                    <input
+                      type="text"
+                      name="twelfthPercentage"
+                      placeholder="e.g. 85.2% or 85.2"
+                      value={pastEducation.twelfthPercentage}
+                      onChange={handlePastEdChange}
+                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                    />
+                  </div>
+                ) : (
+                  <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3 border border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex items-center">
+                    <span>ℹ️ 12th Board Score: Not applicable yet (Currently pursuing Class 11/12).</span>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* SECTION 4: LIVING STATUS & ACCOMMODATION */}
         {activeSection === "living" && (

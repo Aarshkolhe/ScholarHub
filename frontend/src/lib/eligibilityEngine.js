@@ -6,93 +6,372 @@
 
 import { SCHOLARSHIPS_DATABASE } from "./scholarshipData.js";
 
-export const SIMULATION_DEMO_PROFILE = {
-  user: {
-    id: "usr_sim_demo",
-    name: "Aarsh Kolhe",
-    fullName: "Aarsh Kolhe",
-    email: "aarsh@scholarhub.edu",
-    role: "Student",
+export const SIMULATION_DEMO_PROFILES = [
+  {
+    id: "high_merit_tech",
+    label: "Aarsh Kolhe",
+    tagline: "High Merit Engineering Student (OBC, 78% Marks, ₹2L Income)",
+    description: "B.Tech Computer Science (Sem 6), OBC quota, ₹2.0L annual income, Maharashtra domicile. High eligibility for STEM & state merit grants.",
+    badgeColor: "emerald",
+    profile: {
+      user: {
+        id: "usr_sim_demo_aarsh",
+        name: "Aarsh Kolhe",
+        fullName: "Aarsh Kolhe",
+        email: "aarsh@scholarhub.edu",
+        role: "Student",
+      },
+      personal: {
+        fullName: "Aarsh Kolhe",
+        email: "aarsh@scholarhub.edu",
+        phone: "9876543210",
+        gender: "Male",
+        dob: "2004-05-15",
+        age: "21",
+      },
+      currentEducation: {
+        currentCourse: "B.Tech Computer Science",
+        streamBranch: "Engineering & Technology",
+        collegeName: "National Institute of Technology",
+        yearSemester: "3rd Year (Sem 6)",
+        marksPercentage: "78%",
+        qualification: "Undergraduate (UG)",
+      },
+      pastEducation: {
+        tenthPercentage: "88.4%",
+        twelfthPercentage: "85.2%",
+      },
+      livingStatus: {
+        livingType: "Hostel",
+        monthlyLivingCost: "6000",
+      },
+      financial: {
+        annualIncome: "200000",
+      },
+      eligibility: {
+        category: "OBC",
+        domicileState: "Maharashtra",
+        isDisability: "No",
+        specialCriteria: "None",
+      },
+      savedIds: [],
+      appliedIds: [],
+    },
   },
-  personal: {
-    fullName: "Aarsh Kolhe",
-    email: "aarsh@scholarhub.edu",
-    phone: "9876543210",
-    gender: "Male",
-    dob: "2004-05-15",
-    age: "21",
+  {
+    id: "class_10_school_student",
+    label: "Tanvi Deshmukh",
+    tagline: "Class 10 School Student (SSC Board, 85% Marks, ₹1.2L Income)",
+    description: "Class 10 Passed (SSC Board), EBC category, 85% 10th marks, ₹1.2L income, Maharashtra domicile. Tests 10th Passed & school merit grants (e.g. MahaDBT 10th Merit).",
+    badgeColor: "cyan",
+    profile: {
+      user: {
+        id: "usr_sim_demo_tanvi",
+        name: "Tanvi Deshmukh",
+        fullName: "Tanvi Deshmukh",
+        email: "tanvi.d@scholarhub.edu",
+        role: "Student",
+      },
+      personal: {
+        fullName: "Tanvi Deshmukh",
+        email: "tanvi.d@scholarhub.edu",
+        phone: "9876123456",
+        gender: "Female",
+        dob: "2009-08-12",
+        age: "16",
+      },
+      currentEducation: {
+        currentCourse: "Class 10 (SSC Board)",
+        streamBranch: "Secondary School (Class 9th & 10th)",
+        collegeName: "Saraswati High School",
+        yearSemester: "Class 10 (Board Year)",
+        marksPercentage: "85%",
+        qualification: "Class 10 / Secondary (SSC)",
+      },
+      pastEducation: {
+        tenthPercentage: "85.0%",
+        twelfthPercentage: "",
+      },
+      livingStatus: {
+        livingType: "Day Scholar (Commuter)",
+        monthlyLivingCost: "1500",
+      },
+      financial: {
+        annualIncome: "120000",
+      },
+      eligibility: {
+        category: "EBC",
+        domicileState: "Maharashtra",
+        isDisability: "No",
+        specialCriteria: "Single Girl Child",
+      },
+      savedIds: [],
+      appliedIds: [],
+    },
   },
-  currentEducation: {
-    currentCourse: "B.Tech Computer Science",
-    streamBranch: "Engineering & Technology",
-    collegeName: "National Institute of Technology",
-    yearSemester: "3rd Year (Sem 6)",
-    marksPercentage: "78%",
-    qualification: "Undergraduate (UG)",
+  {
+    id: "disabled_girl_high_merit",
+    label: "Ananya Roy",
+    tagline: "Disabled Female Top Scholar (SC/ST, PwD, 90% Marks, ₹1.5L Income)",
+    description: "B.Sc Biotechnology (1st Year), Female, PwD/Disability: Yes, SC/ST quota, ₹1.5L annual income, West Bengal domicile. Qualifies for disability grants & women in STEM awards.",
+    badgeColor: "indigo",
+    profile: {
+      user: {
+        id: "usr_sim_demo_ananya",
+        name: "Ananya Roy",
+        fullName: "Ananya Roy",
+        email: "ananya.roy@scholarhub.edu",
+        role: "Student",
+      },
+      personal: {
+        fullName: "Ananya Roy",
+        email: "ananya.roy@scholarhub.edu",
+        phone: "9812345678",
+        gender: "Female",
+        dob: "2005-02-20",
+        age: "20",
+      },
+      currentEducation: {
+        currentCourse: "B.Sc Biotechnology",
+        streamBranch: "Science & Healthcare",
+        collegeName: "St. Xavier's College",
+        yearSemester: "1st Year (Sem 2)",
+        marksPercentage: "90%",
+        qualification: "Undergraduate (UG)",
+      },
+      pastEducation: {
+        tenthPercentage: "94.0%",
+        twelfthPercentage: "92.5%",
+      },
+      livingStatus: {
+        livingType: "Day Scholar (Commuter)",
+        monthlyLivingCost: "2500",
+      },
+      financial: {
+        annualIncome: "150000",
+      },
+      eligibility: {
+        category: "SC/ST",
+        domicileState: "West Bengal",
+        isDisability: "Yes",
+        specialCriteria: "Single Girl Child",
+      },
+      savedIds: [],
+      appliedIds: [],
+    },
   },
-  pastEducation: {
-    tenthPercentage: "88.4%",
-    twelfthPercentage: "85.2%",
+  {
+    id: "moderate_general_arts",
+    label: "Rahul Sharma",
+    tagline: "Moderate Marks Arts Student (General Category, 50% Marks, ₹4.5L Income)",
+    description: "B.A. Humanities (2nd Year), General category, 50% marks, ₹4.5L annual income, Delhi domicile. Tests moderate eligibility calculations & lower % match badge styling.",
+    badgeColor: "amber",
+    profile: {
+      user: {
+        id: "usr_sim_demo_rahul",
+        name: "Rahul Sharma",
+        fullName: "Rahul Sharma",
+        email: "rahul.sharma@scholarhub.edu",
+        role: "Student",
+      },
+      personal: {
+        fullName: "Rahul Sharma",
+        email: "rahul.sharma@scholarhub.edu",
+        phone: "9898989898",
+        gender: "Male",
+        dob: "2004-09-10",
+        age: "21",
+      },
+      currentEducation: {
+        currentCourse: "B.A. Humanities & Social Sciences",
+        streamBranch: "Arts & Humanities",
+        collegeName: "Delhi University",
+        yearSemester: "2nd Year (Sem 4)",
+        marksPercentage: "50%",
+        qualification: "Undergraduate (UG)",
+      },
+      pastEducation: {
+        tenthPercentage: "58.0%",
+        twelfthPercentage: "54.0%",
+      },
+      livingStatus: {
+        livingType: "Rented Room / PG",
+        monthlyLivingCost: "4500",
+      },
+      financial: {
+        annualIncome: "450000",
+      },
+      eligibility: {
+        category: "General",
+        domicileState: "Delhi",
+        isDisability: "No",
+        specialCriteria: "None",
+      },
+      savedIds: [],
+      appliedIds: [],
+    },
   },
-  livingStatus: {
-    livingType: "Hostel",
-    monthlyLivingCost: "6000",
+  {
+    id: "incomplete_profile_gate",
+    label: "Priya Patel",
+    tagline: "Incomplete Profile (< 30% Strength - Threshold Gate Test)",
+    description: "B.Com (1st Year). Only basic name & course filled, profile strength ~15%. Triggers the 30% Recommendation Threshold Gate card and incomplete profile alerts.",
+    badgeColor: "rose",
+    profile: {
+      user: {
+        id: "usr_sim_demo_priya",
+        name: "Priya Patel",
+        fullName: "Priya Patel",
+        email: "priya.patel@scholarhub.edu",
+        role: "Student",
+      },
+      personal: {
+        fullName: "Priya Patel",
+        email: "priya.patel@scholarhub.edu",
+        phone: "",
+        gender: "",
+        dob: "",
+        age: "",
+      },
+      currentEducation: {
+        currentCourse: "B.Com Commerce",
+        streamBranch: "",
+        collegeName: "",
+        yearSemester: "",
+        marksPercentage: "",
+        qualification: "Undergraduate (UG)",
+      },
+      pastEducation: {
+        tenthPercentage: "",
+        twelfthPercentage: "",
+      },
+      livingStatus: {
+        livingType: "",
+        monthlyLivingCost: "",
+      },
+      financial: {
+        annualIncome: "",
+      },
+      eligibility: {
+        category: "",
+        domicileState: "",
+        isDisability: "",
+        specialCriteria: "",
+      },
+      savedIds: [],
+      appliedIds: [],
+    },
   },
-  financial: {
-    annualIncome: "200000",
+  {
+    id: "postgraduate_research",
+    label: "Siddharth Verma",
+    tagline: "Postgraduate AI Scholar (EWS, 82% Marks, ₹5L Income)",
+    description: "M.Tech Artificial Intelligence (1st Year), EWS quota, 82% marks, ₹5.0L annual income, Karnataka domicile. Qualifies for PG research fellowships and higher education grants.",
+    badgeColor: "violet",
+    profile: {
+      user: {
+        id: "usr_sim_demo_siddharth",
+        name: "Siddharth Verma",
+        fullName: "Siddharth Verma",
+        email: "siddharth.v@scholarhub.edu",
+        role: "Student",
+      },
+      personal: {
+        fullName: "Siddharth Verma",
+        email: "siddharth.v@scholarhub.edu",
+        phone: "9765432109",
+        gender: "Male",
+        dob: "2002-11-05",
+        age: "23",
+      },
+      currentEducation: {
+        currentCourse: "M.Tech Artificial Intelligence",
+        streamBranch: "Engineering & Technology",
+        collegeName: "Indian Institute of Science",
+        yearSemester: "1st Year (Sem 2)",
+        marksPercentage: "82%",
+        qualification: "Postgraduate (PG)",
+      },
+      pastEducation: {
+        tenthPercentage: "90.0%",
+        twelfthPercentage: "88.0%",
+        ugPercentage: "84.5%",
+      },
+      livingStatus: {
+        livingType: "Hostel",
+        monthlyLivingCost: "7000",
+      },
+      financial: {
+        annualIncome: "500000",
+      },
+      eligibility: {
+        category: "EWS",
+        domicileState: "Karnataka",
+        isDisability: "No",
+        specialCriteria: "First Generation College Student",
+      },
+      savedIds: [],
+      appliedIds: [],
+    },
   },
-  eligibility: {
-    category: "OBC",
-    domicileState: "Maharashtra",
-    isDisability: "No",
-    specialCriteria: "None",
-  },
-  savedIds: ["mahadbt-10th-1", "mahadbt-1", "mahadbt-2"],
-  appliedIds: ["mahadbt-10th-1"],
-};
+];
+
+export const SIMULATION_DEMO_PROFILE = SIMULATION_DEMO_PROFILES[0].profile;
 
 /**
  * Load complete demo dataset into localStorage for Simulation Mode.
+ * Accepts a profile index or ID string.
  */
-export function loadSimulationProfile() {
-  const uid = "_usr_sim_demo";
+export function loadSimulationProfile(profileIndexOrId = 0) {
+  let selected = SIMULATION_DEMO_PROFILES[0];
 
-  // Global keys
-  localStorage.setItem("scholarhub_user", JSON.stringify(SIMULATION_DEMO_PROFILE.user));
-  localStorage.setItem("scholarhub_profile_personal", JSON.stringify(SIMULATION_DEMO_PROFILE.personal));
-  localStorage.setItem("scholarhub_profile_current_education", JSON.stringify(SIMULATION_DEMO_PROFILE.currentEducation));
-  localStorage.setItem("scholarhub_profile_past_education", JSON.stringify(SIMULATION_DEMO_PROFILE.pastEducation));
-  localStorage.setItem("scholarhub_profile_living_status", JSON.stringify(SIMULATION_DEMO_PROFILE.livingStatus));
-  localStorage.setItem("scholarhub_profile_financial", JSON.stringify(SIMULATION_DEMO_PROFILE.financial));
-  localStorage.setItem("scholarhub_profile_eligibility", JSON.stringify(SIMULATION_DEMO_PROFILE.eligibility));
+  if (typeof profileIndexOrId === "number") {
+    selected = SIMULATION_DEMO_PROFILES[profileIndexOrId] || SIMULATION_DEMO_PROFILES[0];
+  } else if (typeof profileIndexOrId === "string") {
+    selected =
+      SIMULATION_DEMO_PROFILES.find((p) => p.id === profileIndexOrId) ||
+      SIMULATION_DEMO_PROFILES[0];
+  }
+
+  const demo = selected.profile;
+  const uid = `_${demo.user.id}`;
+
+  // Global keys — savedIds and appliedIds are explicitly empty []
+  localStorage.setItem("scholarhub_user", JSON.stringify(demo.user));
+  localStorage.setItem("scholarhub_profile_personal", JSON.stringify(demo.personal));
+  localStorage.setItem("scholarhub_profile_current_education", JSON.stringify(demo.currentEducation));
+  localStorage.setItem("scholarhub_profile_past_education", JSON.stringify(demo.pastEducation));
+  localStorage.setItem("scholarhub_profile_living_status", JSON.stringify(demo.livingStatus));
+  localStorage.setItem("scholarhub_profile_financial", JSON.stringify(demo.financial));
+  localStorage.setItem("scholarhub_profile_eligibility", JSON.stringify(demo.eligibility));
   localStorage.setItem("scholarhub_profile_education", JSON.stringify({
-    ...SIMULATION_DEMO_PROFILE.currentEducation,
-    ...SIMULATION_DEMO_PROFILE.pastEducation,
+    ...demo.currentEducation,
+    ...demo.pastEducation,
   }));
-  localStorage.setItem("scholarhub_saved_landing_name", SIMULATION_DEMO_PROFILE.personal.fullName);
-  localStorage.setItem("scholarhub_saved_ids", JSON.stringify(SIMULATION_DEMO_PROFILE.savedIds));
-  localStorage.setItem("scholarhub_applied_ids", JSON.stringify(SIMULATION_DEMO_PROFILE.appliedIds));
+  localStorage.setItem("scholarhub_saved_landing_name", demo.personal.fullName);
+  localStorage.setItem("scholarhub_saved_ids", JSON.stringify([]));
+  localStorage.setItem("scholarhub_applied_ids", JSON.stringify([]));
 
   // Scoped keys
-  localStorage.setItem(`scholarhub_profile_personal${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.personal));
-  localStorage.setItem(`scholarhub_profile_current_education${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.currentEducation));
-  localStorage.setItem(`scholarhub_profile_past_education${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.pastEducation));
-  localStorage.setItem(`scholarhub_profile_living_status${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.livingStatus));
-  localStorage.setItem(`scholarhub_profile_financial${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.financial));
-  localStorage.setItem(`scholarhub_profile_eligibility${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.eligibility));
+  localStorage.setItem(`scholarhub_profile_personal${uid}`, JSON.stringify(demo.personal));
+  localStorage.setItem(`scholarhub_profile_current_education${uid}`, JSON.stringify(demo.currentEducation));
+  localStorage.setItem(`scholarhub_profile_past_education${uid}`, JSON.stringify(demo.pastEducation));
+  localStorage.setItem(`scholarhub_profile_living_status${uid}`, JSON.stringify(demo.livingStatus));
+  localStorage.setItem(`scholarhub_profile_financial${uid}`, JSON.stringify(demo.financial));
+  localStorage.setItem(`scholarhub_profile_eligibility${uid}`, JSON.stringify(demo.eligibility));
   localStorage.setItem(`scholarhub_profile_education${uid}`, JSON.stringify({
-    ...SIMULATION_DEMO_PROFILE.currentEducation,
-    ...SIMULATION_DEMO_PROFILE.pastEducation,
+    ...demo.currentEducation,
+    ...demo.pastEducation,
   }));
-  localStorage.setItem(`scholarhub_saved_landing_name${uid}`, SIMULATION_DEMO_PROFILE.personal.fullName);
-  localStorage.setItem(`scholarhub_saved_ids${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.savedIds));
-  localStorage.setItem(`scholarhub_applied_ids${uid}`, JSON.stringify(SIMULATION_DEMO_PROFILE.appliedIds));
+  localStorage.setItem(`scholarhub_saved_landing_name${uid}`, demo.personal.fullName);
+  localStorage.setItem(`scholarhub_saved_ids${uid}`, JSON.stringify([]));
+  localStorage.setItem(`scholarhub_applied_ids${uid}`, JSON.stringify([]));
 
   if (typeof window !== "undefined") {
     window.dispatchEvent(new Event("scholarhub_profile_updated"));
   }
 
-  return SIMULATION_DEMO_PROFILE;
+  return demo;
 }
 
 /**
@@ -270,6 +549,7 @@ export function normalizeProfile(raw) {
     qualification: raw.qualification || curEd.qualification || "",
     tenthPercentage: raw.tenthPercentage || pastEd.tenthPercentage || "",
     twelfthPercentage: raw.twelfthPercentage || pastEd.twelfthPercentage || "",
+    ugPercentage: raw.ugPercentage || pastEd.ugPercentage || "",
     livingType: raw.livingType || living.livingType || "",
     monthlyLivingCost: raw.monthlyLivingCost || living.monthlyLivingCost || "",
     annualIncome: raw.annualIncome !== undefined && raw.annualIncome !== null ? raw.annualIncome : (financial.annualIncome !== undefined ? financial.annualIncome : ""),
@@ -309,8 +589,9 @@ export function calculateProfileStrength(profile = null) {
   if (p.marksPercentage && String(p.marksPercentage).trim()) score += 5;
 
   // 3. Past Education (15 pts)
-  if (p.tenthPercentage && String(p.tenthPercentage).trim()) score += 8;
-  if (p.twelfthPercentage && String(p.twelfthPercentage).trim()) score += 7;
+  if (p.tenthPercentage && String(p.tenthPercentage).trim()) score += 5;
+  if (p.twelfthPercentage && String(p.twelfthPercentage).trim()) score += 5;
+  if (p.ugPercentage && String(p.ugPercentage).trim()) score += 5;
 
   // 4. Living Status (10 pts)
   if (p.livingType && String(p.livingType).trim()) score += 10;
@@ -527,8 +808,9 @@ export function evaluateEligibility(scholarship, profile = null) {
     totalChecks++;
     const stream = (student.streamBranch || "").toLowerCase();
     const course = (student.currentCourse || "").toLowerCase();
+    const qual = (student.qualification || "").toLowerCase();
 
-    if (!stream && !course) {
+    if (!stream && !course && !qual) {
       missingFields.push("Course / Stream");
       reasons.push(`Course/Stream must relate to [${criteria.allowedStreams.slice(0, 3).join(", ")}] (not specified in profile).`);
       criteriaBreakdown.push({ label: "Degree & Stream", status: "failed", detail: `Requires ${criteria.allowedStreams.slice(0, 3).join(", ")}` });
@@ -538,18 +820,62 @@ export function evaluateEligibility(scholarship, profile = null) {
         return (
           stream.includes(sl) ||
           course.includes(sl) ||
+          qual.includes(sl) ||
           sl.includes(course) ||
-          sl.includes(stream)
+          sl.includes(stream) ||
+          (sl.includes("school") && (qual.includes("10") || qual.includes("12") || qual.includes("secondary") || course.includes("class")))
         );
       });
 
       if (!passed) {
-        reasons.push(`Requires stream related to [${criteria.allowedStreams.slice(0, 3).join(", ")}] (your current: ${student.currentCourse || student.streamBranch || "Other"}).`);
+        reasons.push(`Requires stream related to [${criteria.allowedStreams.slice(0, 3).join(", ")}] (your current: ${student.currentCourse || student.streamBranch || student.qualification || "Other"}).`);
         criteriaBreakdown.push({ label: "Degree & Stream", status: "failed", detail: `Requires ${criteria.allowedStreams.slice(0, 3).join(", ")}` });
       } else {
         passedChecks++;
-        criteriaBreakdown.push({ label: "Degree & Stream", status: "passed", detail: `Matched: ${student.currentCourse || student.streamBranch}` });
+        criteriaBreakdown.push({ label: "Degree & Stream", status: "passed", detail: `Matched: ${student.currentCourse || student.streamBranch || student.qualification}` });
       }
+    }
+  }
+
+  // 9b. Allowed Degree / Level Check
+  if (criteria.allowedDegrees && !criteria.allowedDegrees.includes("All")) {
+    totalChecks++;
+    const qual = (student.qualification || "").toLowerCase();
+    const course = (student.currentCourse || "").toLowerCase();
+
+    const passed = criteria.allowedDegrees.some((d) => {
+      const dl = d.toLowerCase();
+      if (dl === "school" || dl.includes("secondary") || dl.includes("10+2")) {
+        return (
+          qual.includes("10") ||
+          qual.includes("12") ||
+          qual.includes("secondary") ||
+          qual.includes("school") ||
+          course.includes("class 10") ||
+          course.includes("class 12") ||
+          course.includes("class 11") ||
+          course.includes("ssc") ||
+          course.includes("hsc")
+        );
+      }
+      if (dl === "undergraduate" || dl === "ug") {
+        return qual.includes("undergraduate") || qual.includes("ug") || course.includes("b.tech") || course.includes("b.sc") || course.includes("b.a") || course.includes("b.com") || course.includes("mbbs");
+      }
+      if (dl === "postgraduate" || dl === "pg") {
+        return qual.includes("postgraduate") || qual.includes("pg") || course.includes("m.tech") || course.includes("m.sc") || course.includes("m.a") || course.includes("mba");
+      }
+      if (dl === "diploma") {
+        return qual.includes("diploma") || course.includes("diploma") || course.includes("polytechnic");
+      }
+      return qual.includes(dl) || course.includes(dl);
+    });
+
+    if (!passed) {
+      reasons.push(`Degree level restricted to [${criteria.allowedDegrees.join(", ")}] (your profile: ${student.qualification || student.currentCourse || "Unspecified"}).`);
+      criteriaBreakdown.push({ label: "Degree Level", status: "failed", detail: `Requires ${criteria.allowedDegrees.join(", ")}` });
+    } else {
+      passedChecks++;
+      criteriaBreakdown.push({ label: "Degree Level", status: "passed", detail: `Matched: ${student.qualification || student.currentCourse}` });
     }
   }
 

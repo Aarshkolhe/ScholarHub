@@ -18,6 +18,8 @@ import {
   Trash2,
   Upload,
   Check,
+  Pencil,
+  X,
 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import { getStoredStudentProfile, calculateProfileStrength } from "../../lib/eligibilityEngine";
@@ -28,8 +30,47 @@ export function StudentProfileOverview({ onNavigateTab }) {
   const fileInputRef = useRef(null);
 
   const [toastMsg, setToastMsg] = useState("");
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editNameInput, setEditNameInput] = useState("");
 
   const displayName = user?.fullName || user?.name || profile.name || "Student";
+
+  const handleSaveName = (e) => {
+    if (e) e.preventDefault();
+    const trimmed = editNameInput.trim();
+    if (!trimmed) return;
+
+    updateUser({ name: trimmed, fullName: trimmed });
+
+    try {
+      const uid = user?.id ? `_${user.id}` : "";
+      const personalKey = uid
+        ? `scholarhub_profile_personal${uid}`
+        : "scholarhub_profile_personal";
+      const storedPersonal = localStorage.getItem(personalKey);
+      const parsedPersonal = storedPersonal ? JSON.parse(storedPersonal) : {};
+      parsedPersonal.fullName = trimmed;
+      localStorage.setItem(personalKey, JSON.stringify(parsedPersonal));
+
+      const profileKey = uid
+        ? `scholarhub_student_profile${uid}`
+        : "scholarhub_student_profile";
+      const storedProfile = localStorage.getItem(profileKey);
+      if (storedProfile) {
+        const parsedProf = JSON.parse(storedProfile);
+        parsedProf.name = trimmed;
+        parsedProf.fullName = trimmed;
+        localStorage.setItem(profileKey, JSON.stringify(parsedProf));
+      }
+    } catch (err) {
+      console.error("Error updating profile name:", err);
+    }
+
+    window.dispatchEvent(new Event("scholarhub_profile_updated"));
+    setIsEditingName(false);
+    setToastMsg("Name updated successfully!");
+    setTimeout(() => setToastMsg(""), 3500);
+  };
   const initials =
     displayName
       .split(" ")
@@ -196,17 +237,55 @@ export function StudentProfileOverview({ onNavigateTab }) {
           </div>
 
           <div className="min-w-0 flex-1 space-y-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-xl font-bold text-slate-900 dark:text-white truncate">
-                {displayName}
-              </h2>
-              <span className="rounded-full bg-blue-50 dark:bg-blue-950/80 px-2.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
-                Student Account
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-                <CheckCircle2 className="size-3" /> Active
-              </span>
-            </div>
+            {isEditingName ? (
+              <form onSubmit={handleSaveName} className="flex items-center gap-2 py-0.5">
+                <input
+                  type="text"
+                  value={editNameInput}
+                  onChange={(e) => setEditNameInput(e.target.value)}
+                  placeholder="Enter full name"
+                  className="rounded-xl border border-blue-500 bg-white dark:bg-slate-800 px-3 py-1 text-sm font-bold text-slate-900 dark:text-white outline-none ring-2 ring-blue-500/20"
+                  autoFocus
+                />
+                <button
+                  type="submit"
+                  className="flex items-center gap-1 rounded-xl bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 transition-colors shadow-xs"
+                >
+                  <Check className="size-3.5" /> Save
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsEditingName(false)}
+                  className="rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-100 dark:bg-slate-800 p-1.5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                >
+                  <X className="size-3.5" />
+                </button>
+              </form>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white truncate">
+                  {displayName}
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditNameInput(displayName);
+                    setIsEditingName(true);
+                  }}
+                  title="Edit Full Name"
+                  className="inline-flex items-center gap-1 p-1 px-2 rounded-lg text-xs font-semibold text-blue-600 dark:text-blue-400 hover:bg-blue-50 dark:hover:bg-blue-950/60 transition-colors border border-blue-200 dark:border-blue-800/60"
+                >
+                  <Pencil className="size-3" />
+                  <span>Edit Name</span>
+                </button>
+                <span className="rounded-full bg-blue-50 dark:bg-blue-950/80 px-2.5 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider">
+                  Student Account
+                </span>
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 dark:bg-emerald-950 px-2.5 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                  <CheckCircle2 className="size-3" /> Active
+                </span>
+              </div>
+            )}
 
             <p className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1.5">
               <Mail className="size-3.5" /> {profile.email || user?.email || "No email linked"}

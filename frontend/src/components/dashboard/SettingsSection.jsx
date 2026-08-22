@@ -29,6 +29,7 @@ import {
   clearProfileData,
   getStoredStudentProfile,
   calculateProfileStrength,
+  SIMULATION_DEMO_PROFILES,
 } from "../../lib/eligibilityEngine";
 import { forgotPassword } from "../../services/authService";
 
@@ -98,18 +99,18 @@ export function SettingsSection({
   };
 
   // Simulation Profile Load & Clear Handlers
-  const handleLoadSimulationData = () => {
-    const loaded = loadSimulationProfile();
+  const handleLoadSimulationData = (presetIdOrIndex = 0) => {
+    const loaded = loadSimulationProfile(presetIdOrIndex);
     if (loadSimulationSession) {
       loadSimulationSession(loaded.user);
     } else {
       updateUser(loaded.user);
     }
-    if (onUpdateSavedCount) onUpdateSavedCount(loaded.savedIds.length);
-    if (onUpdateAppliedCount) onUpdateAppliedCount(loaded.appliedIds.length);
+    if (onUpdateSavedCount) onUpdateSavedCount(0);
+    if (onUpdateAppliedCount) onUpdateAppliedCount(0);
     setProfileVersion((v) => v + 1);
     triggerToast(
-      "⚡ Simulation Demo Profile Loaded: Aarsh Kolhe (B.Tech CS @ NIT, 78% marks, 10th: 88.4%, 12th: 85.2%, Hostel, ₹2L income, OBC, Maharashtra)"
+      `⚡ Loaded Simulation Profile: ${loaded.user.name} (${loaded.currentEducation.currentCourse || "Incomplete Profile Sandbox"}) — Saved & Applied reset to 0`
     );
   };
 
@@ -401,35 +402,79 @@ export function SettingsSection({
               <div className="flex items-center gap-2">
                 <Database className="size-4 text-amber-600 dark:text-amber-400" />
                 <span className="text-sm font-bold text-amber-950 dark:text-amber-100">
-                  Demo Profile Preloader & Sandbox Manager
+                  Simulation Profiles & Sandbox Test Suite
                 </span>
               </div>
               <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/80 px-2.5 py-0.5 rounded-full">
-                1-Click Preload
+                5 Test Presets
               </span>
             </div>
 
             <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
-              1-Click loading of the complete demo profile (<strong>Aarsh Kolhe</strong> — B.Tech CS @ NIT, 78% marks, 10th: 88.4%, 12th: 85.2%, Hostel, ₹2L income, OBC, Maharashtra) to immediately test matching rules, % match badges, and AI counselor prompts:
+              Select a test profile below to load mock student details into the Sandbox. <strong>No bookmarks or applications are preloaded</strong> — allowing you to test real-time recommendation updates, eligibility badges (% match), threshold gates, and AI matching:
             </p>
 
-            <div className="flex flex-wrap items-center gap-2.5 pt-1">
-              <button
-                type="button"
-                onClick={handleLoadSimulationData}
-                className="rounded-xl bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white px-4 py-2 text-xs font-bold shadow-sm transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
-              >
-                <Zap className="size-3.5" />
-                <span>Load Simulation Demo Profile</span>
-              </button>
+            {/* Profile Presets Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+              {SIMULATION_DEMO_PROFILES.map((preset, pIdx) => {
+                const isActive = storedProfile.name === preset.profile.user.name;
+                return (
+                  <div
+                    key={preset.id}
+                    onClick={() => handleLoadSimulationData(pIdx)}
+                    className={`group relative flex flex-col justify-between rounded-xl border p-3.5 transition-all cursor-pointer ${
+                      isActive
+                        ? "border-amber-500 bg-amber-100/70 dark:bg-amber-900/40 ring-2 ring-amber-500/30 shadow-md"
+                        : "border-amber-200/80 dark:border-amber-800/50 bg-white/90 dark:bg-slate-900/90 hover:border-amber-400 hover:shadow-sm"
+                    }`}
+                  >
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                          {preset.label}
+                        </span>
+                        {isActive && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-200/80 dark:bg-amber-900/80 px-2 py-0.5 rounded-md">
+                            <Check className="size-3" /> Active
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-[11px] font-medium text-amber-800 dark:text-amber-300 leading-snug">
+                        {preset.tagline}
+                      </p>
+                      <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                        {preset.description}
+                      </p>
+                    </div>
 
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLoadSimulationData(pIdx);
+                      }}
+                      className="mt-3 w-full rounded-lg bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white py-1.5 text-[11px] font-bold shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                    >
+                      <Zap className="size-3" />
+                      <span>{isActive ? "Reload Profile" : "Load Profile"}</span>
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Clear Sandbox Button */}
+            <div className="pt-2 flex items-center justify-between border-t border-amber-200/70 dark:border-amber-800/50">
+              <span className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+                Want a clean slate? Reset all profile details, bookmarks, and applications to 0%.
+              </span>
               <button
                 type="button"
                 onClick={handleClearSimulationData}
-                className="rounded-xl border border-amber-300 dark:border-amber-700 bg-white dark:bg-slate-900 px-4 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                className="rounded-xl border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
               >
                 <Trash2 className="size-3.5" />
-                <span>Clear / Reset Profile Data</span>
+                <span>Reset Sandbox (0%)</span>
               </button>
             </div>
 
@@ -447,7 +492,7 @@ export function SettingsSection({
                       : "bg-slate-100 dark:bg-slate-800 text-slate-500"
                   }`}
                 >
-                  {profileStrength >= 30 ? "✓ Matching Engine Active" : "Details Incomplete"}
+                  {profileStrength >= 30 ? "✓ Matching Engine Active" : "Details Incomplete (<30%)"}
                 </span>
               </div>
 
