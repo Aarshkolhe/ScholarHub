@@ -245,7 +245,7 @@ export function RecentScholarships({
           <div className="flex items-center gap-2">
             <Sparkles className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>
-              <strong>Profile Pending:</strong> Enter your marks, annual income, and category in the <strong>Details</strong> tab to unlock personalized AI match scores and recommendations.
+              <strong>Profile Below Recommendation Threshold:</strong> Your profile strength is at <strong>{profileStrength}%</strong>. Fill your details above the <strong>30% threshold</strong> in the <strong>Details</strong> tab to unlock personalized AI recommendations.
             </span>
           </div>
           <button

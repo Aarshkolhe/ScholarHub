@@ -79,15 +79,17 @@ export function StudentDashboard() {
     return () => window.removeEventListener("scholarhub_profile_updated", updateStrength);
   }, [user, activeTab]);
 
-  // Dynamic Recommended Count (Match Score >= 50%)
+  // Dynamic Recommended Count (Match Score >= 50% only when profile passes 30% threshold)
   const recommendedCount = useMemo(() => {
     try {
+      const strength = calculateProfileStrength();
+      if (strength < 30) return 0;
       const evaluated = evaluateAllScholarships();
-      return evaluated.filter((s) => s.matchScore >= 50).length;
+      return evaluated.filter((s) => (s.eligibilityPercent ?? s.matchScore) >= 50).length;
     } catch {
       return 0;
     }
-  }, [user, activeTab]);
+  }, [user, activeTab, profileStrength]);
 
   const firstName = (user?.fullName || user?.name || "Student").split(" ")[0];
 
@@ -250,6 +252,7 @@ export function StudentDashboard() {
             <SearchScholarshipView
               initialQuery={searchQuery}
               activeTab={activeTab}
+              onNavigateTab={setActiveTab}
               onUpdateSavedCount={setSavedCount}
               onUpdateAppliedCount={setAppliedCount}
             />

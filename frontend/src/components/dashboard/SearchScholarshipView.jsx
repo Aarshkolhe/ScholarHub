@@ -17,8 +17,14 @@ import {
   Mail,
   ArrowUpDown,
   Layers,
+  Sparkles,
+  ClipboardList,
 } from "lucide-react";
-import { getStoredStudentProfile, evaluateEligibility } from "../../lib/eligibilityEngine";
+import {
+  getStoredStudentProfile,
+  evaluateEligibility,
+  calculateProfileStrength,
+} from "../../lib/eligibilityEngine";
 import { SCHOLARSHIPS_DATABASE } from "../../lib/scholarshipData";
 import { ScholarshipRowItem } from "./ScholarshipRowItem";
 import useAuth from "../../hooks/useAuth";
@@ -86,6 +92,7 @@ function CustomDropdown({ value, options, onChange, icon: Icon }) {
 export function SearchScholarshipView({
   initialQuery = "",
   activeTab = "Search",
+  onNavigateTab,
   onUpdateSavedCount,
   onUpdateAppliedCount,
 }) {
@@ -112,6 +119,8 @@ export function SearchScholarshipView({
   }, []);
 
   const studentProfile = useMemo(() => getStoredStudentProfile(), [user, profileVersion]);
+  const profileStrength = useMemo(() => calculateProfileStrength(studentProfile), [studentProfile]);
+  const hasFilledDetails = profileStrength >= 30;
   const [applicantName, setApplicantName] = useState(user?.fullName || user?.name || "");
   const [applicantCourse, setApplicantCourse] = useState(studentProfile.currentCourse || "");
   const [applicantStatement, setApplicantStatement] = useState("");
@@ -196,8 +205,11 @@ export function SearchScholarshipView({
       // 1. Saved Tab Filter
       if (activeTab === "Saved" && !savedIds.includes(s.id)) return false;
 
-      // 2. Recommended Tab Filter
-      if (activeTab === "Recommended" && s.matchScore < 50) return false;
+      // 2. Recommended Tab Filter (requires profile strength >= 30% threshold and match score >= 50%)
+      if (activeTab === "Recommended") {
+        if (!hasFilledDetails) return false;
+        if ((s.eligibilityPercent ?? s.matchScore) < 50) return false;
+      }
 
       // 3. Portal Source Filter
       if (selectedPortal !== "All") {
@@ -550,20 +562,79 @@ export function SearchScholarshipView({
         </div>
       )}
 
-      {/* Results Counter Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-slate-500 dark:text-slate-400 px-1">
-        <span className="font-semibold text-slate-700 dark:text-slate-200">
-          Showing {filteredScholarships.length} of {SCHOLARSHIPS_DATABASE.length} {activeTab === "Saved" ? "Saved" : activeTab === "Recommended" ? "Recommended" : "Available"} Scholarships
-        </span>
-        <span className="text-[11px] font-medium text-slate-400">
-          All scholarships listed • Live eligibility % calculated
-        </span>
-      </div>
+      {/* Results Counter Banner (hide or adjust when in incomplete recommended view) */}
+      {(activeTab !== "Recommended" || hasFilledDetails) && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-slate-500 dark:text-slate-400 px-1">
+          <span className="font-semibold text-slate-700 dark:text-slate-200">
+            Showing {filteredScholarships.length} of {SCHOLARSHIPS_DATABASE.length} {activeTab === "Saved" ? "Saved" : activeTab === "Recommended" ? "Recommended" : "Available"} Scholarships
+          </span>
+          <span className="text-[11px] font-medium text-slate-400">
+            {activeTab === "Recommended"
+              ? `Filtered for ≥50% match based on your ${profileStrength}% completed profile`
+              : "All scholarships listed • Live eligibility % calculated"}
+          </span>
+        </div>
+      )}
 
-      {/* Vertical List of Cards */}
-      {filteredScholarships.length === 0 ? (
+      {/* If on Recommended tab and profile is below the 30% threshold */}
+      {activeTab === "Recommended" && !hasFilledDetails ? (
+        <div className="rounded-3xl border border-amber-200 dark:border-amber-900/60 bg-gradient-to-b from-amber-50/80 via-amber-50/40 to-white dark:from-amber-950/40 dark:via-slate-900 dark:to-slate-900 p-8 sm:p-12 text-center space-y-6 shadow-sm">
+          <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 shadow-md">
+            <Sparkles className="size-8 animate-icon-twinkle" />
+          </div>
+
+          <div className="max-w-xl mx-auto space-y-2">
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
+              Profile Below Recommendation Threshold
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+              Your profile strength is currently <strong>{profileStrength}%</strong>. To see personalized scholarship recommendations, please complete your profile details above the <strong>30% threshold</strong> (e.g. current stream, marks %, annual family income, category, and domicile state).
+            </p>
+          </div>
+
+          {/* Progress Meter */}
+          <div className="max-w-md mx-auto bg-white dark:bg-slate-800/90 p-4 rounded-2xl border border-amber-200/60 dark:border-slate-700/80 shadow-xs space-y-2">
+            <div className="flex items-center justify-between text-xs font-semibold">
+              <span className="text-slate-600 dark:text-slate-400">Current Profile Strength</span>
+              <span className="text-amber-600 dark:text-amber-400 font-bold">{profileStrength}% / 30% Required</span>
+            </div>
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-slate-700">
+              <div
+                style={{ width: `${Math.min(100, Math.round((profileStrength / 30) * 100))}%` }}
+                className="h-full rounded-full bg-gradient-to-r from-amber-500 to-orange-500 transition-all duration-500"
+              />
+            </div>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 pt-1">
+              Complete your profile details to unlock high-match AI recommendations.
+            </p>
+          </div>
+
+          {/* Action CTAs */}
+          <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
+            {onNavigateTab && (
+              <button
+                type="button"
+                onClick={() => onNavigateTab("Details")}
+                className="rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-xs font-bold px-6 py-3 shadow-md hover:scale-105 active:scale-95 transition-all flex items-center gap-2 cursor-pointer"
+              >
+                <ClipboardList className="size-4" />
+                <span>Fill Details Profile &rarr;</span>
+              </button>
+            )}
+            {onNavigateTab && (
+              <button
+                type="button"
+                onClick={() => onNavigateTab("Search")}
+                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 text-xs font-semibold px-5 py-3 hover:bg-slate-50 dark:hover:bg-slate-700/80 transition-all cursor-pointer"
+              >
+                <span>Browse Full Search Directory</span>
+              </button>
+            )}
+          </div>
+        </div>
+      ) : filteredScholarships.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center text-xs text-slate-400">
-          No scholarships match your search filters. Try resetting filters.
+          No scholarships match your criteria. Try adjusting your filters.
         </div>
       ) : (
         <div className="space-y-4">
