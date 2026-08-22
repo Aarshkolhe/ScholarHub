@@ -4,10 +4,14 @@ import {
   ExternalLink,
   Send,
   X,
+  Sparkles,
+  UserCheck,
+  ArrowRight,
 } from "lucide-react";
 import {
   getStoredStudentProfile,
   evaluateEligibility,
+  calculateProfileStrength,
 } from "../../lib/eligibilityEngine";
 import { SCHOLARSHIPS_DATABASE } from "../../lib/scholarshipData";
 import { ScholarshipRowItem } from "./ScholarshipRowItem";
@@ -18,15 +22,44 @@ const BACKEND_URL = "http://localhost:5000";
 export function RecentScholarships({
   searchQuery = "",
   onViewAllClick,
+  onNavigateTab,
   onUpdateSavedCount,
   onUpdateAppliedCount,
 }) {
   const { user } = useAuth();
-  const [filter, setFilter] = useState("All"); // All, Government, STEM, Technology, Engineering
   const [activeModalItem, setActiveModalItem] = useState(null);
 
   // Application Modal state
   const studentProfile = useMemo(() => getStoredStudentProfile(), [user]);
+  const profileStrength = useMemo(() => calculateProfileStrength(studentProfile), [studentProfile]);
+  const hasFilledDetails = profileStrength > 0;
+
+  // Evaluate database scholarships against profile
+  const evaluatedScholarships = useMemo(() => {
+    return SCHOLARSHIPS_DATABASE.map((s) => {
+      const evalResult = evaluateEligibility(s, studentProfile);
+      return {
+        ...s,
+        ...evalResult,
+      };
+    });
+  }, [studentProfile]);
+
+  // Recommended scholarships count
+  const recommendedList = useMemo(() => {
+    return evaluatedScholarships.filter((s) => s.matchScore !== null && s.matchScore >= 50);
+  }, [evaluatedScholarships]);
+
+  const [filter, setFilter] = useState(() => (hasFilledDetails && recommendedList.length > 0 ? "Recommended" : "All"));
+
+  useEffect(() => {
+    if (hasFilledDetails && recommendedList.length > 0) {
+      setFilter("Recommended");
+    } else {
+      setFilter("All");
+    }
+  }, [hasFilledDetails, recommendedList.length]);
+
   const [applyModalItem, setApplyModalItem] = useState(null);
   const [applicantName, setApplicantName] = useState(user?.fullName || user?.name || "");
   const [applicantCourse, setApplicantCourse] = useState(studentProfile.currentCourse || "");
@@ -96,17 +129,6 @@ export function RecentScholarships({
     if (onUpdateSavedCount) onUpdateSavedCount(next.length);
   };
 
-  // Evaluate database scholarships against profile
-  const evaluatedScholarships = useMemo(() => {
-    return SCHOLARSHIPS_DATABASE.map((s) => {
-      const evalResult = evaluateEligibility(s, studentProfile);
-      return {
-        ...s,
-        ...evalResult,
-      };
-    });
-  }, [studentProfile]);
-
   const filteredScholarships = useMemo(() => {
     return evaluatedScholarships.filter((s) => {
       // Keyword Search
@@ -119,6 +141,9 @@ export function RecentScholarships({
       }
 
       // Filter chips
+      if (filter === "Recommended") {
+        return s.matchScore !== null && s.matchScore >= 50;
+      }
       if (filter === "Govt Schemes" && !s.isGovt) return false;
       if (filter === "Engineering" && s.category !== "Engineering" && !s.name?.toLowerCase().includes("engineering") && !s.name?.toLowerCase().includes("b.tech") && !s.description?.toLowerCase().includes("engineering")) return false;
       if (filter === "Research" && s.category !== "Research" && !s.name?.toLowerCase().includes("fellowship") && !s.name?.toLowerCase().includes("research") && !s.description?.toLowerCase().includes("science")) return false;
@@ -178,10 +203,20 @@ export function RecentScholarships({
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-4">
         <div>
           <h2 className="font-display text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2">
-            <span>🎓</span> List of Scholarships
+            {hasFilledDetails && recommendedList.length > 0 ? (
+              <>
+                <span>🎯</span> Recommended Scholarships for You
+              </>
+            ) : (
+              <>
+                <span>🎓</span> Available Scholarship Directory
+              </>
+            )}
           </h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-            {filteredScholarships.length} verified government & portal opportunities in static catalog
+            {hasFilledDetails && recommendedList.length > 0
+              ? `${recommendedList.length} matching grant opportunities evaluated from your ${profileStrength}% completed profile`
+              : `${filteredScholarships.length} verified government & portal schemes — Fill details to calculate match score`}
           </p>
         </div>
 
@@ -190,16 +225,38 @@ export function RecentScholarships({
           <button
             type="button"
             onClick={onViewAllClick}
-            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 self-start lg:self-auto"
+            className="text-xs font-bold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-1 self-start lg:self-auto cursor-pointer"
           >
-            <span>Explore All Search Schemes</span> &rarr;
+            <span>Explore Full Search Directory</span> &rarr;
           </button>
         )}
       </div>
 
+      {/* Incomplete Profile Prompt Banner */}
+      {!hasFilledDetails && onNavigateTab && (
+        <div className="rounded-2xl border border-amber-200/80 dark:border-amber-900/60 bg-amber-50/80 dark:bg-amber-950/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-amber-900 dark:text-amber-200">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
+            <span>
+              <strong>Profile Pending:</strong> Enter your marks, annual income, and category in the <strong>Details</strong> tab to unlock personalized AI match scores and recommendations.
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => onNavigateTab("Details")}
+            className="shrink-0 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold px-3.5 py-1.5 transition-colors cursor-pointer shadow-xs"
+          >
+            Complete Profile &rarr;
+          </button>
+        </div>
+      )}
+
       {/* Category Filter Pills */}
       <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
         {[
+          ...(hasFilledDetails && recommendedList.length > 0
+            ? [{ id: "Recommended", label: `✨ Recommended (${recommendedList.length})` }]
+            : []),
           { id: "All", label: "All Scholarships" },
           { id: "Govt Schemes", label: "🏛️ Govt Schemes" },
           { id: "Engineering", label: "⚙️ Engineering & Tech" },
@@ -228,7 +285,7 @@ export function RecentScholarships({
         </div>
       )}
 
-      {/* Vertical List matching screenshot */}
+      {/* Vertical List of Scholarship Cards */}
       {filteredScholarships.length === 0 ? (
         <div className="py-12 text-center text-xs text-slate-400">
           No scholarships match your search criteria. Try adjusting your filters.
@@ -255,15 +312,21 @@ export function RecentScholarships({
           <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                    activeModalItem.isEligible
-                      ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
-                      : "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400"
-                  }`}
-                >
-                  {activeModalItem.isEligible ? "Eligible" : "Not Eligible"} ({activeModalItem.matchScore}% Match)
-                </span>
+                {activeModalItem.isPendingDetails || activeModalItem.matchScore === null ? (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                    📋 Details Pending ({activeModalItem.missingFields?.join(", ") || "Profile Details"} Missing)
+                  </span>
+                ) : (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                      activeModalItem.isEligible
+                        ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
+                        : "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400"
+                    }`}
+                  >
+                    {activeModalItem.isEligible ? "Eligible" : "Not Eligible"} ({activeModalItem.matchScore}% Match)
+                  </span>
+                )}
                 <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
                   {activeModalItem.name}
                 </h3>
@@ -273,7 +336,7 @@ export function RecentScholarships({
               <button
                 type="button"
                 onClick={() => setActiveModalItem(null)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer"
               >
                 <X className="size-5" />
               </button>
