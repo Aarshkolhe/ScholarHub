@@ -1,10 +1,10 @@
 const CANDIDATE_MODELS = [
-  "gemini-3.6-flash",
-  "gemini-3.5-flash-lite",
-  "gemini-3.5-flash",
-  "gemini-3.7-flash",
+  "gemini-flash-lite-latest",
   "gemini-flash-latest",
   "gemini-pro-latest",
+  "gemini-2.5-flash-lite",
+  "gemini-3.5-flash",
+  "gemini-1.5-flash",
 ];
 
 export async function askGemini({ prompt, systemInstruction }) {
@@ -30,9 +30,10 @@ export async function askGemini({ prompt, systemInstruction }) {
     ],
   };
 
-  for (const model of CANDIDATE_MODELS) {
+  for (const rawModel of CANDIDATE_MODELS) {
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
+      const model = rawModel.startsWith("models/") ? rawModel : `models/${rawModel}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/${model}:generateContent?key=${apiKey.trim()}`;
 
       const response = await fetch(url, {
         method: "POST",
@@ -49,15 +50,15 @@ export async function askGemini({ prompt, systemInstruction }) {
         if (text) {
           return {
             success: true,
-            source: `Google Gemini AI (${model})`,
+            source: `Google Gemini AI (${rawModel})`,
             reply: text,
           };
         }
       } else {
-        console.warn(`[Gemini API] Model '${model}' returned code ${data?.error?.code}: ${data?.error?.message}`);
+        console.warn(`[Gemini API] Model '${rawModel}' returned code ${data?.error?.code}: ${data?.error?.message}`);
       }
     } catch (err) {
-      console.warn(`[Gemini API] Network attempt failed for '${model}':`, err.message);
+      console.warn(`[Gemini API] Network attempt failed for '${rawModel}':`, err.message);
     }
   }
 

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Bot, Send, X, Sparkles, User, RefreshCw } from "lucide-react";
+import { Send, X, Sparkles, RefreshCw } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
+import { ScholarHubAiAvatar } from "./ScholarHubAiAvatar";
 
 const INITIAL_SUGGESTIONS = [
   "Am I eligible for the STEM Grant?",
@@ -117,11 +118,9 @@ export function AiAssistantPill() {
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         aria-label="Open AI Assistant"
-        className="group flex items-center gap-2 rounded-full bg-blue-600 dark:bg-blue-500 py-2.5 pl-3 pr-4 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/25"
+        className="group flex items-center gap-2 rounded-full bg-blue-600 dark:bg-blue-500 py-2 pl-2.5 pr-4 text-xs sm:text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-blue-600/25"
       >
-        <span className="flex size-6 items-center justify-center rounded-full bg-white/20 transition-transform duration-300 group-hover:rotate-12">
-          <Bot className="size-4" />
-        </span>
+        <ScholarHubAiAvatar size="xs" showContainer={true} />
         <span className="whitespace-nowrap">AI Assistant</span>
       </button>
 
@@ -130,12 +129,13 @@ export function AiAssistantPill() {
           {/* Header */}
           <div className="flex items-center justify-between bg-blue-600 dark:bg-blue-700 px-4 py-3 text-white">
             <div className="flex items-center gap-2">
-              <span className="flex size-7 items-center justify-center rounded-lg bg-white/20">
-                <Bot className="size-4" />
-              </span>
+              <ScholarHubAiAvatar size="sm" showContainer={true} />
               <div className="leading-tight">
-                <p className="text-sm font-semibold">AI Assistant</p>
-                <p className="text-[11px] text-blue-100">Smart Matching Active</p>
+                <p className="text-sm font-semibold">ScholarHub AI</p>
+                <p className="text-[11px] text-blue-100 flex items-center gap-1">
+                  <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  Smart Matching Active
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-1">
@@ -158,33 +158,30 @@ export function AiAssistantPill() {
             </div>
           </div>
 
-          {/* Messages Container */}
-          <div className="flex min-h-[280px] max-h-[360px] flex-col gap-3 overflow-y-auto px-4 py-4">
+          {/* Messages Container - Clean Conversational Layout */}
+          <div className="flex min-h-[260px] max-h-[340px] flex-col gap-3 overflow-y-auto px-4 py-4">
             {messages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex items-start gap-2 ${
-                  msg.sender === "user" ? "flex-row-reverse" : ""
-                }`}
-              >
-                <span
-                  className={`flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                    msg.sender === "user"
-                      ? "bg-blue-600 text-white"
-                      : "bg-blue-100 text-blue-600 dark:bg-blue-950/80 dark:text-blue-400"
-                  }`}
-                >
-                  {msg.sender === "user" ? <User className="size-3.5" /> : <Sparkles className="size-3.5" />}
-                </span>
-                <div
-                  className={`rounded-2xl px-3.5 py-2.5 text-xs leading-relaxed ${
-                    msg.sender === "user"
-                      ? "rounded-tr-sm bg-blue-600 text-white"
-                      : "rounded-tl-sm bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-100"
-                  }`}
-                >
-                  {msg.text}
-                </div>
+              <div key={i} className="animate-fade-in">
+                {msg.sender === "user" ? (
+                  <div className="flex flex-col items-end">
+                    <span className="text-[10px] font-semibold text-slate-400 mb-0.5 pr-1">You</span>
+                    <div className="max-w-[85%] rounded-2xl rounded-tr-xs bg-blue-600 text-white px-3 py-1.5 text-xs leading-relaxed shadow-xs">
+                      {msg.text}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <ScholarHubAiAvatar size="xs" showContainer={true} />
+                      <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
+                        ScholarHub AI
+                      </span>
+                    </div>
+                    <div className="pl-6 text-xs leading-relaxed text-slate-800 dark:text-slate-100 whitespace-pre-wrap">
+                      {msg.text}
+                    </div>
+                  </div>
+                )}
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -210,22 +207,22 @@ export function AiAssistantPill() {
               e.preventDefault();
               handleSend();
             }}
-            className="flex items-center gap-2 border-t border-slate-100 dark:border-slate-800 p-3 bg-white dark:bg-slate-900"
+            className="flex items-center gap-2 border-t border-slate-100 dark:border-slate-800 p-2.5 bg-white dark:bg-slate-900"
           >
             <input
               value={value}
               onChange={(e) => setValue(e.target.value)}
               placeholder="Type your question..."
               aria-label="Message AI Assistant"
-              className="min-w-0 flex-1 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs text-slate-800 dark:text-slate-100 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              className="min-w-0 flex-1 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
             <button
               type="submit"
               disabled={!value.trim()}
               aria-label="Send message"
-              className="flex size-9 shrink-0 items-center justify-center rounded-full bg-blue-600 dark:bg-blue-500 text-white disabled:opacity-50 transition-transform duration-200 hover:scale-105"
+              className="flex size-8 shrink-0 items-center justify-center rounded-full bg-blue-600 dark:bg-blue-500 text-white disabled:opacity-50 transition-transform duration-200 hover:scale-105"
             >
-              <Send className="size-4" />
+              <Send className="size-3.5" />
             </button>
           </form>
         </div>

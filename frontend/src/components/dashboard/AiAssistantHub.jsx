@@ -1,18 +1,19 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import {
-  Bot,
   Sparkles,
   Send,
-  User,
   Copy,
   Check,
   RotateCcw,
+  GraduationCap,
+  ChevronRight,
 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import {
   getStoredStudentProfile,
   evaluateAllScholarships,
 } from "../../lib/eligibilityEngine";
+import { ScholarHubAiAvatar } from "./ScholarHubAiAvatar";
 
 const BACKEND_URL = "http://localhost:5000";
 
@@ -25,26 +26,31 @@ export function AiAssistantHub() {
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [copiedIdx, setCopiedIdx] = useState(null);
 
-  const initialGreeting = `Hello ${firstName}! I am your AI Scholarship Counselor. ${
+  const evaluatedScholarships = useMemo(() => {
+    return evaluateAllScholarships(studentProfile);
+  }, [studentProfile]);
+
+  const eligibleScholarships = useMemo(() => {
+    return evaluatedScholarships.filter((s) => s.matchScore >= 50);
+  }, [evaluatedScholarships]);
+
+  const initialGreeting = `Hello ${firstName}! I'm your ScholarHub AI. ${
     studentProfile.category || studentProfile.currentCourse || studentProfile.annualIncome
-      ? `I have evaluated your profile (${studentProfile.category || "General"}, ${studentProfile.domicileState || "State"}, ₹${parseFloat(studentProfile.annualIncome || 0).toLocaleString("en-IN")} Income).`
-      : "Complete your profile in the Eligibility Details tab or load the demo profile in Settings to receive personalized grant suggestions."
+      ? `I have evaluated your profile (${studentProfile.category || "General"}, ${
+          studentProfile.domicileState || "State"
+        }, ₹${parseFloat(studentProfile.annualIncome || 0).toLocaleString("en-IN")} Income).`
+      : "Complete your profile in the Eligibility Details tab to receive personalized grant suggestions."
   } Ask me any questions about matching schemes, eligibility criteria, required documents, or application guidelines.`;
 
   const [messages, setMessages] = useState([
     {
       sender: "ai",
       text: initialGreeting,
+      recommendations: eligibleScholarships.slice(0, 3),
     },
   ]);
 
   const chatEndRef = useRef(null);
-
-  const evaluatedScholarships = useMemo(() => {
-    return evaluateAllScholarships(studentProfile);
-  }, [studentProfile]);
-
-  const eligibleScholarships = evaluatedScholarships.filter((s) => s.matchScore >= 50);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -77,12 +83,25 @@ export function AiAssistantHub() {
         throw new Error("No response");
       }
     } catch {
-      // Local fallback response
+      // Local fallback response with structured recommendations if query asks for matches
+      const lower = text.toLowerCase();
+      const isMatchQuery =
+        lower.includes("match") ||
+        lower.includes("eligible") ||
+        lower.includes("scholarship") ||
+        lower.includes("grant") ||
+        lower.includes("recommend");
+
       setMessages((prev) => [
         ...prev,
         {
           sender: "ai",
-          text: `Based on your profile in ${studentProfile.currentCourse || "Higher Education"} with ${studentProfile.category || "OBC"} category and family income below ₹${parseFloat(studentProfile.annualIncome || 0).toLocaleString("en-IN")}:\n\n- You currently qualify for ${eligibleScholarships.length} scholarships with a 50%+ match score (including ${eligibleScholarships[0]?.name || "MahaDBT EBC Fee Reimbursement"}).\n- All eligibility checks are dynamically evaluated against official portal criteria.\n- You can explore scheme details and apply directly in the Search or Recommended sections.`,
+          text: `Based on your profile in ${studentProfile.currentCourse || "Higher Education"} (${
+            studentProfile.category || "OBC"
+          } category, family income below ₹${parseFloat(
+            studentProfile.annualIncome || 0
+          ).toLocaleString("en-IN")}):`,
+          recommendations: isMatchQuery ? eligibleScholarships.slice(0, 3) : null,
         },
       ]);
     } finally {
@@ -97,28 +116,19 @@ export function AiAssistantHub() {
   };
 
   const handleResetChat = () => {
-    setMessages([{ sender: "ai", text: initialGreeting }]);
+    setMessages([
+      {
+        sender: "ai",
+        text: initialGreeting,
+        recommendations: eligibleScholarships.slice(0, 3),
+      },
+    ]);
   };
 
   return (
-    <div className="relative flex h-[calc(100vh-120px)] w-full flex-col rounded-2xl border border-slate-800 bg-[#0d1527]/80 p-4 shadow-xl overflow-hidden animate-fade-in">
-      {/* Top Header Bar */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-3 shrink-0">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-7 items-center justify-center rounded-lg bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-sm shadow-blue-500/20">
-            <Bot className="size-4" />
-          </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-100">AI Counselor</span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-400 border border-emerald-500/20">
-                <span className="size-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                Online
-              </span>
-            </div>
-          </div>
-        </div>
-
+    <div className="relative flex h-[calc(100vh-120px)] w-full flex-col rounded-2xl border border-slate-800/80 bg-[#0b1324]/90 p-4 shadow-xl overflow-hidden animate-fade-in">
+      {/* Top Action Bar - Header completely removed; ONLY Reset Chat positioned top-right */}
+      <div className="flex items-center justify-end pt-1 pb-3 shrink-0">
         <button
           type="button"
           onClick={handleResetChat}
@@ -130,62 +140,99 @@ export function AiAssistantHub() {
         </button>
       </div>
 
-      {/* Messages Scroll Area */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
+      {/* Messages Scroll Area - Direct conversation start */}
+      <div className="flex-1 overflow-y-auto py-2 px-2 sm:px-4 space-y-4 min-h-0">
         {messages.map((m, idx) => (
-          <div
-            key={idx}
-            className={`flex items-start gap-3 animate-rise-in ${
-              m.sender === "user" ? "flex-row-reverse" : "flex-row"
-            }`}
-          >
-            {/* Avatar Badge - Sits directly inside flex layout without negative margins */}
-            <div
-              className={`flex size-8 shrink-0 items-center justify-center rounded-xl text-xs font-bold shadow-sm ${
-                m.sender === "user"
-                  ? "bg-blue-600 text-white shadow-blue-600/20"
-                  : "bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-blue-500/20"
-              }`}
-            >
-              {m.sender === "user" ? <User className="size-4" /> : <Bot className="size-4" />}
-            </div>
+          <div key={idx} className="animate-rise-in">
+            {m.sender === "user" ? (
+              /* User Message - Compact, Right-Aligned Bubble */
+              <div className="flex flex-col items-end">
+                <span className="text-[11px] font-semibold text-slate-400 mb-1 pr-1">You</span>
+                <div className="max-w-[80%] sm:max-w-[70%] rounded-2xl rounded-tr-xs bg-blue-600 text-white px-3.5 py-2 text-xs sm:text-sm leading-relaxed shadow-sm">
+                  {m.text}
+                </div>
+              </div>
+            ) : (
+              /* AI Response - Direct on Chat Background, no header or card container */
+              <div className="space-y-1.5 max-w-[92%] sm:max-w-[88%]">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <ScholarHubAiAvatar size="xs" showContainer={true} />
+                    <span className="text-xs font-semibold text-slate-300">ScholarHub AI</span>
+                  </div>
 
-            {/* Message Bubble */}
-            <div
-              className={`group relative max-w-[82%] rounded-2xl p-4 text-xs sm:text-sm leading-relaxed ${
-                m.sender === "user"
-                  ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white rounded-tr-sm shadow-md shadow-blue-600/15"
-                  : "bg-slate-800/90 text-slate-100 rounded-tl-sm border border-slate-700/80 backdrop-blur-md shadow-xs"
-              }`}
-            >
-              <div className="flex items-center justify-between gap-2 font-bold mb-1 opacity-75 text-[11px]">
-                <span>{m.sender === "user" ? "You" : "ScholarHub AI"}</span>
-
-                {m.sender === "ai" && (
                   <button
                     type="button"
                     onClick={() => handleCopy(m.text, idx)}
                     title="Copy response"
-                    className="rounded p-1 hover:bg-slate-700 text-slate-400 hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"
+                    className="rounded p-1 text-slate-500 hover:text-slate-300 transition-colors"
                   >
-                    {copiedIdx === idx ? <Check className="size-3 text-emerald-500" /> : <Copy className="size-3" />}
+                    {copiedIdx === idx ? (
+                      <Check className="size-3.5 text-emerald-400" />
+                    ) : (
+                      <Copy className="size-3.5" />
+                    )}
                   </button>
-                )}
-              </div>
+                </div>
 
-              <p className="whitespace-pre-wrap">{m.text}</p>
-            </div>
+                <div className="pl-7 text-xs sm:text-sm leading-relaxed text-slate-200 whitespace-pre-wrap font-normal">
+                  {m.text}
+
+                  {/* Compact Scholarship Recommendation List Rows */}
+                  {m.recommendations && m.recommendations.length > 0 && (
+                    <div className="mt-3 space-y-2 border-t border-slate-800/80 pt-3">
+                      <div className="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
+                        <GraduationCap className="size-3.5 text-blue-400" />
+                        <span>Top Scholarship Matches</span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-2">
+                        {m.recommendations.map((item, rIdx) => (
+                          <div
+                            key={rIdx}
+                            className="group flex items-center justify-between gap-3 rounded-xl border border-slate-800 bg-slate-900/50 p-2.5 sm:p-3 hover:border-blue-500/50 hover:bg-slate-900/80 transition-all"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                                <GraduationCap className="size-4" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className="truncate text-xs sm:text-sm font-semibold text-slate-100 group-hover:text-blue-300 transition-colors">
+                                  {item.name}
+                                </p>
+                                <div className="flex items-center gap-2 text-[11px] text-slate-400 mt-0.5">
+                                  <span className="font-semibold text-emerald-400">
+                                    {item.matchScore}% Match
+                                  </span>
+                                  <span>·</span>
+                                  <span>
+                                    {typeof item.amount === "number"
+                                      ? `₹${item.amount.toLocaleString("en-IN")}`
+                                      : item.amount || "Financial Support"}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                            <span className="flex items-center gap-1 text-[11px] font-semibold text-blue-400 group-hover:text-blue-300 transition-colors shrink-0 pr-1">
+                              <span>View</span>
+                              <ChevronRight className="size-3.5" />
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         ))}
 
         {isAiLoading && (
-          <div className="flex items-start gap-3 animate-fade-in">
-            <div className="flex size-8 shrink-0 items-center justify-center rounded-xl bg-gradient-to-tr from-blue-600 to-indigo-600 text-white shadow-sm">
-              <Bot className="size-4 animate-spin" />
-            </div>
-            <div className="rounded-2xl rounded-tl-sm bg-slate-800/90 p-4 text-xs text-slate-400 border border-slate-700/80 flex items-center gap-2 shadow-xs">
-              <Sparkles className="size-4 text-blue-500 animate-spin" />
-              <span>AI is analyzing your query...</span>
+          <div className="flex items-center gap-2.5 pl-1 animate-fade-in">
+            <ScholarHubAiAvatar size="xs" showContainer={true} />
+            <div className="flex items-center gap-2 text-xs text-slate-400 font-medium">
+              <Sparkles className="size-3.5 text-blue-400 animate-spin" />
+              <span>ScholarHub AI is evaluating your request...</span>
             </div>
           </div>
         )}
@@ -193,25 +240,25 @@ export function AiAssistantHub() {
       </div>
 
       {/* Input Field Pinned Cleanly at Bottom */}
-      <div className="mt-auto pt-4 shrink-0">
+      <div className="mt-auto pt-3 shrink-0 border-t border-slate-800/60">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSendMessage();
           }}
-          className="relative w-full flex items-center rounded-2xl border border-slate-700/80 bg-slate-800/90 p-1.5 shadow-xs transition-all focus-within:border-blue-500 focus-within:ring-4 focus-within:ring-blue-500/15"
+          className="relative w-full flex items-center rounded-xl border border-slate-700/80 bg-slate-900/90 p-1 shadow-xs transition-all focus-within:border-blue-500 focus-within:ring-2 focus-within:ring-blue-500/20"
         >
           <input
             type="text"
             value={chatInput}
             onChange={(e) => setChatInput(e.target.value)}
             placeholder="Ask any scholarship question (e.g. Which grants fit my income or category?)..."
-            className="flex-1 bg-transparent px-4 py-2 text-xs sm:text-sm text-slate-100 outline-none placeholder:text-slate-400"
+            className="flex-1 bg-transparent px-3 py-2 text-xs sm:text-sm text-slate-100 outline-none placeholder:text-slate-400"
           />
           <button
             type="submit"
             disabled={isAiLoading || !chatInput.trim()}
-            className="rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-semibold text-xs px-4 py-2.5 shadow-md shadow-blue-600/20 disabled:opacity-40 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-1.5 shrink-0"
+            className="rounded-lg bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs px-3.5 py-2 shadow-sm disabled:opacity-40 transition-all hover:scale-[1.02] active:scale-95 flex items-center gap-1.5 shrink-0"
           >
             <span>Send</span>
             <Send className="size-3.5" />
