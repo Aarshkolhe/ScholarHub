@@ -51,81 +51,80 @@ function MarkdownMessage({ text }) {
   return (
     <ReactMarkdown
       components={{
-        // Headings
+        // H1 — big section title, lots of breathing room
         h1: ({ children }) => (
-          <h1 className="text-base font-bold text-white mt-3 mb-1.5 first:mt-0 border-b border-slate-700/60 pb-1">
+          <h1 className="text-base font-bold text-white mt-5 mb-3 first:mt-0 border-b border-slate-700/40 pb-2">
             {children}
           </h1>
         ),
+        // H2 — subsection, with a subtle blue left bar
         h2: ({ children }) => (
-          <h2 className="text-sm font-bold text-blue-300 mt-3 mb-1.5 first:mt-0 flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-blue-400 shrink-0" />
+          <h2 className="text-sm font-bold text-blue-300 mt-5 mb-2.5 first:mt-0 pl-2 border-l-2 border-blue-500/50">
             {children}
           </h2>
         ),
+        // H3
         h3: ({ children }) => (
-          <h3 className="text-sm font-semibold text-slate-200 mt-2.5 mb-1 first:mt-0">
+          <h3 className="text-sm font-semibold text-slate-100 mt-4 mb-2 first:mt-0">
             {children}
           </h3>
         ),
+        // H4
         h4: ({ children }) => (
-          <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wider mt-2 mb-1 first:mt-0">
+          <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mt-4 mb-2 first:mt-0">
             {children}
           </h4>
         ),
 
-        // Paragraphs
+        // Paragraphs — generous bottom margin
         p: ({ children }) => (
-          <p className="text-sm text-slate-200 leading-relaxed mb-2 last:mb-0">
+          <p className="text-sm text-slate-300 leading-7 mb-3 last:mb-0">
             {children}
           </p>
         ),
 
         // Bold & italic
         strong: ({ children }) => (
-          <strong className="font-bold text-white">{children}</strong>
+          <strong className="font-semibold text-white">{children}</strong>
         ),
         em: ({ children }) => (
-          <em className="italic text-slate-300">{children}</em>
+          <em className="italic text-slate-400">{children}</em>
         ),
 
-        // Unordered lists
+        // Lists — generous item gaps, indented for clarity
         ul: ({ children }) => (
-          <ul className="mt-1.5 mb-2 space-y-1.5 last:mb-0">{children}</ul>
+          <ul className="mt-2 mb-4 space-y-3 pl-1 last:mb-0">{children}</ul>
         ),
-        // Ordered lists
         ol: ({ children }) => (
-          <ol className="mt-1.5 mb-2 space-y-1.5 list-none counter-reset-list last:mb-0">
-            {children}
-          </ol>
+          <ol className="mt-2 mb-4 space-y-3 pl-1 list-none last:mb-0">{children}</ol>
         ),
-        li: ({ children, ordered, index }) => (
-          <li className="flex items-start gap-2.5 text-sm text-slate-200 leading-relaxed">
-            <span className="mt-1 shrink-0 size-1.5 rounded-full bg-blue-400/70" />
-            <span>{children}</span>
+        li: ({ children }) => (
+          <li className="flex items-baseline gap-3 text-sm text-slate-300 leading-6">
+            <span className="mt-[7px] shrink-0 size-[5px] rounded-full bg-blue-500/60" />
+            <span className="flex-1">{children}</span>
           </li>
         ),
 
-        // Horizontal rule (----)
+        // Divider
         hr: () => (
-          <hr className="my-3 border-slate-700/60" />
+          <hr className="my-5 border-slate-700/50" />
         ),
 
         // Inline code
         code: ({ inline, children }) =>
           inline ? (
-            <code className="rounded px-1.5 py-0.5 text-xs font-mono bg-slate-700/80 text-blue-300 border border-slate-600/50">
+            <code className="rounded-md px-1.5 py-0.5 text-xs font-mono bg-slate-700/60 text-blue-300 border border-slate-600/40">
               {children}
             </code>
           ) : (
-            <pre className="mt-2 mb-2 overflow-x-auto rounded-xl border border-slate-700/50 bg-slate-900/80 p-3">
+            <pre className="mt-3 mb-3 overflow-x-auto rounded-xl border border-slate-700/50 bg-slate-900/80 p-4">
               <code className="text-xs font-mono text-slate-300">{children}</code>
             </pre>
           ),
 
-        // Block quote
+        // Blockquote
         blockquote: ({ children }) => (
-          <blockquote className="mt-2 mb-2 border-l-2 border-blue-500/50 pl-3 text-sm text-slate-400 italic">
+          <blockquote className="mt-3 mb-3 border-l-2 border-blue-500/40 pl-4 text-sm text-slate-400 italic leading-7">
             {children}
           </blockquote>
         ),
@@ -148,19 +147,24 @@ function MarkdownMessage({ text }) {
   );
 }
 
-function MessageBubble({ message, idx, copiedIdx, onCopy }) {
+function MessageBubble({ message, idx, copiedIdx, onCopy, userAvatar, userInitials }) {
   const isUser = message.sender === "user";
 
   if (isUser) {
     return (
       <div className="flex items-end justify-end gap-2.5 group">
-        <div className="max-w-[78%] flex flex-col items-end gap-1">
-          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white px-4 py-2.5 rounded-2xl rounded-br-sm text-sm leading-relaxed shadow-lg shadow-blue-500/20">
+        <div className="max-w-[75%] flex flex-col items-end gap-1">
+          <div className="bg-gradient-to-br from-blue-500 to-blue-600 text-white px-4 py-3 rounded-2xl rounded-br-sm text-sm leading-relaxed shadow-lg shadow-blue-500/20">
             {message.text}
           </div>
         </div>
-        <div className="size-7 shrink-0 rounded-full bg-slate-700 border border-slate-600 flex items-center justify-center mb-0.5">
-          <User className="size-3.5 text-slate-300" />
+        {/* Real user avatar — photo if set, else gradient initials */}
+        <div className="size-8 shrink-0 rounded-full overflow-hidden border-2 border-slate-600 mb-0.5 flex items-center justify-center bg-gradient-to-tr from-blue-600 to-indigo-500 text-white text-[10px] font-bold">
+          {userAvatar ? (
+            <img src={userAvatar} alt="You" className="size-full object-cover" />
+          ) : (
+            <span>{userInitials}</span>
+          )}
         </div>
       </div>
     );
@@ -168,21 +172,21 @@ function MessageBubble({ message, idx, copiedIdx, onCopy }) {
 
   return (
     <div className="flex items-start gap-3 group">
-      {/* AI Avatar glow */}
-      <div className="shrink-0 mt-0.5">
+      {/* AI Avatar */}
+      <div className="shrink-0 mt-1">
         <div className="size-8 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-blue-500/30 ring-2 ring-blue-500/20">
           <Sparkles className="size-4 text-white" />
         </div>
       </div>
 
-      <div className="flex-1 min-w-0 space-y-2">
+      <div className="flex-1 min-w-0 space-y-2.5">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-blue-400">ScholarHub AI</span>
           <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
         </div>
 
-        {/* Rendered Markdown response */}
-        <div className="bg-slate-800/80 border border-slate-700/50 rounded-2xl rounded-tl-sm px-4 py-3 backdrop-blur-sm space-y-0.5">
+        {/* Rendered Markdown — open, padded bubble */}
+        <div className="bg-slate-800/70 border border-slate-700/40 rounded-2xl rounded-tl-sm px-5 py-4 backdrop-blur-sm">
           <MarkdownMessage text={message.text} />
         </div>
 
@@ -196,7 +200,7 @@ function MessageBubble({ message, idx, copiedIdx, onCopy }) {
             {message.recommendations.map((item, rIdx) => (
               <div
                 key={rIdx}
-                className="group/card flex items-center justify-between gap-3 rounded-xl border border-slate-700/60 bg-slate-800/60 p-3 hover:border-blue-500/50 hover:bg-slate-800 transition-all backdrop-blur-sm"
+                className="group/card flex items-center justify-between gap-3 rounded-xl border border-slate-700/50 bg-slate-800/50 p-3.5 hover:border-blue-500/50 hover:bg-slate-800 transition-all"
               >
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="size-8 shrink-0 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center">
@@ -225,11 +229,11 @@ function MessageBubble({ message, idx, copiedIdx, onCopy }) {
           </div>
         )}
 
-        {/* Copy button - appears on hover */}
+        {/* Copy button */}
         <button
           type="button"
           onClick={() => onCopy(message.text, idx)}
-          className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[11px] text-slate-500 hover:text-slate-300 transition-all"
+          className="opacity-0 group-hover:opacity-100 flex items-center gap-1 text-[11px] text-slate-600 hover:text-slate-300 transition-all"
         >
           {copiedIdx === idx ? (
             <><Check className="size-3 text-emerald-400" /><span className="text-emerald-400">Copied!</span></>
@@ -243,6 +247,7 @@ function MessageBubble({ message, idx, copiedIdx, onCopy }) {
 }
 
 
+
 export function AiAssistantHub() {
   const { user } = useAuth();
   const [profileVersion, setProfileVersion] = useState(0);
@@ -253,7 +258,17 @@ export function AiAssistantHub() {
     return () => window.removeEventListener("scholarhub_profile_updated", handleProfileUpdate);
   }, []);
 
-  const firstName = (user?.fullName || user?.name || "Student").split(" ")[0];
+  const displayName = user?.fullName || user?.name || "Student";
+  const firstName = displayName.split(" ")[0];
+  const userInitials = displayName
+    .split(" ")
+    .map((n) => n[0])
+    .filter(Boolean)
+    .join("")
+    .substring(0, 2)
+    .toUpperCase() || "ST";
+  const userAvatar = user?.avatar || null;
+
   const studentProfile = useMemo(() => getStoredStudentProfile(), [user, profileVersion]);
   const profileStrength = useMemo(() => calculateProfileStrength(studentProfile), [studentProfile]);
 
@@ -302,8 +317,32 @@ export function AiAssistantHub() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: text.trim(),
-          studentName: studentProfile.name,
+          // Basic identity
+          studentName: studentProfile.fullName || studentProfile.name || displayName,
           course: studentProfile.currentCourse,
+          // Full profile context for richer AI responses
+          category: studentProfile.category,
+          domicileState: studentProfile.domicileState,
+          annualIncome: studentProfile.annualIncome,
+          marksPercentage: studentProfile.marksPercentage,
+          tenthPercentage: studentProfile.tenthPercentage,
+          twelfthPercentage: studentProfile.twelfthPercentage,
+          gender: studentProfile.gender,
+          qualification: studentProfile.qualification,
+          streamBranch: studentProfile.streamBranch,
+          yearSemester: studentProfile.yearSemester,
+          isDisability: studentProfile.isDisability,
+          specialCriteria: studentProfile.specialCriteria,
+          profileStrengthPct: profileStrength,
+          // Top eligible scholarships for context
+          eligibleScholarships: eligibleScholarships.slice(0, 5).map((s) => ({
+            name: s.name,
+            amount: s.amount,
+            provider: s.provider,
+            portalUrl: s.portalUrl,
+            eligibilityPercent: s.eligibilityPercent,
+            matchScore: s.matchScore,
+          })),
         }),
       });
       const data = await response.json();
@@ -404,7 +443,7 @@ export function AiAssistantHub() {
       <div className="flex-1 min-h-0 overflow-y-auto border-x border-slate-800 bg-gradient-to-b from-[#07101f] via-[#090f1e] to-[#0b1324] px-5 py-6 space-y-6 scrollbar-none">
         {messages.map((m, idx) => (
           <div key={idx} className="animate-rise-in">
-            <MessageBubble message={m} idx={idx} copiedIdx={copiedIdx} onCopy={handleCopy} />
+            <MessageBubble message={m} idx={idx} copiedIdx={copiedIdx} onCopy={handleCopy} userAvatar={userAvatar} userInitials={userInitials} />
           </div>
         ))}
 
