@@ -562,22 +562,68 @@ export function SearchScholarshipView({
         </div>
       )}
 
-      {/* Results Counter Banner (hide or adjust when in incomplete recommended view) */}
-      {(activeTab !== "Recommended" || hasFilledDetails) && (
+      {/* Results Counter Banner (Only for Search and valid Recommended / Saved tabs) */}
+      {activeTab === "Search" && (
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-slate-500 dark:text-slate-400 px-1">
           <span className="font-semibold text-slate-700 dark:text-slate-200">
-            Showing {filteredScholarships.length} of {SCHOLARSHIPS_DATABASE.length} {activeTab === "Saved" ? "Saved" : activeTab === "Recommended" ? "Recommended" : "Available"} Scholarships
+            Showing {filteredScholarships.length} of {SCHOLARSHIPS_DATABASE.length} Available Scholarships
           </span>
           <span className="text-[11px] font-medium text-slate-400">
-            {activeTab === "Recommended"
-              ? `Filtered for ≥50% match based on your ${profileStrength}% completed profile`
-              : "All scholarships listed • Live eligibility % calculated"}
+            All scholarships listed • Live eligibility % calculated
           </span>
         </div>
       )}
 
-      {/* If on Recommended tab and profile is below the 30% threshold */}
-      {activeTab === "Recommended" && !hasFilledDetails ? (
+      {activeTab === "Recommended" && hasFilledDetails && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-slate-500 dark:text-slate-400 px-1">
+          <span className="font-semibold text-slate-700 dark:text-slate-200">
+            Showing {filteredScholarships.length} Recommended Scholarships
+          </span>
+          <span className="text-[11px] font-medium text-slate-400">
+            Filtered for ≥50% match based on your {profileStrength}% completed profile
+          </span>
+        </div>
+      )}
+
+      {activeTab === "Saved" && filteredScholarships.length > 0 && (
+        <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+          <span className="font-semibold text-slate-700 dark:text-slate-200">
+            Showing {filteredScholarships.length} Saved {filteredScholarships.length === 1 ? "Scholarship" : "Scholarships"}
+          </span>
+        </div>
+      )}
+
+      {/* 1. If on Saved tab and no scholarships are saved yet */}
+      {activeTab === "Saved" && filteredScholarships.length === 0 ? (
+        <div className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 p-8 sm:p-12 text-center space-y-5 shadow-sm">
+          <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-violet-100 dark:bg-violet-950/60 text-violet-600 dark:text-violet-400 shadow-md">
+            <Bookmark className="size-8 animate-icon-bounce" />
+          </div>
+
+          <div className="max-w-md mx-auto space-y-2">
+            <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+              No Saved Scholarships Yet
+            </h2>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+              You haven't saved any scholarships yet. Browse the scholarship directory and click the bookmark icon on any scholarship card to save it here for quick tracking and application.
+            </p>
+          </div>
+
+          {onNavigateTab && (
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => onNavigateTab("Search")}
+                className="inline-flex items-center gap-2 rounded-xl bg-blue-600 hover:bg-blue-700 dark:bg-blue-500 dark:hover:bg-blue-600 text-white text-xs font-bold px-6 py-3 shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer"
+              >
+                <span>Browse & Save Scholarships</span>
+                <span>&rarr;</span>
+              </button>
+            </div>
+          )}
+        </div>
+      ) : activeTab === "Recommended" && !hasFilledDetails ? (
+        /* 2. If on Recommended tab and profile is below the 30% threshold */
         <div className="rounded-3xl border border-amber-200 dark:border-amber-900/60 bg-gradient-to-b from-amber-50/80 via-amber-50/40 to-white dark:from-amber-950/40 dark:via-slate-900 dark:to-slate-900 p-8 sm:p-12 text-center space-y-6 shadow-sm">
           <div className="mx-auto flex size-16 items-center justify-center rounded-2xl bg-amber-100 dark:bg-amber-900/60 text-amber-600 dark:text-amber-400 shadow-md">
             <Sparkles className="size-8 animate-icon-twinkle" />
@@ -633,10 +679,12 @@ export function SearchScholarshipView({
           </div>
         </div>
       ) : filteredScholarships.length === 0 ? (
+        /* 3. General empty state */
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center text-xs text-slate-400">
           No scholarships match your criteria. Try adjusting your filters.
         </div>
       ) : (
+        /* 4. Scholarship cards list */
         <div className="space-y-4">
           {filteredScholarships.map((s) => (
             <ScholarshipRowItem
