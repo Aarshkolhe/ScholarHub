@@ -6,6 +6,7 @@ import { AiAssistantHub } from "../../components/dashboard/AiAssistantHub";
 import { Sidebar } from "../../components/dashboard/Sidebar";
 import { Topbar } from "../../components/dashboard/Topbar";
 import { StatCards } from "../../components/dashboard/StatCards";
+import { RecentScholarships } from "../../components/dashboard/RecentScholarships";
 import {
   Sparkles,
   Mail,
@@ -331,6 +332,14 @@ export function StudentDashboard() {
                   </div>
                 </div>
               </div>
+
+              {/* Dynamic Scholarship List (Auto-updates with Recommended or Search Catalog) */}
+              <RecentScholarships
+                onViewAllClick={() => setActiveTab("Search")}
+                onNavigateTab={setActiveTab}
+                onUpdateSavedCount={setSavedCount}
+                onUpdateAppliedCount={setAppliedCount}
+              />
             </div>
           )}
 
