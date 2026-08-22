@@ -249,60 +249,88 @@ export function evaluateEligibility(scholarship, profile = null) {
   let passedChecks = 0;
   let totalChecks = 0;
 
+  const missingFields = [];
+
   // 1. Social Category Check
   if (criteria.allowedCategories && !criteria.allowedCategories.includes("All")) {
     totalChecks++;
-    const studentCat = (student.category || "General").trim();
-    const passed = criteria.allowedCategories.some(
-      (c) => c.toLowerCase() === studentCat.toLowerCase()
-    );
-    if (!passed) {
+    const studentCat = (student.category || "").trim();
+    if (!studentCat) {
+      missingFields.push("Category");
       reasons.push(
-        `Reserved for ${criteria.allowedCategories.join(", ")} category (your profile: ${studentCat || "Unspecified"}).`
+        `Reserved for ${criteria.allowedCategories.join(", ")} category (not specified in your profile yet).`
       );
-      criteriaBreakdown.push({ label: "Category Requirement", status: "failed", detail: `Requires ${criteria.allowedCategories.join(", ")}` });
+      criteriaBreakdown.push({ label: "Category Requirement", status: "failed", detail: `Requires ${criteria.allowedCategories.join(", ")} (Profile: Not specified)` });
     } else {
-      passedChecks++;
-      criteriaBreakdown.push({ label: "Category Requirement", status: "passed", detail: `Matched: ${studentCat}` });
+      const passed = criteria.allowedCategories.some(
+        (c) => c.toLowerCase() === studentCat.toLowerCase()
+      );
+      if (!passed) {
+        reasons.push(
+          `Reserved for ${criteria.allowedCategories.join(", ")} category (your profile: ${studentCat}).`
+        );
+        criteriaBreakdown.push({ label: "Category Requirement", status: "failed", detail: `Requires ${criteria.allowedCategories.join(", ")} (Yours: ${studentCat})` });
+      } else {
+        passedChecks++;
+        criteriaBreakdown.push({ label: "Category Requirement", status: "passed", detail: `Matched: ${studentCat}` });
+      }
     }
   }
 
   // 2. Annual Family Income Check
   if (criteria.maxIncome) {
     totalChecks++;
-    const incomeNum =
-      parseFloat(String(student.annualIncome || "").replace(/[^0-9.]/g, "")) || 0;
+    const rawIncome = student.annualIncome !== undefined && student.annualIncome !== null ? String(student.annualIncome).trim() : "";
     const maxFormatted = `₹${criteria.maxIncome.toLocaleString("en-IN")}`;
-    const userFormatted = `₹${incomeNum.toLocaleString("en-IN")}`;
 
-    if (incomeNum > criteria.maxIncome) {
+    if (!rawIncome) {
+      missingFields.push("Family Income");
       reasons.push(
-        `Family income exceeds ${maxFormatted} limit (your reported income: ${userFormatted}).`
+        `Requires annual family income verification <= ${maxFormatted} (not specified in your profile yet).`
       );
-      criteriaBreakdown.push({ label: "Income Limit", status: "failed", detail: `Max ${maxFormatted} (Yours: ${userFormatted})` });
+      criteriaBreakdown.push({ label: "Income Limit", status: "failed", detail: `Max ${maxFormatted} (Profile: Not specified)` });
     } else {
-      passedChecks++;
-      criteriaBreakdown.push({ label: "Income Limit", status: "passed", detail: `Within limit: ${userFormatted} <= ${maxFormatted}` });
+      const incomeNum = parseFloat(rawIncome.replace(/[^0-9.]/g, "")) || 0;
+      const userFormatted = `₹${incomeNum.toLocaleString("en-IN")}`;
+
+      if (incomeNum > criteria.maxIncome) {
+        reasons.push(
+          `Family income exceeds ${maxFormatted} limit (your reported income: ${userFormatted}).`
+        );
+        criteriaBreakdown.push({ label: "Income Limit", status: "failed", detail: `Max ${maxFormatted} (Yours: ${userFormatted})` });
+      } else {
+        passedChecks++;
+        criteriaBreakdown.push({ label: "Income Limit", status: "passed", detail: `Within limit: ${userFormatted} <= ${maxFormatted}` });
+      }
     }
   }
 
   // 3. Minimum Percentage / CGPA Check
   if (criteria.minPercentage) {
     totalChecks++;
-    let scoreNum =
-      parseFloat(String(student.marksPercentage || "").replace(/[^0-9.]/g, "")) || 0;
-    if (scoreNum > 0 && scoreNum <= 10) {
-      scoreNum = scoreNum * 9.5; // CGPA to %
-    }
+    const rawMarks = student.marksPercentage !== undefined && student.marksPercentage !== null ? String(student.marksPercentage).trim() : "";
 
-    if (scoreNum < criteria.minPercentage) {
+    if (!rawMarks) {
+      missingFields.push("Academic Marks");
       reasons.push(
-        `Requires minimum ${criteria.minPercentage}% marks (your reported score: ${Math.round(scoreNum)}%).`
+        `Requires minimum ${criteria.minPercentage}% marks (not specified in your profile yet).`
       );
-      criteriaBreakdown.push({ label: "Academic Cutoff", status: "failed", detail: `Requires >= ${criteria.minPercentage}% (Yours: ${Math.round(scoreNum)}%)` });
+      criteriaBreakdown.push({ label: "Academic Cutoff", status: "failed", detail: `Requires >= ${criteria.minPercentage}% (Profile: Not specified)` });
     } else {
-      passedChecks++;
-      criteriaBreakdown.push({ label: "Academic Cutoff", status: "passed", detail: `Passed: ${Math.round(scoreNum)}% >= ${criteria.minPercentage}%` });
+      let scoreNum = parseFloat(rawMarks.replace(/[^0-9.]/g, "")) || 0;
+      if (scoreNum > 0 && scoreNum <= 10) {
+        scoreNum = scoreNum * 9.5; // CGPA to %
+      }
+
+      if (scoreNum < criteria.minPercentage) {
+        reasons.push(
+          `Requires minimum ${criteria.minPercentage}% marks (your reported score: ${Math.round(scoreNum)}%).`
+        );
+        criteriaBreakdown.push({ label: "Academic Cutoff", status: "failed", detail: `Requires >= ${criteria.minPercentage}% (Yours: ${Math.round(scoreNum)}%)` });
+      } else {
+        passedChecks++;
+        criteriaBreakdown.push({ label: "Academic Cutoff", status: "passed", detail: `Passed: ${Math.round(scoreNum)}% >= ${criteria.minPercentage}%` });
+      }
     }
   }
 
@@ -313,17 +341,25 @@ export function evaluateEligibility(scholarship, profile = null) {
     !criteria.allowedStates.includes("All")
   ) {
     totalChecks++;
-    const studentState = (student.domicileState || "").trim().toLowerCase();
-    const passed = criteria.allowedStates.some((s) => s.toLowerCase() === studentState);
+    const studentState = (student.domicileState || "").trim();
 
-    if (!passed) {
+    if (!studentState) {
+      missingFields.push("Domicile State");
       reasons.push(
-        `Restricted to students domiciled in ${criteria.allowedStates.join(", ")} (your state: ${student.domicileState || "Unspecified"}).`
+        `Restricted to students domiciled in ${criteria.allowedStates.join(", ")} (not specified in your profile yet).`
       );
-      criteriaBreakdown.push({ label: "Domicile State", status: "failed", detail: `Requires ${criteria.allowedStates.join(", ")}` });
+      criteriaBreakdown.push({ label: "Domicile State", status: "failed", detail: `Requires ${criteria.allowedStates.join(", ")} (Profile: Not specified)` });
     } else {
-      passedChecks++;
-      criteriaBreakdown.push({ label: "Domicile State", status: "passed", detail: `Matched state: ${student.domicileState}` });
+      const passed = criteria.allowedStates.some((s) => s.toLowerCase() === studentState.toLowerCase());
+      if (!passed) {
+        reasons.push(
+          `Restricted to students domiciled in ${criteria.allowedStates.join(", ")} (your state: ${studentState}).`
+        );
+        criteriaBreakdown.push({ label: "Domicile State", status: "failed", detail: `Requires ${criteria.allowedStates.join(", ")} (Yours: ${studentState})` });
+      } else {
+        passedChecks++;
+        criteriaBreakdown.push({ label: "Domicile State", status: "passed", detail: `Matched state: ${studentState}` });
+      }
     }
   }
 
@@ -333,12 +369,13 @@ export function evaluateEligibility(scholarship, profile = null) {
     const studentGender = (student.gender || "").trim().toLowerCase();
     const targetGender = criteria.gender.toLowerCase();
 
-    if (studentGender && studentGender !== targetGender) {
-      reasons.push(`Exclusively open for ${criteria.gender} candidates.`);
-      criteriaBreakdown.push({ label: "Gender Requirement", status: "failed", detail: `Requires ${criteria.gender}` });
-    } else if (!studentGender) {
-      reasons.push(`Requires ${criteria.gender} gender in profile.`);
-      criteriaBreakdown.push({ label: "Gender Requirement", status: "failed", detail: `Requires ${criteria.gender}` });
+    if (!studentGender) {
+      missingFields.push("Gender");
+      reasons.push(`Requires ${criteria.gender} gender (not specified in your profile yet).`);
+      criteriaBreakdown.push({ label: "Gender Requirement", status: "failed", detail: `Requires ${criteria.gender} (Profile: Not specified)` });
+    } else if (studentGender !== targetGender) {
+      reasons.push(`Exclusively open for ${criteria.gender} candidates (your profile: ${student.gender}).`);
+      criteriaBreakdown.push({ label: "Gender Requirement", status: "failed", detail: `Requires ${criteria.gender} (Yours: ${student.gender})` });
     } else {
       passedChecks++;
       criteriaBreakdown.push({ label: "Gender Requirement", status: "passed", detail: `Matched: ${student.gender}` });
@@ -350,24 +387,33 @@ export function evaluateEligibility(scholarship, profile = null) {
     totalChecks++;
     const stream = (student.streamBranch || "").toLowerCase();
     const course = (student.currentCourse || "").toLowerCase();
-    const passed = criteria.allowedStreams.some((s) => {
-      const sl = s.toLowerCase();
-      return (
-        stream.includes(sl) ||
-        course.includes(sl) ||
-        sl.includes(course) ||
-        sl.includes(stream)
-      );
-    });
 
-    if (!passed && (stream || course)) {
+    if (!stream && !course) {
+      missingFields.push("Course / Stream");
       reasons.push(
-        `Course/Stream must relate to [${criteria.allowedStreams.slice(0, 4).join(", ")}] (your current: ${student.currentCourse || student.streamBranch || "Other"}).`
+        `Course/Stream must relate to [${criteria.allowedStreams.slice(0, 4).join(", ")}] (not specified in your profile yet).`
       );
-      criteriaBreakdown.push({ label: "Degree & Stream", status: "failed", detail: `Requires ${criteria.allowedStreams.slice(0, 3).join(", ")}` });
+      criteriaBreakdown.push({ label: "Degree & Stream", status: "failed", detail: `Requires ${criteria.allowedStreams.slice(0, 3).join(", ")} (Profile: Not specified)` });
     } else {
-      passedChecks++;
-      criteriaBreakdown.push({ label: "Degree & Stream", status: "passed", detail: `Matched: ${student.currentCourse} - ${student.streamBranch}` });
+      const passed = criteria.allowedStreams.some((s) => {
+        const sl = s.toLowerCase();
+        return (
+          stream.includes(sl) ||
+          course.includes(sl) ||
+          sl.includes(course) ||
+          sl.includes(stream)
+        );
+      });
+
+      if (!passed) {
+        reasons.push(
+          `Course/Stream must relate to [${criteria.allowedStreams.slice(0, 4).join(", ")}] (your current: ${student.currentCourse || student.streamBranch || "Other"}).`
+        );
+        criteriaBreakdown.push({ label: "Degree & Stream", status: "failed", detail: `Requires ${criteria.allowedStreams.slice(0, 3).join(", ")}` });
+      } else {
+        passedChecks++;
+        criteriaBreakdown.push({ label: "Degree & Stream", status: "passed", detail: `Matched: ${student.currentCourse || student.streamBranch}` });
+      }
     }
   }
 
@@ -400,19 +446,27 @@ export function evaluateEligibility(scholarship, profile = null) {
     }
   }
 
-  const isEligible = reasons.length === 0;
+  const isPendingDetails = missingFields.length > 0;
+  const isEligible = !isPendingDetails && reasons.length === 0;
 
-  // Calculate dynamic match percentage: 88-99% if eligible, 35-70% if ineligible
-  let matchScore = 75;
-  if (isEligible) {
-    matchScore = 90 + Math.min(Math.round((passedChecks / Math.max(totalChecks, 1)) * 9), 9);
-  } else {
-    const fraction = totalChecks > 0 ? passedChecks / totalChecks : 0;
-    matchScore = Math.max(35, Math.round(fraction * 70));
+  // Calculate dynamic match percentage:
+  // If required details are missing -> null (Details Pending, no arbitrary 35%!)
+  // If eligible -> 90-99%
+  // If evaluated with details provided and ineligible -> 30-65%
+  let matchScore = null;
+  if (!isPendingDetails) {
+    if (isEligible) {
+      matchScore = 90 + Math.min(Math.round((passedChecks / Math.max(totalChecks, 1)) * 9), 9);
+    } else {
+      const fraction = totalChecks > 0 ? passedChecks / totalChecks : 0;
+      matchScore = Math.max(30, Math.round(fraction * 70));
+    }
   }
 
   return {
     isEligible,
+    isPendingDetails,
+    missingFields,
     matchScore,
     reasons,
     criteriaBreakdown,

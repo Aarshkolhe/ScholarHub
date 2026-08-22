@@ -17,18 +17,24 @@ export function ScholarshipRowItem({
       <div className="space-y-1.5 min-w-0 flex-1">
         {/* Badges & Provider Line */}
         <div className="flex items-center gap-2 flex-wrap text-xs">
-          {/* Match Score Badge */}
-          <span
-            className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold shadow-xs ${
-              scholarship.matchScore >= 75
-                ? "bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/30"
-                : scholarship.matchScore >= 50
-                ? "bg-blue-500/15 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-500/30"
-                : "bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-500/30"
-            }`}
-          >
-            <span>✨</span> {scholarship.matchScore}% Match
-          </span>
+          {/* Match Score Badge or Details Pending Badge */}
+          {scholarship.isPendingDetails || scholarship.matchScore === null ? (
+            <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold bg-amber-500/15 text-amber-700 dark:bg-amber-500/20 dark:text-amber-300 border border-amber-500/30 shadow-xs">
+              <span>📋</span> Details Pending
+            </span>
+          ) : (
+            <span
+              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-extrabold shadow-xs ${
+                scholarship.matchScore >= 75
+                  ? "bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/30"
+                  : scholarship.matchScore >= 50
+                  ? "bg-blue-500/15 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 border border-blue-500/30"
+                  : "bg-rose-500/15 text-rose-600 dark:bg-rose-500/20 dark:text-rose-400 border border-rose-500/30"
+              }`}
+            >
+              <span>✨</span> {scholarship.matchScore}% Match
+            </span>
+          )}
 
           {/* Govt Scheme Badge */}
           {scholarship.isGovt ? (
@@ -63,14 +69,21 @@ export function ScholarshipRowItem({
           <span>
             Deadline: <span className="font-medium text-slate-700 dark:text-slate-300">{scholarship.deadline || "31 Oct 2026"}</span>
           </span>
-          {!scholarship.isEligible && scholarship.reasons?.length > 0 && (
+          {scholarship.isPendingDetails ? (
+            <>
+              <span>•</span>
+              <span className="text-amber-600 dark:text-amber-400 font-medium">
+                Note: Fill in {scholarship.missingFields?.join(", ") || "profile details"} in Details tab to check match
+              </span>
+            </>
+          ) : !scholarship.isEligible && scholarship.reasons?.length > 0 ? (
             <>
               <span>•</span>
               <span className="text-rose-600 dark:text-rose-400 font-medium">
                 Note: {scholarship.reasons[0]}
               </span>
             </>
-          )}
+          ) : null}
         </div>
       </div>
 

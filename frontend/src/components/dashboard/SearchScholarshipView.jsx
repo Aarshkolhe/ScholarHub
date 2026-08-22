@@ -181,27 +181,59 @@ export function SearchScholarshipView({
 
   const filteredScholarships = useMemo(() => {
     return evaluatedScholarships.filter((s) => {
+      // 1. Saved Tab Filter
       if (activeTab === "Saved" && !savedIds.includes(s.id)) return false;
+
+      // 2. Recommended Tab Filter
       if (activeTab === "Recommended" && s.matchScore < 50) return false;
 
-      // Portal Pills
-      if (selectedPortal === "MahaDBT" && !s.id.includes("mahadbt") && !s.provider.toLowerCase().includes("mahadbt")) return false;
-      if (selectedPortal === "MahaJYOTI" && !s.id.includes("mahajyoti") && !s.provider.toLowerCase().includes("mahajyoti")) return false;
-      if (selectedPortal === "Vidyasaarathi" && !s.id.includes("vidya") && !s.provider.toLowerCase().includes("vidyasaarathi")) return false;
+      // 3. Portal Source Filter (Only filter if a specific portal is clicked)
+      if (selectedPortal !== "All") {
+        const pKey = selectedPortal.toLowerCase();
+        const prov = (s.provider || "").toLowerCase();
+        const pUrl = (s.portalUrl || "").toLowerCase();
+        const sId = (s.id || "").toLowerCase();
+        const matchesPortal = prov.includes(pKey) || pUrl.includes(pKey) || sId.includes(pKey);
+        if (!matchesPortal) return false;
+      }
 
-      // Form Filters
-      if (selectedStatus === "Active" && s.daysLeft <= 0) return false;
-      if (selectedStatus === "Closing Soon" && (s.daysLeft <= 0 || s.daysLeft > 15)) return false;
-      if (selectedDegree && s.degree !== selectedDegree) return false;
-      if (selectedCategory && !s.category.includes(selectedCategory) && s.category !== "All Categories") return false;
+      // 4. Status Filter
+      if (selectedStatus === "Eligible Only" && !s.isEligible) return false;
+      if (selectedStatus === "Not Eligible" && s.isEligible) return false;
 
-      // Text Query Search
+      // 5. Degree Filter (Only filter if specific degree is selected)
+      if (selectedDegree && selectedDegree !== "All") {
+        const d = selectedDegree.toLowerCase();
+        const sDeg = (s.degree || "").toLowerCase();
+        const allowedDegs = (s.criteria?.allowedDegrees || []).map((x) => x.toLowerCase());
+        const matchesDegree =
+          sDeg.includes(d) ||
+          allowedDegs.includes("all") ||
+          allowedDegs.some((deg) => deg.includes(d) || d.includes(deg));
+        if (!matchesDegree) return false;
+      }
+
+      // 6. Category Filter (Only filter if specific category is selected)
+      if (selectedCategory && selectedCategory !== "All") {
+        const c = selectedCategory.toLowerCase();
+        const sCat = (s.category || "").toLowerCase();
+        const allowedCats = (s.criteria?.allowedCategories || []).map((x) => x.toLowerCase());
+        const matchesCategory =
+          sCat.includes(c) ||
+          allowedCats.includes("all") ||
+          allowedCats.some((cat) => cat === c || c.includes(cat) || cat.includes(c));
+        if (!matchesCategory) return false;
+      }
+
+      // 7. Text Query Search
       if (query.trim()) {
-        const q = query.toLowerCase();
-        const matchesName = s.name.toLowerCase().includes(q);
-        const matchesCat = s.category.toLowerCase().includes(q);
-        const matchesProv = s.provider.toLowerCase().includes(q);
-        if (!matchesName && !matchesCat && !matchesProv) return false;
+        const q = query.toLowerCase().trim();
+        const matchesName = (s.name || "").toLowerCase().includes(q);
+        const matchesCat = (s.category || "").toLowerCase().includes(q);
+        const matchesProv = (s.provider || "").toLowerCase().includes(q);
+        const matchesDesc = (s.description || "").toLowerCase().includes(q);
+        const matchesReq = (s.requirements || "").toLowerCase().includes(q);
+        if (!matchesName && !matchesCat && !matchesProv && !matchesDesc && !matchesReq) return false;
       }
 
       return true;
@@ -425,6 +457,16 @@ export function SearchScholarshipView({
         </div>
       )}
 
+      {/* Results Counter Banner */}
+      <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400 px-1">
+        <span className="font-semibold text-slate-700 dark:text-slate-200">
+          Showing {filteredScholarships.length} {activeTab === "Saved" ? "Saved" : activeTab === "Recommended" ? "Recommended" : "Available"} Scholarships
+        </span>
+        <span className="text-[11px] font-medium text-slate-400">
+          {activeTab === "Search" && "⚡ Evaluated against your profile"}
+        </span>
+      </div>
+
       {/* Vertical List of Cards */}
       {filteredScholarships.length === 0 ? (
         <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-12 text-center text-xs text-slate-400">
@@ -452,15 +494,21 @@ export function SearchScholarshipView({
           <div className="w-full max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-200 dark:border-slate-800 space-y-4">
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
               <div>
-                <span
-                  className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
-                    activeModalScholarship.isEligible
-                      ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
-                      : "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400"
-                  }`}
-                >
-                  {activeModalScholarship.isEligible ? "Eligible" : "Not Eligible"} ({activeModalScholarship.matchScore}% Match)
-                </span>
+                {activeModalScholarship.isPendingDetails || activeModalScholarship.matchScore === null ? (
+                  <span className="inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold bg-amber-50 dark:bg-amber-950 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                    📋 Details Pending ({activeModalScholarship.missingFields?.join(", ") || "Profile Details"} Missing)
+                  </span>
+                ) : (
+                  <span
+                    className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-bold ${
+                      activeModalScholarship.isEligible
+                        ? "bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400"
+                        : "bg-rose-50 dark:bg-rose-950 text-rose-600 dark:text-rose-400"
+                    }`}
+                  >
+                    {activeModalScholarship.isEligible ? "Eligible" : "Not Eligible"} ({activeModalScholarship.matchScore}% Match)
+                  </span>
+                )}
                 <h3 className="mt-2 text-lg font-bold text-slate-900 dark:text-white">
                   {activeModalScholarship.name}
                 </h3>
