@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   User,
   GraduationCap,
@@ -11,11 +11,167 @@ import {
   RotateCcw,
   Sparkles,
   Check,
+  ChevronDown,
 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import { calculateProfileStrength } from "../../lib/eligibilityEngine";
 
 const BACKEND_URL = "http://localhost:5000";
+
+const GENDER_OPTIONS = [
+  { value: "Male", label: "Male" },
+  { value: "Female", label: "Female (Powers AICTE Pragati & Women in STEM)" },
+  { value: "Other", label: "Other / Prefer not to say" },
+];
+
+const QUALIFICATION_OPTIONS = [
+  { value: "Class 10 / Secondary (SSC)", label: "Class 10 / Secondary School (SSC)" },
+  { value: "Class 12 / Senior Secondary (HSC / 10+2)", label: "Class 12 / Senior Secondary (HSC / 10+2 / Junior College)" },
+  { value: "Undergraduate (UG)", label: "Undergraduate (UG / B.Tech, B.Sc, B.A, B.Com, MBBS)" },
+  { value: "Postgraduate (PG)", label: "Postgraduate (PG / M.Tech, M.Sc, M.A, MBA)" },
+  { value: "Diploma / Polytechnic", label: "Diploma / Polytechnic (3-Year Technical)" },
+  { value: "Doctorate (PhD)", label: "Doctorate (PhD / Research Fellow)" },
+  { value: "Primary / Middle School (Class 1 - 8)", label: "Primary / Middle School (Class 1 - 8)" },
+];
+
+const CLASS_12_STREAM_OPTIONS = [
+  { value: "Senior Secondary 10+2 (Science PCM / PCB)", label: "Senior Secondary 10+2 (Science PCM / PCB)" },
+  { value: "Senior Secondary 10+2 (Arts & Commerce)", label: "Senior Secondary 10+2 (Arts & Commerce)" },
+];
+
+const COLLEGE_STREAM_OPTIONS = [
+  { value: "Engineering & Technology", label: "Engineering & Technology" },
+  { value: "Science / STEM", label: "Science / STEM" },
+  { value: "Arts & Humanities", label: "Arts & Humanities" },
+  { value: "Commerce & Finance", label: "Commerce & Finance" },
+  { value: "Medical & Healthcare", label: "Medical & Healthcare" },
+  { value: "Diploma / Polytechnic", label: "Diploma / Polytechnic" },
+  { value: "General School Education (Class 1 - 8)", label: "General School Education (Class 1 - 8)" },
+];
+
+const CLASS_YEAR_OPTIONS = [
+  { value: "Class 11th", label: "Class 11th" },
+  { value: "Class 12th", label: "Class 12th (HSC Board Year)" },
+];
+
+const LIVING_TYPE_OPTIONS = [
+  { value: "Hostel", label: "Hostel (College / Govt / Private Hostel)" },
+  { value: "PG / Rented Accommodation", label: "PG / Rented Accommodation" },
+  { value: "Day Scholar at Home", label: "Day Scholar at Home (Resident with Family)" },
+];
+
+const CATEGORY_OPTIONS = [
+  { value: "General", label: "General / Open" },
+  { value: "OBC", label: "OBC (Other Backward Class)" },
+  { value: "SC", label: "SC (Scheduled Caste)" },
+  { value: "ST", label: "ST (Scheduled Tribe)" },
+  { value: "EWS", label: "EWS (Economically Weaker Section)" },
+  { value: "VJNT", label: "VJNT (Vimukta Jati & Nomadic Tribes)" },
+  { value: "SBC", label: "SBC (Special Backward Class)" },
+];
+
+const DOMICILE_STATE_OPTIONS = [
+  { value: "Maharashtra", label: "Maharashtra (Powers MahaDBT & MahaJYOTI)" },
+  { value: "Andhra Pradesh", label: "Andhra Pradesh" },
+  { value: "Assam", label: "Assam" },
+  { value: "Bihar", label: "Bihar" },
+  { value: "Chhattisgarh", label: "Chhattisgarh" },
+  { value: "Delhi", label: "Delhi (NCT)" },
+  { value: "Goa", label: "Goa" },
+  { value: "Gujarat", label: "Gujarat" },
+  { value: "Haryana", label: "Haryana" },
+  { value: "Himachal Pradesh", label: "Himachal Pradesh" },
+  { value: "Jammu & Kashmir", label: "Jammu & Kashmir / Ladakh" },
+  { value: "Jharkhand", label: "Jharkhand" },
+  { value: "Karnataka", label: "Karnataka" },
+  { value: "Kerala", label: "Kerala" },
+  { value: "Madhya Pradesh", label: "Madhya Pradesh" },
+  { value: "Odisha", label: "Odisha" },
+  { value: "Punjab", label: "Punjab" },
+  { value: "Rajasthan", label: "Rajasthan" },
+  { value: "Tamil Nadu", label: "Tamil Nadu" },
+  { value: "Telangana", label: "Telangana" },
+  { value: "Uttar Pradesh", label: "Uttar Pradesh" },
+  { value: "Uttarakhand", label: "Uttarakhand" },
+  { value: "West Bengal", label: "West Bengal" },
+  { value: "Other State", label: "Other State / All India Resident" },
+];
+
+const DISABILITY_OPTIONS = [
+  { value: "No", label: "No" },
+  { value: "Yes", label: "Yes (Person with Disability - PwD)" },
+];
+
+const SPECIAL_CRITERIA_OPTIONS = [
+  { value: "None", label: "None / General" },
+  { value: "First-Generation Learner", label: "First-Generation College Student" },
+  { value: "Single Girl Child", label: "Single Girl Child" },
+  { value: "Rural Background", label: "Rural Background Resident" },
+  { value: "National Sports Level", label: "National / State Level Sports Athlete" },
+];
+
+function CustomSelect({ name, value, onChange, options, placeholder = "Select...", className = "" }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const containerRef = useRef(null);
+
+  useEffect(() => {
+    function handleClickOutside(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setIsOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const selectedOption = options.find((opt) => opt.value === value);
+  const displayLabel = selectedOption ? selectedOption.label : placeholder;
+
+  const handleSelect = (val) => {
+    onChange({ target: { name, value: val } });
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative w-full" ref={containerRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen((prev) => !prev)}
+        className={`mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 px-3.5 text-xs font-medium text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500 flex items-center justify-between transition-all cursor-pointer ${
+          isOpen ? "ring-2 ring-blue-500/20 border-blue-500 shadow-sm" : ""
+        } ${className}`}
+      >
+        <span className={`truncate text-left ${!value ? "text-slate-400 dark:text-slate-500 font-normal" : ""}`}>
+          {displayLabel}
+        </span>
+        <ChevronDown className={`size-4 text-slate-400 dark:text-slate-500 shrink-0 transition-transform duration-200 ${isOpen ? "rotate-180 text-blue-500" : ""}`} />
+      </button>
+
+      {isOpen && (
+        <div className="absolute left-0 right-0 top-full mt-1.5 z-50 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-xl overflow-hidden animate-fade-in max-h-60 overflow-y-auto divide-y divide-slate-100 dark:divide-slate-800/60">
+          {options.map((opt) => {
+            const isSelected = opt.value === value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleSelect(opt.value)}
+                className={`w-full text-left px-3.5 py-2.5 text-xs font-medium transition-colors flex items-center justify-between cursor-pointer ${
+                  isSelected
+                    ? "bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 font-bold"
+                    : "text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/80"
+                }`}
+              >
+                <span className="truncate">{opt.label}</span>
+                {isSelected && <Check className="size-3.5 text-blue-600 dark:text-blue-400 shrink-0 ml-2" />}
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export function UserProfileSection() {
   const { user, updateUser } = useAuth();
@@ -581,17 +737,13 @@ export function UserProfileSection() {
 
               <div>
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Gender</label>
-                <select
+                <CustomSelect
                   name="gender"
                   value={personal.gender}
                   onChange={handlePersonalChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                >
-                  <option value="">Select Gender...</option>
-                  <option value="Male">Male</option>
-                  <option value="Female">Female (Powers AICTE Pragati & Women in STEM)</option>
-                  <option value="Other">Other / Prefer not to say</option>
-                </select>
+                  options={GENDER_OPTIONS}
+                  placeholder="Select Gender..."
+                />
               </div>
 
               <div>
@@ -628,20 +780,14 @@ export function UserProfileSection() {
                   <label className="text-xs font-bold text-blue-900 dark:text-blue-300">
                     Qualification / Education Level
                   </label>
-                  <select
+                  <CustomSelect
                     name="qualification"
                     value={currentEducation.qualification}
                     onChange={handleCurrentEdChange}
-                    className="mt-1 w-full rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 p-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
-                  >
-                    <option value="Class 10 / Secondary (SSC)">Class 10 / Secondary School (SSC)</option>
-                    <option value="Class 12 / Senior Secondary (HSC / 10+2)">Class 12 / Senior Secondary (HSC / 10+2 / Junior College)</option>
-                    <option value="Undergraduate (UG)">Undergraduate (UG / B.Tech, B.Sc, B.A, B.Com, MBBS)</option>
-                    <option value="Postgraduate (PG)">Postgraduate (PG / M.Tech, M.Sc, M.A, MBA)</option>
-                    <option value="Diploma / Polytechnic">Diploma / Polytechnic (3-Year Technical)</option>
-                    <option value="Doctorate (PhD)">Doctorate (PhD / Research Fellow)</option>
-                    <option value="Primary / Middle School (Class 1 - 8)">Primary / Middle School (Class 1 - 8)</option>
-                  </select>
+                    options={QUALIFICATION_OPTIONS}
+                    placeholder="Select Qualification Level..."
+                    className="font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-800 border-blue-300 dark:border-blue-700"
+                  />
                 </div>
 
                 {/* 2. School / College Name */}
@@ -692,29 +838,13 @@ export function UserProfileSection() {
                 {!isClass10 && (
                   <div>
                     <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Stream / Academic Field</label>
-                    <select
+                    <CustomSelect
                       name="streamBranch"
                       value={currentEducation.streamBranch}
                       onChange={handleCurrentEdChange}
-                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                    >
-                      <option value="">Select Stream...</option>
-                      {isClass12 ? (
-                        <>
-                          <option value="Senior Secondary 10+2 (Science PCM / PCB)">Senior Secondary 10+2 (Science PCM / PCB)</option>
-                          <option value="Senior Secondary 10+2 (Arts & Commerce)">Senior Secondary 10+2 (Arts & Commerce)</option>
-                        </>
-                      ) : (
-                        <>
-                          <option value="Engineering & Technology">Engineering & Technology</option>
-                          <option value="Science / STEM">Science / STEM</option>
-                          <option value="Arts & Humanities">Arts & Humanities</option>
-                          <option value="Commerce & Finance">Commerce & Finance</option>
-                          <option value="Medical & Healthcare">Medical & Healthcare</option>
-                          <option value="Diploma / Polytechnic">Diploma / Polytechnic</option>
-                        </>
-                      )}
-                    </select>
+                      options={isClass12 ? CLASS_12_STREAM_OPTIONS : COLLEGE_STREAM_OPTIONS}
+                      placeholder="Select Stream..."
+                    />
                   </div>
                 )}
 
@@ -725,15 +855,13 @@ export function UserProfileSection() {
                       {isClass12 ? "Class Year" : "Year / Semester of Study"}
                     </label>
                     {isClass12 ? (
-                      <select
+                      <CustomSelect
                         name="yearSemester"
                         value={currentEducation.yearSemester}
                         onChange={handleCurrentEdChange}
-                        className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                      >
-                        <option value="Class 11th">Class 11th</option>
-                        <option value="Class 12th">Class 12th (HSC Board Year)</option>
-                      </select>
+                        options={CLASS_YEAR_OPTIONS}
+                        placeholder="Select Class Year..."
+                      />
                     ) : (
                       <input
                         type="text"
@@ -874,16 +1002,13 @@ export function UserProfileSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Living / Accommodation Type</label>
-                <select
+                <CustomSelect
                   name="livingType"
                   value={livingStatus.livingType}
                   onChange={handleLivingChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                >
-                  <option value="Hostel">Hostel (College / Govt / Private Hostel)</option>
-                  <option value="PG / Rented Accommodation">PG / Rented Accommodation</option>
-                  <option value="Day Scholar at Home">Day Scholar at Home (Resident with Family)</option>
-                </select>
+                  options={LIVING_TYPE_OPTIONS}
+                  placeholder="Select Living Accommodation..."
+                />
               </div>
 
               <div>
@@ -940,73 +1065,46 @@ export function UserProfileSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Social Category</label>
-                <select
+                <CustomSelect
                   name="category"
                   value={eligibility.category}
                   onChange={handleEligibilityChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                >
-                  <option value="">Select Category...</option>
-                  <option value="General">General / Open</option>
-                  <option value="OBC">OBC (Other Backward Class)</option>
-                  <option value="SC">SC (Scheduled Caste)</option>
-                  <option value="ST">ST (Scheduled Tribe)</option>
-                  <option value="EWS">EWS (Economically Weaker Section)</option>
-                  <option value="VJNT">VJNT (Vimukta Jati & Nomadic Tribes)</option>
-                  <option value="SBC">SBC (Special Backward Class)</option>
-                </select>
+                  options={CATEGORY_OPTIONS}
+                  placeholder="Select Social Category..."
+                />
               </div>
 
               <div>
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Domicile State</label>
-                <select
+                <CustomSelect
                   name="domicileState"
                   value={eligibility.domicileState}
                   onChange={handleEligibilityChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                >
-                  <option value="">Select Domicile State...</option>
-                  <option value="Maharashtra">Maharashtra (Powers MahaDBT & MahaJYOTI)</option>
-                  <option value="Delhi">Delhi</option>
-                  <option value="Karnataka">Karnataka</option>
-                  <option value="Tamil Nadu">Tamil Nadu</option>
-                  <option value="Uttar Pradesh">Uttar Pradesh</option>
-                  <option value="Gujarat">Gujarat</option>
-                  <option value="Rajasthan">Rajasthan</option>
-                  <option value="West Bengal">West Bengal</option>
-                  <option value="Telangana">Telangana</option>
-                  <option value="Madhya Pradesh">Madhya Pradesh</option>
-                  <option value="Other State">Other State / All India</option>
-                </select>
+                  options={DOMICILE_STATE_OPTIONS}
+                  placeholder="Select Domicile State..."
+                />
               </div>
 
               <div>
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Disability Status (PwD)</label>
-                <select
+                <CustomSelect
                   name="isDisability"
                   value={eligibility.isDisability}
                   onChange={handleEligibilityChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                >
-                  <option value="No">No</option>
-                  <option value="Yes">Yes (Person with Disability)</option>
-                </select>
+                  options={DISABILITY_OPTIONS}
+                  placeholder="Select Disability Status..."
+                />
               </div>
 
               <div>
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Special Criteria / Quota</label>
-                <select
+                <CustomSelect
                   name="specialCriteria"
                   value={eligibility.specialCriteria}
                   onChange={handleEligibilityChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                >
-                  <option value="None">None / General</option>
-                  <option value="First-Generation Learner">First-Generation Learner</option>
-                  <option value="Single Girl Child">Single Girl Child</option>
-                  <option value="Rural Background">Rural Background Resident</option>
-                  <option value="National Sports Level">National / State Level Sports Athlete</option>
-                </select>
+                  options={SPECIAL_CRITERIA_OPTIONS}
+                  placeholder="Select Special Criteria..."
+                />
               </div>
             </div>
           </div>
