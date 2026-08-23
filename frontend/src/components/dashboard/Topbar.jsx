@@ -48,14 +48,14 @@ export function Topbar({ onSelectTab, onToggleSidebar, isSidebarOpen = false }) 
   };
 
   return (
-    <header className="sticky top-0 z-20 flex items-center gap-3 sm:gap-4 border-b border-slate-200 bg-white/80 dark:border-slate-800 dark:bg-slate-900/80 px-4 sm:px-6 py-3.5 backdrop-blur transition-colors">
+    <header className="sticky top-0 z-20 flex items-center gap-3 sm:gap-4 border-b border-slate-300 bg-white/80 dark:border-slate-800 dark:bg-slate-900/80 px-4 sm:px-6 py-3.5 backdrop-blur transition-colors">
       {/* Sidebar Collapsible Toggle Button */}
       <button
         type="button"
         onClick={onToggleSidebar}
         title={isSidebarOpen ? "Collapse sidebar" : "Open sidebar"}
         aria-label="Toggle navigation menu"
-        className="flex size-9 items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-all shrink-0 hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="flex size-9 items-center justify-center rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-blue-600 dark:hover:text-blue-400 shadow-sm transition-all shrink-0 hover:scale-105 active:scale-95 outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
       >
         <Menu className="size-5" />
       </button>

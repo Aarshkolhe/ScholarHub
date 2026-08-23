@@ -92,7 +92,7 @@ export function Sidebar({
           // Mobile styling (Fixed drawer overlay) vs Desktop (Push/rescale layout)
           "fixed inset-y-0 left-0 lg:sticky",
           isOpen
-            ? "w-64 border-r border-slate-200 dark:border-slate-800 opacity-100 pointer-events-auto translate-x-0 shadow-2xl lg:shadow-none"
+            ? "w-64 border-r border-slate-300 dark:border-slate-800 opacity-100 pointer-events-auto translate-x-0 shadow-2xl lg:shadow-none"
             : "w-0 -translate-x-full lg:translate-x-0 border-0 p-0 opacity-0 pointer-events-none overflow-hidden"
         )}
       >

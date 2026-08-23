@@ -479,7 +479,7 @@ export function SearchScholarshipView({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search by keyword, scheme name, or provider (e.g. MahaDBT, STEM, Post-Matric)..."
-              className="w-full rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 pl-10 pr-4 text-xs text-slate-800 dark:text-slate-100 outline-none shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              className="w-full rounded-2xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 py-3 pl-10 pr-4 text-xs text-slate-800 dark:text-slate-100 outline-none shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
           </div>
 
@@ -500,7 +500,7 @@ export function SearchScholarshipView({
                 className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
                   selectedPortal === p.id
                     ? "bg-blue-600 text-white shadow-sm dark:bg-blue-500"
-                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800"
+                    : "bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-800"
                 }`}
               >
                 {p.label}
@@ -509,7 +509,7 @@ export function SearchScholarshipView({
           </div>
 
           {/* Multi-Criterion Custom Visually Appealing Dropdown Row */}
-          <div className="flex flex-wrap items-center gap-2.5 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm text-xs">
+          <div className="flex flex-wrap items-center gap-2.5 bg-white dark:bg-slate-900 p-3 rounded-2xl border border-slate-300 dark:border-slate-800 shadow-sm text-xs">
             <span className="font-semibold text-slate-700 dark:text-slate-300 flex items-center gap-1.5 mr-0.5">
               <SlidersHorizontal className="size-3.5 text-blue-500" /> Filters:
             </span>

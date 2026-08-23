@@ -291,7 +291,7 @@ export function NotificationsSection({ onNavigateTab }) {
             <button
               type="button"
               onClick={markAllAsRead}
-              className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
+              className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition-all flex items-center gap-1.5 cursor-pointer"
             >
               <CheckCheck className="size-3.5 text-blue-600 dark:text-blue-400" />
               <span>Mark all read</span>
@@ -302,7 +302,7 @@ export function NotificationsSection({ onNavigateTab }) {
             <button
               type="button"
               onClick={restoreDismissedNotifications}
-              className="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition-all cursor-pointer"
+              className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-3.5 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition-all cursor-pointer"
             >
               <span>Restore dismissed ({dismissedIds.length})</span>
             </button>

@@ -12,6 +12,7 @@ import {
   Sparkles,
   Check,
   ChevronDown,
+  AlertTriangle,
 } from "lucide-react";
 import useAuth from "../../hooks/useAuth";
 import { calculateProfileStrength } from "../../lib/eligibilityEngine";
@@ -178,6 +179,7 @@ export function UserProfileSection() {
   const [activeSection, setActiveSection] = useState("personal"); // personal, currentEd, pastEd, living, financial, eligibility
   const [saveSuccessMsg, setSaveSuccessMsg] = useState("");
   const [isSavingDb, setIsSavingDb] = useState(false);
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // 1. Personal Identity State (👤 Identity)
   const [personal, setPersonal] = useState(() => {
@@ -514,7 +516,12 @@ export function UserProfileSection() {
     }
   };
 
-  const handleResetProfile = () => {
+  const handleOpenResetConfirm = () => {
+    setShowResetConfirm(true);
+  };
+
+  const confirmResetProfile = () => {
+    setShowResetConfirm(false);
     const uid = user?.id ? `_${user.id}` : "";
     if (uid) {
       localStorage.removeItem(`scholarhub_profile_personal${uid}`);
@@ -584,7 +591,7 @@ export function UserProfileSection() {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 dark:border-slate-800 pb-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-300 dark:border-slate-800 pb-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white flex items-center gap-2">
             <User className="size-6 text-blue-600 dark:text-blue-400" />
@@ -599,9 +606,9 @@ export function UserProfileSection() {
           {/* Clear / Reset Profile Button */}
           <button
             type="button"
-            onClick={handleResetProfile}
+            onClick={handleOpenResetConfirm}
             title="Reset profile fields to clean state"
-            className="flex items-center gap-1.5 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 rounded-2xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs transition-colors cursor-pointer"
           >
             <RotateCcw className="size-3.5" />
             <span>Reset to 0%</span>
@@ -1124,6 +1131,44 @@ export function UserProfileSection() {
           </button>
         </div>
       </form>
+
+      {/* Confirmation Warning Modal before Reset */}
+      {showResetConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-fade-in">
+          <div className="w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 p-6 shadow-2xl border border-slate-300 dark:border-slate-800 space-y-4">
+            <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-rose-100 dark:bg-rose-950/70 text-rose-600 dark:text-rose-400">
+                <AlertTriangle className="size-5" />
+              </span>
+              <div>
+                <h3 className="text-base font-bold text-slate-900 dark:text-white">Reset All Eligibility Details?</h3>
+                <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">Warning: This action will clear your profile data</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+              Are you sure you want to reset all your eligibility fields (academic marks, annual income, living status, category, and domicile)? Your details profile strength will return to <strong>0%</strong> and cached local data will be removed.
+            </p>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(false)}
+                className="rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-4 py-2 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmResetProfile}
+                className="rounded-xl bg-rose-600 hover:bg-rose-700 text-white px-4 py-2 text-xs font-bold shadow-sm transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                Yes, Reset Fields
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

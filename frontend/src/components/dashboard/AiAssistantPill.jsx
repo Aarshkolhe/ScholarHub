@@ -125,7 +125,7 @@ export function AiAssistantPill() {
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 origin-top-right animate-rise-in overflow-hidden rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl transition-all">
+        <div className="absolute right-0 top-full mt-2 w-80 sm:w-96 origin-top-right animate-rise-in overflow-hidden rounded-2xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-2xl transition-all">
           {/* Header */}
           <div className="flex items-center justify-between bg-blue-600 dark:bg-blue-700 px-4 py-3 text-white">
             <div className="flex items-center gap-2">
@@ -214,7 +214,7 @@ export function AiAssistantPill() {
               onChange={(e) => setValue(e.target.value)}
               placeholder="Type your question..."
               aria-label="Message AI Assistant"
-              className="min-w-0 flex-1 rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+              className="min-w-0 flex-1 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-xs text-slate-800 dark:text-slate-100 outline-none transition-colors placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
             />
             <button
               type="submit"

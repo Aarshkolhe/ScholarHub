@@ -58,7 +58,7 @@ export function StatCards({
             key={stat.id}
             onClick={() => onSelectStatFilter && onSelectStatFilter(stat.targetTab || stat.id)}
             style={{ animationDelay: `${i * 90}ms` }}
-            className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all duration-300 ease-out hover:scale-[1.025] hover:shadow-xl cursor-pointer"
+            className="group rounded-2xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 shadow-sm transition-all duration-300 ease-out hover:scale-[1.025] hover:shadow-xl cursor-pointer"
           >
             <div className="flex items-center justify-between">
               <span

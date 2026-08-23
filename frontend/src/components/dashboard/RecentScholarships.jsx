@@ -205,7 +205,7 @@ export function RecentScholarships({
   };
 
   return (
-    <section className="rounded-3xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900/90 shadow-md p-5 sm:p-6 space-y-5">
+    <section className="rounded-3xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900/90 shadow-md p-5 sm:p-6 space-y-5">
       {/* Header & Filter Controls */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800/80 pb-4">
         <div>
