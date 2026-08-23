@@ -29,7 +29,7 @@ import { SCHOLARSHIPS_DATABASE } from "../../lib/scholarshipData";
 import { ScholarshipRowItem } from "./ScholarshipRowItem";
 import useAuth from "../../hooks/useAuth";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 // Custom Visually Appealing Dropdown Component
 function CustomDropdown({ value, options, onChange, icon: Icon }) {
@@ -169,12 +169,45 @@ export function SearchScholarshipView({
     } catch {}
     setApplicantName(user?.fullName || user?.name || "");
     setApplicantCourse(studentProfile.currentCourse || "");
+
+    // Sync saved bookmarks and applications from PostgreSQL database
+    const token = localStorage.getItem("scholarhub_token");
+    if (token && user?.id) {
+      fetch(`${BACKEND_URL}/api/scholarships/saved`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.savedIds)) {
+            setSavedIds(data.savedIds);
+            const uid = `_${user.id}`;
+            localStorage.setItem(`scholarhub_saved_ids${uid}`, JSON.stringify(data.savedIds));
+            if (onUpdateSavedCount) onUpdateSavedCount(data.savedIds.length);
+          }
+        })
+        .catch(() => {});
+
+      fetch(`${BACKEND_URL}/api/scholarships/applications`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success && Array.isArray(data.appliedIds)) {
+            setAppliedIds(data.appliedIds);
+            const uid = `_${user.id}`;
+            localStorage.setItem(`scholarhub_applied_ids${uid}`, JSON.stringify(data.appliedIds));
+            if (onUpdateAppliedCount) onUpdateAppliedCount(data.appliedIds.length);
+          }
+        })
+        .catch(() => {});
+    }
   }, [user, studentProfile, profileVersion]);
 
-  const toggleSave = (id, e) => {
+  const toggleSave = async (id, e) => {
     if (e) e.stopPropagation();
     let next;
-    if (savedIds.includes(id)) {
+    const isRemoving = savedIds.includes(id);
+    if (isRemoving) {
       next = savedIds.filter((item) => item !== id);
     } else {
       next = [...savedIds, id];
@@ -187,6 +220,26 @@ export function SearchScholarshipView({
       localStorage.setItem("scholarhub_saved_ids", JSON.stringify(next));
     }
     if (onUpdateSavedCount) onUpdateSavedCount(next.length);
+
+    // Sync action with backend database
+    const token = localStorage.getItem("scholarhub_token");
+    if (token) {
+      try {
+        const endpoint = isRemoving
+          ? `${BACKEND_URL}/api/scholarships/unbookmark`
+          : `${BACKEND_URL}/api/scholarships/bookmark`;
+        await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ scholarshipId: id }),
+        });
+      } catch {
+        // Fallback to local state
+      }
+    }
   };
 
   // Evaluate database scholarships against profile
@@ -309,16 +362,21 @@ export function SearchScholarshipView({
 
     setIsSubmittingApp(true);
     const nextApplied = [...appliedIds, applyModalScholarship.id];
+    const token = localStorage.getItem("scholarhub_token");
 
     try {
-      await fetch(`${BACKEND_URL}/api/applications`, {
+      await fetch(`${BACKEND_URL}/api/scholarships/apply`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           userId: user?.id,
           scholarshipId: applyModalScholarship.id,
           scholarshipName: applyModalScholarship.name,
           applicantName,
+          courseName: applicantCourse,
           course: applicantCourse,
           statement: applicantStatement,
         }),

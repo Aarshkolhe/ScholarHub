@@ -33,7 +33,7 @@ import {
 } from "../../lib/eligibilityEngine";
 import { forgotPassword } from "../../services/authService";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export function SettingsSection({
   onNavigateTab,

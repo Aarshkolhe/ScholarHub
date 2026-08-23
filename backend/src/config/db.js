@@ -153,6 +153,47 @@ export async function initializeDatabase() {
       attempts INTEGER NOT NULL DEFAULT 0,
       created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+
+    -- Database B-Tree Indexes for High-Frequency Foreign Key Queries
+    CREATE INDEX IF NOT EXISTS idx_student_profiles_user_id ON student_profiles (user_id);
+    CREATE INDEX IF NOT EXISTS idx_saved_scholarships_user_id ON user_saved_scholarships (user_id);
+    CREATE INDEX IF NOT EXISTS idx_applications_user_id ON user_scholarship_applications (user_id);
+    CREATE INDEX IF NOT EXISTS idx_otps_user_id ON password_reset_otps (user_id);
+
+    -- Scholarship Portals Table (Phase 1)
+    CREATE TABLE IF NOT EXISTS scholarship_portals (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      name VARCHAR(150) NOT NULL UNIQUE,
+      description TEXT,
+      url TEXT NOT NULL,
+      logo_url TEXT,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    ALTER TABLE scholarships ADD COLUMN IF NOT EXISTS portal_id UUID REFERENCES scholarship_portals(id) ON DELETE SET NULL;
+    CREATE INDEX IF NOT EXISTS idx_scholarships_portal_id ON scholarships (portal_id);
+  `);
+
+  // Seed Default Scholarship Portals (Phase 2 Data Migration)
+  await pool.query(`
+    INSERT INTO scholarship_portals (name, description, url, is_active)
+    VALUES
+      ('MahaDBT Portal', 'Government of Maharashtra Direct Benefit Transfer Portal', 'https://mahadbt.maharashtra.gov.in', true),
+      ('National Scholarship Portal (NSP)', 'Ministry of Education Government of India Central Portal', 'https://scholarships.gov.in', true),
+      ('Vidyasaarathi Portal', 'NSDL Corporate Social Responsibility (CSR) Scholarship Portal', 'https://www.vidyasaarathi.co.in', true),
+      ('MahaJYOTI Portal', 'Mahatma Jyotiba Phule Research & Training Institute Maharashtra', 'https://mahajyoti.org.in', true)
+    ON CONFLICT (name) DO UPDATE SET url = EXCLUDED.url;
+
+    -- Migration: Link existing scholarships to matching portal records via portal_id
+    UPDATE scholarships s
+    SET portal_id = p.id
+    FROM scholarship_portals p
+    WHERE s.portal_url IS NOT NULL AND (
+      s.portal_url = p.url OR 
+      s.portal_url LIKE '%' || REPLACE(p.url, 'https://', '') || '%'
+    );
   `);
 
   // Seed All Schemes Including 10th & 12th Class School Schemes

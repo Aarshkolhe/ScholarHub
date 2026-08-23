@@ -97,3 +97,31 @@ export function authenticateToken(req, res, next) {
     });
   }
 }
+
+/**
+ * Server-side Admin authorization middleware.
+ * Must run AFTER authenticateToken.
+ */
+export function requireAdmin(req, res, next) {
+  if (!req.user) {
+    return res.status(401).json({
+      success: false,
+      error: {
+        code: "AUTH_REQUIRED",
+        message: "Authentication token is required."
+      }
+    });
+  }
+
+  if (req.user.role !== "Admin") {
+    return res.status(403).json({
+      success: false,
+      error: {
+        code: "FORBIDDEN",
+        message: "Admin privilege is required to access this resource."
+      }
+    });
+  }
+
+  next();
+}

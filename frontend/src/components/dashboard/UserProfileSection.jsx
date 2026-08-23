@@ -18,7 +18,7 @@ import {
 import useAuth from "../../hooks/useAuth";
 import { calculateProfileStrength } from "../../lib/eligibilityEngine";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 const GENDER_OPTIONS = [
   { value: "Male", label: "Male" },
@@ -511,11 +511,14 @@ export function UserProfileSection() {
     window.dispatchEvent(new Event("scholarhub_profile_updated"));
 
     try {
+      const token = localStorage.getItem("scholarhub_token");
       const response = await fetch(`${BACKEND_URL}/api/profile`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
-          userId: user?.id || "demo-user-id",
           personal,
           currentEducation,
           pastEducation,

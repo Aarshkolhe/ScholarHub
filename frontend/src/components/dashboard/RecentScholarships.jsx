@@ -17,7 +17,7 @@ import { SCHOLARSHIPS_DATABASE } from "../../lib/scholarshipData";
 import { ScholarshipRowItem } from "./ScholarshipRowItem";
 import useAuth from "../../hooks/useAuth";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 export function RecentScholarships({
   searchQuery = "",
@@ -118,10 +118,11 @@ export function RecentScholarships({
     setApplicantCourse(studentProfile.currentCourse || "");
   }, [user, studentProfile]);
 
-  const toggleSave = (id, e) => {
+  const toggleSave = async (id, e) => {
     if (e) e.stopPropagation();
     let next;
-    if (savedIds.includes(id)) {
+    const isRemoving = savedIds.includes(id);
+    if (isRemoving) {
       next = savedIds.filter((item) => item !== id);
     } else {
       next = [...savedIds, id];
@@ -134,6 +135,26 @@ export function RecentScholarships({
       localStorage.setItem("scholarhub_saved_ids", JSON.stringify(next));
     }
     if (onUpdateSavedCount) onUpdateSavedCount(next.length);
+
+    // Sync action with backend database
+    const token = localStorage.getItem("scholarhub_token");
+    if (token) {
+      try {
+        const endpoint = isRemoving
+          ? `${BACKEND_URL}/api/scholarships/unbookmark`
+          : `${BACKEND_URL}/api/scholarships/bookmark`;
+        await fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ scholarshipId: id }),
+        });
+      } catch {
+        // Fallback to local state
+      }
+    }
   };
 
   const filteredScholarships = useMemo(() => {
@@ -171,16 +192,21 @@ export function RecentScholarships({
 
     setIsSubmittingApp(true);
     const nextApplied = [...appliedIds, applyModalItem.id];
+    const token = localStorage.getItem("scholarhub_token");
 
     try {
-      await fetch(`${BACKEND_URL}/api/applications`, {
+      await fetch(`${BACKEND_URL}/api/scholarships/apply`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
         body: JSON.stringify({
           userId: user?.id,
           scholarshipId: applyModalItem.id,
           scholarshipName: applyModalItem.name,
           applicantName,
+          courseName: applicantCourse,
           course: applicantCourse,
           statement: applicantStatement,
         }),

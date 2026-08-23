@@ -23,7 +23,7 @@ import {
 } from "../../lib/eligibilityEngine";
 import { ScholarHubAiAvatar } from "./ScholarHubAiAvatar";
 
-const BACKEND_URL = "http://localhost:5000";
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 const QUICK_PROMPTS = [
   { icon: TrendingUp, label: "Best matches for me", color: "emerald" },

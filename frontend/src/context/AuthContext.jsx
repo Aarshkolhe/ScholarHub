@@ -7,37 +7,108 @@ const USER_KEY = "scholarhub_user";
 const TOKEN_KEY = "scholarhub_token";
 const SAVED_NAME_KEY = "scholarhub_saved_landing_name";
 
+function isTokenExpired(token) {
+  if (!token || typeof token !== "string") return true;
+  if (token.startsWith("scholarhub_simulation_")) return false;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(
+      atob(parts[1].replace(/-/g, "+").replace(/_/g, "/"))
+    );
+    if (payload && payload.exp) {
+      return payload.exp * 1000 < Date.now();
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+function clearAuthStorage() {
+  localStorage.removeItem(USER_KEY);
+  localStorage.removeItem(TOKEN_KEY);
+  localStorage.removeItem(SAVED_NAME_KEY);
+  localStorage.removeItem("scholarhub_avatar");
+  localStorage.removeItem("scholarhub_profile_personal");
+  localStorage.removeItem("scholarhub_profile_education");
+  localStorage.removeItem("scholarhub_profile_financial");
+  localStorage.removeItem("scholarhub_profile_eligibility");
+  localStorage.removeItem("scholarhub_saved_ids");
+  localStorage.removeItem("scholarhub_applied_ids");
+}
+
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Restore session on first load
+  // Restore session on first load with token expiration & JSON safety checks
   useEffect(() => {
     const storedUser = localStorage.getItem(USER_KEY);
     const storedToken = localStorage.getItem(TOKEN_KEY);
 
     if (storedUser && storedToken) {
       try {
-        const parsedUser = JSON.parse(storedUser);
-        const uid = parsedUser.id ? `_${parsedUser.id}` : "";
-        const userAvatar = parsedUser.avatar || localStorage.getItem(`scholarhub_avatar${uid}`) || "";
-        const userName = parsedUser.fullName || parsedUser.name || parsedUser.email?.split("@")[0] || "Student";
+        if (isTokenExpired(storedToken)) {
+          clearAuthStorage();
+          setUser(null);
+        } else {
+          const parsedUser = JSON.parse(storedUser);
+          if (!parsedUser || typeof parsedUser !== "object") {
+            clearAuthStorage();
+            setUser(null);
+          } else {
+            const uid = parsedUser.id ? `_${parsedUser.id}` : "";
+            const userAvatar =
+              parsedUser.avatar ||
+              localStorage.getItem(`scholarhub_avatar${uid}`) ||
+              "";
+            const userName =
+              parsedUser.fullName ||
+              parsedUser.name ||
+              parsedUser.email?.split("@")[0] ||
+              "Student";
 
-        const restored = {
-          ...parsedUser,
-          name: userName,
-          fullName: userName,
-          avatar: userAvatar,
-          role: parsedUser.role || "Student",
-        };
-        setUser(restored);
+            const restored = {
+              ...parsedUser,
+              name: userName,
+              fullName: userName,
+              avatar: userAvatar,
+              role: parsedUser.role || "Student",
+            };
+            setUser(restored);
+          }
+        }
       } catch {
+        clearAuthStorage();
         setUser(null);
       }
     } else {
+      if (storedUser || storedToken) {
+        clearAuthStorage();
+      }
       setUser(null);
     }
     setIsInitializing(false);
+  }, []);
+
+  // Listen for global session expiration events triggered by HTTP 401 interceptor
+  useEffect(() => {
+    const handleSessionExpired = () => {
+      clearAuthStorage();
+      setUser(null);
+    };
+
+    window.addEventListener(
+      "scholarhub_session_expired",
+      handleSessionExpired
+    );
+    return () => {
+      window.removeEventListener(
+        "scholarhub_session_expired",
+        handleSessionExpired
+      );
+    };
   }, []);
 
   const persistSession = useCallback(async (data) => {
@@ -80,7 +151,8 @@ export const AuthProvider = ({ children }) => {
       // Fetch saved profile from PostgreSQL for this user if available
       if (u.id) {
         try {
-          const resp = await fetch(`http://localhost:5000/api/profile?userId=${encodeURIComponent(u.id)}`);
+          const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+          const resp = await fetch(`${backendUrl}/api/profile?userId=${encodeURIComponent(u.id)}`);
           const resJson = await resp.json();
           if (resJson.success && resJson.profile) {
             const p = resJson.profile;
@@ -186,16 +258,7 @@ export const AuthProvider = ({ children }) => {
 
   const signOut = useCallback(async () => {
     await authService.logout();
-    localStorage.removeItem(USER_KEY);
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(SAVED_NAME_KEY);
-    localStorage.removeItem("scholarhub_avatar");
-    localStorage.removeItem("scholarhub_profile_personal");
-    localStorage.removeItem("scholarhub_profile_education");
-    localStorage.removeItem("scholarhub_profile_financial");
-    localStorage.removeItem("scholarhub_profile_eligibility");
-    localStorage.removeItem("scholarhub_saved_ids");
-    localStorage.removeItem("scholarhub_applied_ids");
+    clearAuthStorage();
     setUser(null);
   }, []);
 

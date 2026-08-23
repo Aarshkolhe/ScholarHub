@@ -49,7 +49,11 @@ function generateToken(user) {
 /**
  * Validate registration data.
  */
-function validateRegistrationInput(email, password) {
+function validateRegistrationInput(email, password, name) {
+  if (!name || !name.trim()) {
+    return "Name is required.";
+  }
+
   if (!email || !password) {
     return "Email and password are required.";
   }
@@ -76,6 +80,8 @@ function validateRegistrationInput(email, password) {
  */
 export async function register(req, res) {
   try {
+    const name = String(req.body?.name || "").trim();
+
     const email = String(req.body?.email || "")
       .trim()
       .toLowerCase();
@@ -84,7 +90,8 @@ export async function register(req, res) {
 
     const validationError = validateRegistrationInput(
       email,
-      password
+      password,
+      name
     );
 
     if (validationError) {
@@ -125,8 +132,6 @@ export async function register(req, res) {
       password,
       saltRounds
     );
-
-    const name = String(req.body?.name || email.split("@")[0]).trim();
 
     let result;
 

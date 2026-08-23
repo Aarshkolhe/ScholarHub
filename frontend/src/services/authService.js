@@ -23,6 +23,33 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// Response interceptor to catch 401 authentication/token failures
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response && error.response.status === 401) {
+      const code = error.response.data?.error?.code;
+      if (
+        code === "TOKEN_EXPIRED" ||
+        code === "INVALID_TOKEN" ||
+        code === "AUTH_REQUIRED"
+      ) {
+        window.dispatchEvent(
+          new CustomEvent("scholarhub_session_expired", {
+            detail: {
+              code,
+              message:
+                error.response.data?.error?.message ||
+                "Your session has expired.",
+            },
+          })
+        );
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 /**
  * Login
  *
@@ -68,6 +95,7 @@ export const login = async ({ email, password }) => {
  *
  * Request:
  * {
+ *   name,
  *   email,
  *   password
  * }
@@ -83,9 +111,11 @@ export const login = async ({ email, password }) => {
  *   token
  * }
  */
-export const register = async ({ email, password }) => {
+export const register = async ({ name, fullName, email, password }) => {
   try {
+    const userName = name || fullName || "";
     const { data } = await api.post("/register", {
+      name: userName,
       email,
       password,
     });
@@ -192,66 +222,71 @@ function normalizeError(error) {
 
   const { status, data } = error.response;
 
-  // Your backend returns:
-  //
-  // {
-  //   success: false,
-  //   error: {
-  //     code: "...",
-  //     message: "..."
-  //   }
-  // }
+  const backendError =
+    typeof data?.error === "object" && data?.error !== null ? data.error : {};
 
-  const backendError = data?.error || {};
+  const backendCode =
+    backendError.code ||
+    data?.code ||
+    (status ? `HTTP_${status}` : "UNKNOWN_ERROR");
 
-  const backendCode = backendError.code || "";
-  const backendMessage = backendError.message || "";
+  const rawBackendMessage =
+    backendError.message ||
+    data?.message ||
+    (typeof data?.error === "string" ? data.error : "");
 
   // Invalid login credentials
   if (
-    status === 401 ||
-    backendCode === "INVALID_CREDENTIALS"
+    status === 401 &&
+    (backendCode === "INVALID_CREDENTIALS" || !backendCode)
   ) {
     return {
       success: false,
       code: "INVALID_CREDENTIALS",
-      message: "Invalid email or password.",
+      message: rawBackendMessage || "Invalid email or password.",
+    };
+  }
+
+  // Token expired or invalid
+  if (
+    status === 401 &&
+    (backendCode === "TOKEN_EXPIRED" ||
+      backendCode === "INVALID_TOKEN" ||
+      backendCode === "AUTH_REQUIRED")
+  ) {
+    return {
+      success: false,
+      code: backendCode,
+      message:
+        rawBackendMessage || "Your session has expired. Please log in again.",
     };
   }
 
   // Email already registered
-  if (
-    status === 409 ||
-    backendCode === "EMAIL_EXISTS"
-  ) {
+  if (status === 409 || backendCode === "EMAIL_EXISTS") {
     return {
       success: false,
       code: "EMAIL_EXISTS",
       message:
-        "An account with this email already exists.",
+        rawBackendMessage || "An account with this email already exists.",
     };
   }
 
   // Validation error
-  if (
-    status === 400 ||
-    backendCode === "VALIDATION_ERROR"
-  ) {
+  if (status === 400 || backendCode === "VALIDATION_ERROR") {
     return {
       success: false,
-      code: "VALIDATION_ERROR",
+      code: backendCode,
       message:
-        backendMessage ||
-        "Please check the information you entered.",
+        rawBackendMessage || "Please check the information you entered.",
     };
   }
 
   return {
     success: false,
-    code: backendCode || "UNKNOWN_ERROR",
+    code: backendCode,
     message:
-      backendMessage ||
-      "Something went wrong. Please try again.",
+      rawBackendMessage || "Something went wrong. Please try again.",
   };
 }
 

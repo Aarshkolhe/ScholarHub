@@ -13,7 +13,24 @@ import {
   authenticateToken
 } from "../middleware/authMiddleware.js";
 
+import rateLimit from "express-rate-limit";
+
 const router = Router();
+
+// Rate Limiter for Public Auth Endpoints (configurable via AUTH_RATE_LIMIT_MAX)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: Number(process.env.AUTH_RATE_LIMIT_MAX || 100),
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    success: false,
+    error: {
+      code: "TOO_MANY_REQUESTS",
+      message: "Too many authentication requests. Please try again later."
+    }
+  }
+});
 
 // --------------------------------------------------
 // Public Authentication Routes
@@ -26,6 +43,7 @@ const router = Router();
  */
 router.post(
   "/register",
+  authLimiter,
   register
 );
 
@@ -37,6 +55,7 @@ router.post(
  */
 router.post(
   "/login",
+  authLimiter,
   login
 );
 
@@ -52,6 +71,7 @@ router.post(
  */
 router.post(
   "/forgot-password",
+  authLimiter,
   forgotPassword
 );
 
@@ -62,6 +82,7 @@ router.post(
  */
 router.post(
   "/verify-otp",
+  authLimiter,
   verifyOtp
 );
 
@@ -73,6 +94,7 @@ router.post(
  */
 router.post(
   "/reset-password",
+  authLimiter,
   resetPassword
 );
 
