@@ -17,6 +17,7 @@ import {
 import { cn } from "../../lib/utils";
 import useAuth from "../../hooks/useAuth";
 import { calculateProfileStrength } from "../../lib/eligibilityEngine";
+import { SignOutConfirmModal } from "./SignOutConfirmModal";
 
 const mainNav = [
   { id: "Dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -58,6 +59,7 @@ export function Sidebar({
 }) {
   const { signOut, user } = useAuth();
   const [profileStrength, setProfileStrength] = useState(() => calculateProfileStrength());
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   // Dynamic Profile Strength calculation
   useEffect(() => {
@@ -154,7 +156,7 @@ export function Sidebar({
             <NavItem
               label="Logout"
               icon={LogOut}
-              onClick={signOut}
+              onClick={() => setShowSignOutConfirm(true)}
             />
           </nav>
 
@@ -198,6 +200,15 @@ export function Sidebar({
           </div>
         </div>
       </aside>
+
+      <SignOutConfirmModal
+        isOpen={showSignOutConfirm}
+        onClose={() => setShowSignOutConfirm(false)}
+        onConfirm={() => {
+          setShowSignOutConfirm(false);
+          signOut();
+        }}
+      />
     </>
   );
 }

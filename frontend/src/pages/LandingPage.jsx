@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import ThemeToggle from "../components/dashboard/ThemeToggle";
+import { SignOutConfirmModal } from "../components/dashboard/SignOutConfirmModal";
 
 const SAVED_NAME_KEY = "scholarhub_saved_landing_name";
 
@@ -10,6 +11,7 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const canvasRef = useRef(null);
   const heroRef = useRef(null);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
 
   // Initialize input state from user profile or saved local storage name
   const [userName, setUserName] = useState(() => {
@@ -207,7 +209,7 @@ export default function LandingPage() {
             </Link>
             <button
               type="button"
-              onClick={handleLogout}
+              onClick={() => setShowSignOutConfirm(true)}
               className="text-[#565e74] dark:text-slate-400 font-medium text-sm hover:text-[#004ac6] dark:hover:text-blue-400 transition-colors"
             >
               Log Out
@@ -344,6 +346,15 @@ export default function LandingPage() {
           </div>
         </div>
       </footer>
+
+      <SignOutConfirmModal
+        isOpen={showSignOutConfirm}
+        onClose={() => setShowSignOutConfirm(false)}
+        onConfirm={() => {
+          setShowSignOutConfirm(false);
+          handleLogout();
+        }}
+      />
     </div>
   );
 }

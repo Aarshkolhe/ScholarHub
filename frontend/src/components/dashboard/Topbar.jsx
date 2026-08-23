@@ -6,10 +6,12 @@ import {
 } from "./LatestNotifications";
 import ThemeToggle from "./ThemeToggle";
 import useAuth from "../../hooks/useAuth";
+import { SignOutConfirmModal } from "./SignOutConfirmModal";
 
 export function Topbar({ onSelectTab, onToggleSidebar, isSidebarOpen = false }) {
   const { user, signOut } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
   const containerRef = useRef(null);
 
   const displayName = user?.fullName || user?.name || "Student";
@@ -140,7 +142,10 @@ export function Topbar({ onSelectTab, onToggleSidebar, isSidebarOpen = false }) 
 
                 <button
                   type="button"
-                  onClick={signOut}
+                  onClick={() => {
+                    setMenuOpen(false);
+                    setShowSignOutConfirm(true);
+                  }}
                   className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition-colors"
                 >
                   <LogOut className="size-4" />
@@ -151,6 +156,15 @@ export function Topbar({ onSelectTab, onToggleSidebar, isSidebarOpen = false }) 
           )}
         </div>
       </div>
+
+      <SignOutConfirmModal
+        isOpen={showSignOutConfirm}
+        onClose={() => setShowSignOutConfirm(false)}
+        onConfirm={() => {
+          setShowSignOutConfirm(false);
+          signOut();
+        }}
+      />
     </header>
   );
 }
