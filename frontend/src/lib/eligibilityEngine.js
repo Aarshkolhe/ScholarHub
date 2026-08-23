@@ -806,33 +806,29 @@ export function evaluateEligibility(scholarship, profile = null) {
   // 9. Course & Stream Alignment Check
   if (criteria.allowedStreams && !criteria.allowedStreams.includes("All")) {
     totalChecks++;
-    const stream = (student.streamBranch || "").toLowerCase();
-    const course = (student.currentCourse || "").toLowerCase();
-    const qual = (student.qualification || "").toLowerCase();
+    const stream = (student.streamBranch || "").toLowerCase().trim();
+    const course = (student.currentCourse || "").toLowerCase().trim();
 
-    if (!stream && !course && !qual) {
+    if (!stream && !course) {
       missingFields.push("Course / Stream");
       reasons.push(`Course/Stream must relate to [${criteria.allowedStreams.slice(0, 3).join(", ")}] (not specified in profile).`);
       criteriaBreakdown.push({ label: "Degree & Stream", status: "failed", detail: `Requires ${criteria.allowedStreams.slice(0, 3).join(", ")}` });
     } else {
       const passed = criteria.allowedStreams.some((s) => {
-        const sl = s.toLowerCase();
+        const sl = s.toLowerCase().trim();
+        if (!sl) return false;
         return (
-          stream.includes(sl) ||
-          course.includes(sl) ||
-          qual.includes(sl) ||
-          sl.includes(course) ||
-          sl.includes(stream) ||
-          (sl.includes("school") && (qual.includes("10") || qual.includes("12") || qual.includes("secondary") || course.includes("class")))
+          (stream && (stream.includes(sl) || sl.includes(stream))) ||
+          (course && (course.includes(sl) || sl.includes(course)))
         );
       });
 
       if (!passed) {
-        reasons.push(`Requires stream related to [${criteria.allowedStreams.slice(0, 3).join(", ")}] (your current: ${student.currentCourse || student.streamBranch || student.qualification || "Other"}).`);
+        reasons.push(`Requires stream related to [${criteria.allowedStreams.slice(0, 3).join(", ")}] (your profile: ${student.streamBranch || student.currentCourse || "Other"}).`);
         criteriaBreakdown.push({ label: "Degree & Stream", status: "failed", detail: `Requires ${criteria.allowedStreams.slice(0, 3).join(", ")}` });
       } else {
         passedChecks++;
-        criteriaBreakdown.push({ label: "Degree & Stream", status: "passed", detail: `Matched: ${student.currentCourse || student.streamBranch || student.qualification}` });
+        criteriaBreakdown.push({ label: "Degree & Stream", status: "passed", detail: `Matched: ${student.streamBranch || student.currentCourse}` });
       }
     }
   }
@@ -840,42 +836,89 @@ export function evaluateEligibility(scholarship, profile = null) {
   // 9b. Allowed Degree / Level Check
   if (criteria.allowedDegrees && !criteria.allowedDegrees.includes("All")) {
     totalChecks++;
-    const qual = (student.qualification || "").toLowerCase();
-    const course = (student.currentCourse || "").toLowerCase();
+    const course = (student.currentCourse || "").toLowerCase().trim();
+    const yearSem = (student.yearSemester || "").toLowerCase().trim();
+    const qual = (student.qualification || "").toLowerCase().trim();
+    const fullText = `${course} ${yearSem} ${qual}`.toLowerCase();
+
+    const isSchoolStudent =
+      fullText.includes("class 10") ||
+      fullText.includes("class 11") ||
+      fullText.includes("class 12") ||
+      fullText.includes("10th board") ||
+      fullText.includes("12th board") ||
+      fullText.includes("ssc board") ||
+      fullText.includes("hsc board") ||
+      fullText.includes("secondary school");
+
+    const isPGStudent =
+      fullText.includes("postgraduate") ||
+      fullText.includes("pg ") ||
+      fullText.includes("m.tech") ||
+      fullText.includes("m.sc") ||
+      fullText.includes("m.a") ||
+      fullText.includes("m.com") ||
+      fullText.includes("mba") ||
+      fullText.includes("mca") ||
+      fullText.includes("md") ||
+      fullText.includes("ms");
+
+    const isPhDStudent =
+      fullText.includes("phd") ||
+      fullText.includes("doctorate") ||
+      fullText.includes("research fellow");
+
+    const isDiplomaStudent =
+      fullText.includes("diploma") ||
+      fullText.includes("polytechnic") ||
+      fullText.includes("iti");
+
+    const isUGStudent =
+      !isSchoolStudent &&
+      !isPGStudent &&
+      !isPhDStudent &&
+      !isDiplomaStudent;
 
     const passed = criteria.allowedDegrees.some((d) => {
-      const dl = d.toLowerCase();
+      const dl = d.toLowerCase().trim();
       if (dl === "school" || dl.includes("secondary") || dl.includes("10+2")) {
-        return (
-          qual.includes("10") ||
-          qual.includes("12") ||
-          qual.includes("secondary") ||
-          qual.includes("school") ||
-          course.includes("class 10") ||
-          course.includes("class 12") ||
-          course.includes("class 11") ||
-          course.includes("ssc") ||
-          course.includes("hsc")
-        );
+        return isSchoolStudent;
       }
       if (dl === "undergraduate" || dl === "ug") {
-        return qual.includes("undergraduate") || qual.includes("ug") || course.includes("b.tech") || course.includes("b.sc") || course.includes("b.a") || course.includes("b.com") || course.includes("mbbs");
+        return isUGStudent;
       }
       if (dl === "postgraduate" || dl === "pg") {
-        return qual.includes("postgraduate") || qual.includes("pg") || course.includes("m.tech") || course.includes("m.sc") || course.includes("m.a") || course.includes("mba");
+        return isPGStudent;
+      }
+      if (dl === "doctorate / phd" || dl.includes("phd") || dl.includes("doctorate")) {
+        return isPhDStudent;
       }
       if (dl === "diploma") {
-        return qual.includes("diploma") || course.includes("diploma") || course.includes("polytechnic");
+        return isDiplomaStudent;
       }
-      return qual.includes(dl) || course.includes(dl);
+      return fullText.includes(dl);
     });
 
     if (!passed) {
-      reasons.push(`Degree level restricted to [${criteria.allowedDegrees.join(", ")}] (your profile: ${student.qualification || student.currentCourse || "Unspecified"}).`);
+      reasons.push(`Degree level restricted to [${criteria.allowedDegrees.join(", ")}] (your level: ${student.currentCourse || student.yearSemester || "Unmatched"}).`);
       criteriaBreakdown.push({ label: "Degree Level", status: "failed", detail: `Requires ${criteria.allowedDegrees.join(", ")}` });
     } else {
       passedChecks++;
-      criteriaBreakdown.push({ label: "Degree Level", status: "passed", detail: `Matched: ${student.qualification || student.currentCourse}` });
+      criteriaBreakdown.push({ label: "Degree Level", status: "passed", detail: `Matched Level: ${student.currentCourse || student.yearSemester}` });
+    }
+  }
+
+  // 9c. Target Year / Year of Study Check
+  if (criteria.allowedYears && criteria.allowedYears.length > 0) {
+    totalChecks++;
+    const yearSem = `${student.yearSemester || ""} ${student.currentCourse || ""}`.toLowerCase();
+    const passed = criteria.allowedYears.some((y) => yearSem.includes(y.toLowerCase()));
+    if (!passed) {
+      reasons.push(`Restricted to ${criteria.allowedYears.join(", ")} students (your year: ${student.yearSemester || "Other"}).`);
+      criteriaBreakdown.push({ label: "Year of Study", status: "failed", detail: `Requires ${criteria.allowedYears.join(", ")}` });
+    } else {
+      passedChecks++;
+      criteriaBreakdown.push({ label: "Year of Study", status: "passed", detail: `Matched Year: ${student.yearSemester}` });
     }
   }
 

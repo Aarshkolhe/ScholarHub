@@ -44,8 +44,8 @@ export async function saveProfile(req, res) {
     const fin = financial || {};
     const el = eligibility || {};
 
-    const annualIncome = fin.annualIncome ? parseFloat(fin.annualIncome) : null;
-    const monthlyLivingCost = livStat.monthlyLivingCost ? parseFloat(livStat.monthlyLivingCost) : null;
+    const annualIncome = fin.annualIncome ? parseFloat(String(fin.annualIncome).replace(/,/g, "")) : null;
+    const monthlyLivingCost = livStat.monthlyLivingCost ? parseFloat(String(livStat.monthlyLivingCost).replace(/,/g, "")) : null;
 
     // Upsert into student_profiles table
     await pool.query(

@@ -110,7 +110,16 @@ const SPECIAL_CRITERIA_OPTIONS = [
   { value: "Single Girl Child", label: "Single Girl Child" },
   { value: "Rural Background", label: "Rural Background Resident" },
   { value: "National Sports Level", label: "National / State Level Sports Athlete" },
+  { value: "Orphan / Ward of Defense", label: "Orphan / Ward of Defense Personnel" },
 ];
+
+function formatIndianCurrency(val) {
+  if (val === null || val === undefined) return "";
+  const str = String(val).replace(/[^0-9]/g, "");
+  if (!str) return "";
+  const num = parseInt(str, 10);
+  return num.toLocaleString("en-IN");
+}
 
 function CustomSelect({ name, value, onChange, options, placeholder = "Select...", className = "" }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -446,6 +455,9 @@ export function UserProfileSection() {
   const handlePersonalChange = (e) => {
     const { name, value } = e.target;
     setPersonal((prev) => ({ ...prev, [name]: value }));
+    if (name === "gender" && value === "Male" && eligibility.specialCriteria === "Single Girl Child") {
+      setEligibility((prev) => ({ ...prev, specialCriteria: "None" }));
+    }
   };
 
   const handleCurrentEdChange = (e) => {
@@ -460,12 +472,21 @@ export function UserProfileSection() {
 
   const handleLivingChange = (e) => {
     const { name, value } = e.target;
-    setLivingStatus((prev) => ({ ...prev, [name]: value }));
+    if (name === "livingType" && value === "Day Scholar at Home") {
+      setLivingStatus((prev) => ({ ...prev, livingType: value, monthlyLivingCost: "" }));
+    } else {
+      setLivingStatus((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleFinChange = (e) => {
     const { name, value } = e.target;
-    setFinancial((prev) => ({ ...prev, [name]: value }));
+    if (name === "annualIncome") {
+      const formatted = formatIndianCurrency(value);
+      setFinancial((prev) => ({ ...prev, annualIncome: formatted }));
+    } else {
+      setFinancial((prev) => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleEligibilityChange = (e) => {
@@ -755,7 +776,7 @@ export function UserProfileSection() {
               </div>
 
               <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Date of Birth / Age</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Date of Birth</label>
                 <input
                   type="date"
                   name="dob"
@@ -769,270 +790,186 @@ export function UserProfileSection() {
         )}
 
         {/* SECTION 2: CURRENT EDUCATION */}
-        {activeSection === "currentEd" && (() => {
-          const qual = currentEducation.qualification || "";
-          const isClass10 = qual.includes("Class 10") || qual.includes("Primary");
-          const isClass12 = qual.includes("Class 12");
-          const isSchool = isClass10 || isClass12;
-
-          return (
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <GraduationCap className="size-5 text-blue-600 dark:text-blue-400" />
-                Current Education & Qualification Level
-              </h3>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {/* 1. Qualification Level Dropdown (Primary Control) */}
-                <div className="sm:col-span-2 bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50">
-                  <label className="text-xs font-bold text-blue-900 dark:text-blue-300">
-                    Qualification / Education Level
-                  </label>
-                  <CustomSelect
-                    name="qualification"
-                    value={currentEducation.qualification}
-                    onChange={handleCurrentEdChange}
-                    options={QUALIFICATION_OPTIONS}
-                    placeholder="Select Qualification Level..."
-                    className="font-bold text-slate-900 dark:text-white bg-white dark:bg-slate-800 border-blue-300 dark:border-blue-700"
-                  />
-                </div>
-
-                {/* 2. School / College Name */}
-                <div>
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                    {isSchool ? "School / Junior College Name" : "College / University Name"}
-                  </label>
-                  <input
-                    type="text"
-                    name="collegeName"
-                    placeholder={
-                      isSchool
-                        ? "e.g. Kendriya Vidyalaya, Saraswati High School, St. Xavier's"
-                        : "e.g. National Institute of Technology, Delhi University"
-                    }
-                    value={currentEducation.collegeName}
-                    onChange={handleCurrentEdChange}
-                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                {/* 3. Class / Course / Degree Name */}
-                <div>
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                    {isClass10
-                      ? "Class / Board Name"
-                      : isClass12
-                      ? "Class & Stream Name"
-                      : "Course / Degree Name"}
-                  </label>
-                  <input
-                    type="text"
-                    name="currentCourse"
-                    placeholder={
-                      isClass10
-                        ? "e.g. Class 10 (SSC Board)"
-                        : isClass12
-                        ? "e.g. Class 12 Science (PCM), Class 11 Arts"
-                        : "e.g. B.Tech Computer Science, B.Sc Physics, MBBS"
-                    }
-                    value={currentEducation.currentCourse}
-                    onChange={handleCurrentEdChange}
-                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                {/* 4. Stream / Academic Field (Hidden for Class 10 to reduce clutter) */}
-                {!isClass10 && (
-                  <div>
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Stream / Academic Field</label>
-                    <CustomSelect
-                      name="streamBranch"
-                      value={currentEducation.streamBranch}
-                      onChange={handleCurrentEdChange}
-                      options={isClass12 ? CLASS_12_STREAM_OPTIONS : COLLEGE_STREAM_OPTIONS}
-                      placeholder="Select Stream..."
-                    />
-                  </div>
-                )}
-
-                {/* 5. Year / Class / Semester (Only for Class 12 or College) */}
-                {!isClass10 && (
-                  <div>
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                      {isClass12 ? "Class Year" : "Year / Semester of Study"}
-                    </label>
-                    {isClass12 ? (
-                      <CustomSelect
-                        name="yearSemester"
-                        value={currentEducation.yearSemester}
-                        onChange={handleCurrentEdChange}
-                        options={CLASS_YEAR_OPTIONS}
-                        placeholder="Select Class Year..."
-                      />
-                    ) : (
-                      <input
-                        type="text"
-                        name="yearSemester"
-                        placeholder="e.g. 3rd Year (Sem 6), 1st Year"
-                        value={currentEducation.yearSemester}
-                        onChange={handleCurrentEdChange}
-                        className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                      />
-                    )}
-                  </div>
-                )}
-
-                {/* 6. Current / Previous Marks */}
-                <div>
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">
-                    {isClass10
-                      ? "Class 9th / Mid-Term Marks (%)"
-                      : isClass12
-                      ? "Class 11th / Mid-Term Marks (%)"
-                      : "Current Semester / Annual Marks (%) or CGPA"}
-                  </label>
-                  <input
-                    type="text"
-                    name="marksPercentage"
-                    placeholder={isSchool ? "e.g. 85%" : "e.g. 78% or 8.5 CGPA"}
-                    value={currentEducation.marksPercentage}
-                    onChange={handleCurrentEdChange}
-                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                  />
-                </div>
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* SECTION 3: PAST EDUCATION */}
-        {activeSection === "pastEd" && (() => {
-          const qual = currentEducation.qualification || "";
-          const isClass10 = qual.includes("Class 10") || qual.includes("Primary");
-          const isClass12 = qual.includes("Class 12");
-          const isPG = qual.includes("Postgraduate") || qual.includes("Doctorate");
-
-          if (isClass10) {
-            return (
-              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
-                <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                  <BookOpen className="size-5 text-blue-600 dark:text-blue-400" />
-                  Past Education Scores
-                </h3>
-                <div className="rounded-xl bg-blue-50 dark:bg-blue-950/40 p-4 border border-blue-200 dark:border-blue-800 text-xs text-blue-900 dark:text-blue-200 leading-relaxed">
-                  <p className="font-bold flex items-center gap-1.5 mb-1">
-                    ℹ️ Class 10 / Secondary Student Profile Active
-                  </p>
-                  <p>
-                    Past 10th and 12th board exam scores are not applicable yet as you are currently in Class 10. Your Class 9th / Current Class 10 marks are evaluated directly for 10th Passed & pre-matric school merit grants.
-                  </p>
-                </div>
-              </div>
-            );
-          }
-
-          return (
-            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
-              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-                <BookOpen className="size-5 text-blue-600 dark:text-blue-400" />
-                Past Education Scores {isPG ? "(UG Degree, 10th & 12th Scores)" : "(Powers 10th & 12th Merit Grants)"}
-              </h3>
-
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Matches merit-based cutoff grants like <strong>MahaDBT 10th Scheme</strong>, <strong>Postgraduate Research Fellowships</strong>, and <strong>Central Sector Grants</strong>.
-              </p>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                {/* UG Graduation Marks (For PG / PhD Students) */}
-                {isPG && (
-                  <div className="sm:col-span-2 bg-blue-50/50 dark:bg-blue-950/30 p-3 rounded-xl border border-blue-100 dark:border-blue-900/50">
-                    <label className="text-xs font-bold text-blue-900 dark:text-blue-300">
-                      Undergraduate (UG / Graduation) Aggregate Marks (%) or CGPA
-                    </label>
-                    <input
-                      type="text"
-                      name="ugPercentage"
-                      placeholder="e.g. 82% or 8.4 CGPA"
-                      value={pastEducation.ugPercentage}
-                      onChange={handlePastEdChange}
-                      className="mt-1 w-full rounded-xl border border-blue-300 dark:border-blue-700 bg-white dark:bg-slate-800 p-2.5 text-xs font-bold text-slate-900 dark:text-white outline-none focus:ring-2 focus:ring-blue-500/20"
-                    />
-                  </div>
-                )}
-
-                <div>
-                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">10th Board Marks (%)</label>
-                  <input
-                    type="text"
-                    name="tenthPercentage"
-                    placeholder="e.g. 88.4% or 88.4"
-                    value={pastEducation.tenthPercentage}
-                    onChange={handlePastEdChange}
-                    className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                  />
-                </div>
-
-                {!isClass12 ? (
-                  <div>
-                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">12th Board / Diploma Marks (%)</label>
-                    <input
-                      type="text"
-                      name="twelfthPercentage"
-                      placeholder="e.g. 85.2% or 85.2"
-                      value={pastEducation.twelfthPercentage}
-                      onChange={handlePastEdChange}
-                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
-                    />
-                  </div>
-                ) : (
-                  <div className="rounded-xl bg-slate-50 dark:bg-slate-800/50 p-3 border border-slate-200 dark:border-slate-700 text-xs text-slate-500 dark:text-slate-400 flex items-center">
-                    <span>ℹ️ 12th Board Score: Not applicable yet (Currently pursuing Class 11/12).</span>
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })()}
-
-        {/* SECTION 4: LIVING STATUS & ACCOMMODATION */}
-        {activeSection === "living" && (
+        {activeSection === "currentEd" && (
           <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
             <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <Home className="size-5 text-blue-600 dark:text-blue-400" />
-              Living Status & Accommodation (Powers Hostel Allowance Grants)
+              <GraduationCap className="size-5 text-blue-600 dark:text-blue-400" />
+              Current Academic Details (School, Junior College, Diploma, UG, PG & PhD)
             </h3>
 
-            <p className="text-xs text-slate-500 dark:text-slate-400">
-              Directly unlocks government hostel grants like <strong>Dr. Punjabrao Deshmukh Vasatigruh Nirvah Bhatta Yojna</strong> (₹30,000/yr).
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* 1. Institution Name */}
               <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Living / Accommodation Type</label>
-                <CustomSelect
-                  name="livingType"
-                  value={livingStatus.livingType}
-                  onChange={handleLivingChange}
-                  options={LIVING_TYPE_OPTIONS}
-                  placeholder="Select Living Accommodation..."
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">School / College / Institution Name</label>
+                <input
+                  type="text"
+                  name="collegeName"
+                  placeholder="e.g. IIT Bombay, Saraswati High School, Govt Polytechnic, Delhi University"
+                  value={currentEducation.collegeName}
+                  onChange={handleCurrentEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 />
               </div>
 
+              {/* 2. Current Course / Class Name */}
               <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Monthly Rent / Hostel Expense (₹)</label>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Current Course / Class Name</label>
                 <input
-                  type="number"
-                  name="monthlyLivingCost"
-                  placeholder="e.g. 6000"
-                  value={livingStatus.monthlyLivingCost}
-                  onChange={handleLivingChange}
+                  type="text"
+                  name="currentCourse"
+                  placeholder="e.g. B.Tech Computer Science, Class 12, B.Sc Physics, M.Tech, Diploma"
+                  value={currentEducation.currentCourse}
+                  onChange={handleCurrentEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* 3. Stream / Academic Field */}
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Stream / Academic Field</label>
+                <CustomSelect
+                  name="streamBranch"
+                  value={currentEducation.streamBranch}
+                  onChange={handleCurrentEdChange}
+                  options={COLLEGE_STREAM_OPTIONS}
+                  placeholder="Select Academic Stream..."
+                />
+              </div>
+
+              {/* 4. Year / Semester of Study */}
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Year / Semester / Class Level</label>
+                <input
+                  type="text"
+                  name="yearSemester"
+                  placeholder="e.g. 3rd Year (Sem 6), Class 12th, 1st Year, Sem 2, Ph.D Scholar"
+                  value={currentEducation.yearSemester}
+                  onChange={handleCurrentEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              {/* 5. Current / Recent Academic Marks */}
+              <div className="sm:col-span-2">
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Current / Recent Academic Marks (%) or CGPA</label>
+                <input
+                  type="text"
+                  name="marksPercentage"
+                  placeholder="e.g. 78% or 8.5 CGPA"
+                  value={currentEducation.marksPercentage}
+                  onChange={handleCurrentEdChange}
                   className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
                 />
               </div>
             </div>
           </div>
         )}
+
+        {/* SECTION 3: PAST EDUCATION */}
+        {activeSection === "pastEd" && (
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
+            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+              <BookOpen className="size-5 text-blue-600 dark:text-blue-400" />
+              Past Education Scores (Powers Merit Cutoff Grants)
+            </h3>
+
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Matches merit-based cutoff grants like <strong>MahaDBT Schemes</strong>, <strong>Central Sector Grants</strong>, and <strong>Higher Education Fellowships</strong>. Fill all scores that apply to your education journey.
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">10th Board Exam Score (%)</label>
+                <input
+                  type="text"
+                  name="tenthPercentage"
+                  placeholder="e.g. 88.4% or 88.4"
+                  value={pastEducation.tenthPercentage}
+                  onChange={handlePastEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">12th Board / Diploma Score (%)</label>
+                <input
+                  type="text"
+                  name="twelfthPercentage"
+                  placeholder="e.g. 85.2% or 85.2"
+                  value={pastEducation.twelfthPercentage}
+                  onChange={handlePastEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                />
+              </div>
+
+              <div>
+                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">UG / Graduation Score (%) or CGPA</label>
+                <input
+                  type="text"
+                  name="ugPercentage"
+                  placeholder="e.g. 82% or 8.4 CGPA"
+                  value={pastEducation.ugPercentage}
+                  onChange={handlePastEdChange}
+                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* SECTION 4: LIVING STATUS & ACCOMMODATION */}
+        {activeSection === "living" && (() => {
+          const isLivingOnRent =
+            livingStatus.livingType === "Hostel" ||
+            livingStatus.livingType === "PG / Rented Accommodation";
+
+          return (
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <Home className="size-5 text-blue-600 dark:text-blue-400" />
+                Living Status & Accommodation (Powers Hostel Allowance Grants)
+              </h3>
+
+              <p className="text-xs text-slate-500 dark:text-slate-400">
+                Directly unlocks government hostel grants like <strong>Dr. Punjabrao Deshmukh Vasatigruh Nirvah Bhatta Yojna</strong> (₹30,000/yr).
+              </p>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                <div>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Living / Accommodation Type</label>
+                  <CustomSelect
+                    name="livingType"
+                    value={livingStatus.livingType}
+                    onChange={handleLivingChange}
+                    options={LIVING_TYPE_OPTIONS}
+                    placeholder="Select Living Accommodation..."
+                  />
+                </div>
+
+                {isLivingOnRent ? (
+                  <div>
+                    <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Monthly Rent / Hostel Expense (₹)</label>
+                    <input
+                      type="text"
+                      name="monthlyLivingCost"
+                      placeholder="e.g. 6,000"
+                      value={formatIndianCurrency(livingStatus.monthlyLivingCost)}
+                      onChange={(e) => {
+                        const formatted = formatIndianCurrency(e.target.value);
+                        setLivingStatus((prev) => ({ ...prev, monthlyLivingCost: formatted }));
+                      }}
+                      className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex items-center rounded-xl bg-blue-50/60 dark:bg-blue-950/40 p-3.5 border border-blue-100 dark:border-blue-900/50 text-xs text-blue-800 dark:text-blue-300">
+                    <span>ℹ️ <strong>Day Scholar at Home:</strong> Rent & hostel expense inputs are excluded as you reside with your family.</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
 
         {/* SECTION 5: FINANCIAL & INCOME */}
         {activeSection === "financial" && (
@@ -1049,74 +986,91 @@ export function UserProfileSection() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
               <div>
                 <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Annual Family Income (₹)</label>
-                <input
-                  type="number"
-                  name="annualIncome"
-                  placeholder="e.g. 200000"
-                  value={financial.annualIncome}
-                  onChange={handleFinChange}
-                  className="mt-1 w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 text-xs text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500 font-semibold"
-                />
+                <div className="relative mt-1">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">₹</span>
+                  <input
+                    type="text"
+                    name="annualIncome"
+                    placeholder="e.g. 2,00,000"
+                    value={formatIndianCurrency(financial.annualIncome)}
+                    onChange={handleFinChange}
+                    className="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-2.5 pl-7 text-xs font-semibold text-slate-800 dark:text-slate-100 outline-none focus:border-blue-500"
+                  />
+                </div>
+                {financial.annualIncome && (
+                  <p className="mt-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    ✓ Income Formatted: ₹{formatIndianCurrency(financial.annualIncome)}
+                  </p>
+                )}
               </div>
             </div>
           </div>
         )}
 
         {/* SECTION 6: CATEGORY & DOMICILE */}
-        {activeSection === "eligibility" && (
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
-            <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <ShieldCheck className="size-5 text-blue-600 dark:text-blue-400" />
-              Social Category, Domicile & Quotas
-            </h3>
+        {activeSection === "eligibility" && (() => {
+          const filteredSpecialCriteriaOptions = SPECIAL_CRITERIA_OPTIONS.filter((opt) => {
+            if (opt.value === "Single Girl Child" && personal.gender === "Male") {
+              return false;
+            }
+            return true;
+          });
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Social Category</label>
-                <CustomSelect
-                  name="category"
-                  value={eligibility.category}
-                  onChange={handleEligibilityChange}
-                  options={CATEGORY_OPTIONS}
-                  placeholder="Select Social Category..."
-                />
-              </div>
+          return (
+            <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 shadow-sm space-y-4 animate-fade-in">
+              <h3 className="text-base font-bold text-slate-900 dark:text-white flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <ShieldCheck className="size-5 text-blue-600 dark:text-blue-400" />
+                Social Category, Domicile & Quotas
+              </h3>
 
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Domicile State</label>
-                <CustomSelect
-                  name="domicileState"
-                  value={eligibility.domicileState}
-                  onChange={handleEligibilityChange}
-                  options={DOMICILE_STATE_OPTIONS}
-                  placeholder="Select Domicile State..."
-                />
-              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Social Category</label>
+                  <CustomSelect
+                    name="category"
+                    value={eligibility.category}
+                    onChange={handleEligibilityChange}
+                    options={CATEGORY_OPTIONS}
+                    placeholder="Select Social Category..."
+                  />
+                </div>
 
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Disability Status (PwD)</label>
-                <CustomSelect
-                  name="isDisability"
-                  value={eligibility.isDisability}
-                  onChange={handleEligibilityChange}
-                  options={DISABILITY_OPTIONS}
-                  placeholder="Select Disability Status..."
-                />
-              </div>
+                <div>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Domicile State</label>
+                  <CustomSelect
+                    name="domicileState"
+                    value={eligibility.domicileState}
+                    onChange={handleEligibilityChange}
+                    options={DOMICILE_STATE_OPTIONS}
+                    placeholder="Select Domicile State..."
+                  />
+                </div>
 
-              <div>
-                <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Special Criteria / Quota</label>
-                <CustomSelect
-                  name="specialCriteria"
-                  value={eligibility.specialCriteria}
-                  onChange={handleEligibilityChange}
-                  options={SPECIAL_CRITERIA_OPTIONS}
-                  placeholder="Select Special Criteria..."
-                />
+                <div>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Disability Status (PwD)</label>
+                  <CustomSelect
+                    name="isDisability"
+                    value={eligibility.isDisability}
+                    onChange={handleEligibilityChange}
+                    options={DISABILITY_OPTIONS}
+                    placeholder="Select Disability Status..."
+                  />
+                </div>
+
+                <div>
+                  <label className="text-xs font-medium text-slate-700 dark:text-slate-300">Special Non-Caste Criteria / Additional Quota</label>
+                  <CustomSelect
+                    name="specialCriteria"
+                    value={eligibility.specialCriteria}
+                    onChange={handleEligibilityChange}
+                    options={filteredSpecialCriteriaOptions}
+                    placeholder="Select Special Criteria..."
+                  />
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Save Button Footer */}
         <div className="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-800">

@@ -432,7 +432,7 @@ export function StudentProfileOverview({ onNavigateTab }) {
             <div>
               <p className="text-slate-400 font-medium">Monthly Living Cost</p>
               <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
-                {profile.monthlyLivingCost ? `₹${parseFloat(profile.monthlyLivingCost).toLocaleString("en-IN")}` : "None"}
+                {profile.monthlyLivingCost ? `₹${parseFloat(String(profile.monthlyLivingCost).replace(/,/g, "")).toLocaleString("en-IN")}` : "None"}
               </p>
             </div>
             <div className="col-span-2">
@@ -466,7 +466,7 @@ export function StudentProfileOverview({ onNavigateTab }) {
             <div>
               <p className="text-slate-400 font-medium">Annual Family Income</p>
               <p className="font-bold text-slate-800 dark:text-slate-200 mt-0.5">
-                {profile.annualIncome ? `₹${parseFloat(profile.annualIncome).toLocaleString("en-IN")}` : "Not Specified"}
+                {profile.annualIncome ? `₹${parseFloat(String(profile.annualIncome).replace(/,/g, "")).toLocaleString("en-IN")}` : "Not Specified"}
               </p>
             </div>
             <div>
