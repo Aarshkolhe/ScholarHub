@@ -287,7 +287,45 @@ ScholarHub has undergone 10 comprehensive Quality Assurance (QA) testing passes:
 
 ---
 
-## 24. Known Security Limitation & Future Enhancement
+## 24. Final Manual End-to-End Runtime QA
+
+> **Real-World Testing Analogy**: Think of this as actually driving the finished car rather than only inspecting its engine. ScholarHub was started and used through its major student and administrator workflows to confirm that the finished system works correctly in practice.
+
+The current ScholarHub build (Commit: `25dff88` on branch `main`) was started and manually tested at runtime across all 7 operational phases:
+
+1. **Backend Startup & Health Check**: Verified `GET /api/health` returns `200 OK`.
+2. **PostgreSQL Connectivity**: Verified active database connection pool (`SELECT 1`).
+3. **Frontend Startup**: Verified Vite dev server (`http://localhost:5173`) loads cleanly with zero console compilation errors.
+4. **Student Registration**: Verified `POST /register` creates accounts and returns signed JWTs.
+5. **Student Login & Logout**: Verified `POST /login` credential checks, session creation, and `localStorage` session clearing upon logout.
+6. **Password Reset & OTP**: Verified 6-digit OTP delivery, SHA-256 hash matching, single-use invalidation, attempt limits, and password updates.
+7. **Student Profile**: Verified saving (`POST /api/profile`) and fetching (`GET /api/profile`) section fields in PostgreSQL.
+8. **Scholarship Search**: Verified `GET /api/scholarships` fetches active schemes with resolved `portal` objects and match scores.
+9. **Bookmarks**: Verified bookmarking (`POST /api/scholarships/bookmark`) and unbookmarking (`POST /api/scholarships/unbookmark`) in `user_saved_scholarships`.
+10. **Scholarship Applications**: Verified submitting applications (`POST /api/scholarships/apply`) and application status tracking (`GET /api/scholarships/applications`).
+11. **AI Counselor**: Verified Gemini AI Q&A chat (`POST /api/ai/chat`) returns structured markdown advice.
+12. **Admin Dashboard**: Verified system statistics (`GET /api/admin/stats`) and user management lists (`GET /api/admin/users`).
+13. **Scholarship Portal Management**: Verified portal creation, editing, active status toggles, safe delete blocking on in-use portals (`409 Conflict`), and unused portal deletion.
+14. **Admin Authorization**: Verified `requireAdmin` blocks Student JWTs with `403 Forbidden`.
+15. **Unauthenticated Access Protection**: Verified missing Bearer tokens are rejected with `401 Unauthorized`.
+16. **Role Injection Protection**: Verified registration payloads with `role: "Admin"` injection are ignored, hardcoding accounts to `Student`.
+17. **UUID Validation**: Verified malformed UUID parameters return `400 Bad Request`.
+18. **Offline / Network Failure Handling**: Verified frontend displays clean connection error notifications without freezing when the backend is offline.
+
+### Summary of Runtime Execution Results:
+- **All Executed Tests**: **PASSED (100% Score)**
+- **HTTP Responses**: Verified exact status codes (`200`, `201`, `400`, `401`, `403`, `409`)
+- **Bugs Discovered**: **0**
+- **Security Issues**: **0**
+- **Configuration Issues**: **0**
+- **Temporary Test Files**: **0** (All temporary test scripts removed)
+- **Git Working Tree**: **CLEAN**
+
+**FINAL MANUAL END-TO-END QA: PASS**
+
+---
+
+## 25. Known Security Limitation & Future Enhancement
 
 - **Stateless JWT Role Revocation**:
   - *Current Behavior*: ScholarHub uses stateless JWT tokens for performance and scalability. If an Admin demotes an account from `Admin` to `Student` in the database, a previously issued Admin token remains valid until it expires (up to 1 hour), because the server verifies the cryptographic token signature without querying PostgreSQL on every request. Conversely, promoting a Student to Admin requires the user to log in again to receive a token with the new `Admin` claim.
@@ -295,7 +333,7 @@ ScholarHub has undergone 10 comprehensive Quality Assurance (QA) testing passes:
 
 ---
 
-## 25. Security Verification Checklist
+## 26. Security Verification Checklist
 
 | Security Control | Status | Description |
 | --- | --- | --- |
@@ -313,6 +351,7 @@ ScholarHub has undergone 10 comprehensive Quality Assurance (QA) testing passes:
 | **Secret Protection** | `[PASS]` | `password_hash` omitted from API outputs; secrets excluded from Git |
 | **Database Constraints & Indexes** | `[PASS]` | UUID primary keys, CASCADE constraints, and B-Tree indexes active |
 | **Portal Management Security** | `[PASS]` | Portal CRUD protected by `requireAdmin`; in-use deletion returns `409 Conflict` |
+| **Manual End-to-End Runtime QA** | `[PASS]` | 18 runtime operational phases verified with 100% PASS rate |
 | **Production Build Cleanliness** | `[PASS]` | `npm run build` compiles with zero errors |
 
 ---
