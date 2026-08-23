@@ -396,196 +396,200 @@ export function SettingsSection({
             </div>
           </div>
 
-          {/* Sandbox Demo Student Profile Preloader & Snapshot */}
-          <div className="rounded-2xl border border-amber-200 dark:border-amber-800/70 bg-amber-50/50 dark:bg-amber-950/30 p-5 sm:p-6 shadow-sm space-y-4">
-            <div className="flex items-center justify-between border-b border-amber-200/70 dark:border-amber-800/50 pb-3">
-              <div className="flex items-center gap-2">
-                <Database className="size-4 text-amber-600 dark:text-amber-400" />
-                <span className="text-sm font-bold text-amber-950 dark:text-amber-100">
-                  Simulation Profiles & Sandbox Test Suite
-                </span>
-              </div>
-              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/80 px-2.5 py-0.5 rounded-full">
-                5 Test Presets
-              </span>
-            </div>
-
-            <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
-              Select a test profile below to load mock student details into the Sandbox. <strong>No bookmarks or applications are preloaded</strong> — allowing you to test real-time recommendation updates, eligibility badges (% match), threshold gates, and AI matching:
-            </p>
-
-            {/* Profile Presets Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
-              {SIMULATION_DEMO_PROFILES.map((preset, pIdx) => {
-                const isActive = storedProfile.name === preset.profile.user.name;
-                return (
-                  <div
-                    key={preset.id}
-                    onClick={() => handleLoadSimulationData(pIdx)}
-                    className={`group relative flex flex-col justify-between rounded-xl border p-3.5 transition-all cursor-pointer ${
-                      isActive
-                        ? "border-amber-500 bg-amber-100/70 dark:bg-amber-900/40 ring-2 ring-amber-500/30 shadow-md"
-                        : "border-amber-200/80 dark:border-amber-800/50 bg-white/90 dark:bg-slate-900/90 hover:border-amber-400 hover:shadow-sm"
-                    }`}
-                  >
-                    <div className="space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
-                          {preset.label}
-                        </span>
-                        {isActive && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-200/80 dark:bg-amber-900/80 px-2 py-0.5 rounded-md">
-                            <Check className="size-3" /> Active
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-[11px] font-medium text-amber-800 dark:text-amber-300 leading-snug">
-                        {preset.tagline}
-                      </p>
-                      <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                        {preset.description}
-                      </p>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleLoadSimulationData(pIdx);
-                      }}
-                      className="mt-3 w-full rounded-lg bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white py-1.5 text-[11px] font-bold shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
-                    >
-                      <Zap className="size-3" />
-                      <span>{isActive ? "Reload Profile" : "Load Profile"}</span>
-                    </button>
+          {/* Sandbox Demo Student Profile Preloader & Snapshot (Only visible in Simulation Mode) */}
+          {systemMode === "simulation" && (
+            <>
+              <div className="rounded-2xl border border-amber-200 dark:border-amber-800/70 bg-amber-50/50 dark:bg-amber-950/30 p-5 sm:p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between border-b border-amber-200/70 dark:border-amber-800/50 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Database className="size-4 text-amber-600 dark:text-amber-400" />
+                    <span className="text-sm font-bold text-amber-950 dark:text-amber-100">
+                      Simulation Profiles & Sandbox Test Suite
+                    </span>
                   </div>
-                );
-              })}
-            </div>
+                  <span className="text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-100 dark:bg-amber-900/80 px-2.5 py-0.5 rounded-full">
+                    5 Test Presets
+                  </span>
+                </div>
 
-            {/* Clear Sandbox Button */}
-            <div className="pt-2 flex items-center justify-between border-t border-amber-200/70 dark:border-amber-800/50">
-              <span className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
-                Want a clean slate? Reset all profile details, bookmarks, and applications to 0%.
-              </span>
-              <button
-                type="button"
-                onClick={handleClearSimulationData}
-                className="rounded-xl border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
-              >
-                <Trash2 className="size-3.5" />
-                <span>Reset Sandbox (0%)</span>
-              </button>
-            </div>
+                <p className="text-xs text-amber-900/90 dark:text-amber-200/90 leading-relaxed">
+                  Select a test profile below to load mock student details into the Sandbox. <strong>No bookmarks or applications are preloaded</strong> — allowing you to test real-time recommendation updates, eligibility badges (% match), threshold gates, and AI matching:
+                </p>
 
-            {/* Live Sandbox Snapshot Card */}
-            <div className="mt-3 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-amber-200/60 dark:border-amber-800/40 p-4 text-xs space-y-2.5 shadow-xs">
-              <div className="flex items-center justify-between">
-                <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
-                  <UserCheck className="size-4 text-amber-600 dark:text-amber-400" />
-                  Live Sandbox Snapshot ({profileStrength}% Strength)
-                </span>
-                <span
-                  className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
-                    profileStrength >= 30
-                      ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
-                      : "bg-slate-100 dark:bg-slate-800 text-slate-500"
-                  }`}
-                >
-                  {profileStrength >= 30 ? "✓ Matching Engine Active" : "Details Incomplete (<30%)"}
-                </span>
+                {/* Profile Presets Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+                  {SIMULATION_DEMO_PROFILES.map((preset, pIdx) => {
+                    const isActive = storedProfile.name === preset.profile.user.name;
+                    return (
+                      <div
+                        key={preset.id}
+                        onClick={() => handleLoadSimulationData(pIdx)}
+                        className={`group relative flex flex-col justify-between rounded-xl border p-3.5 transition-all cursor-pointer ${
+                          isActive
+                            ? "border-amber-500 bg-amber-100/70 dark:bg-amber-900/40 ring-2 ring-amber-500/30 shadow-md"
+                            : "border-amber-200/80 dark:border-amber-800/50 bg-white/90 dark:bg-slate-900/90 hover:border-amber-400 hover:shadow-sm"
+                        }`}
+                      >
+                        <div className="space-y-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                              {preset.label}
+                            </span>
+                            {isActive && (
+                              <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 dark:text-amber-300 bg-amber-200/80 dark:bg-amber-900/80 px-2 py-0.5 rounded-md">
+                                <Check className="size-3" /> Active
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[11px] font-medium text-amber-800 dark:text-amber-300 leading-snug">
+                            {preset.tagline}
+                          </p>
+                          <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
+                            {preset.description}
+                          </p>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleLoadSimulationData(pIdx);
+                          }}
+                          className="mt-3 w-full rounded-lg bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white py-1.5 text-[11px] font-bold shadow-xs transition-all flex items-center justify-center gap-1 cursor-pointer"
+                        >
+                          <Zap className="size-3" />
+                          <span>{isActive ? "Reload Profile" : "Load Profile"}</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Clear Sandbox Button */}
+                <div className="pt-2 flex items-center justify-between border-t border-amber-200/70 dark:border-amber-800/50">
+                  <span className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+                    Want a clean slate? Reset all profile details, bookmarks, and applications to 0%.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleClearSimulationData}
+                    className="rounded-xl border border-rose-300 dark:border-rose-800 bg-white dark:bg-slate-900 px-3.5 py-1.5 text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 shadow-xs transition-colors flex items-center gap-1.5 shrink-0 cursor-pointer"
+                  >
+                    <Trash2 className="size-3.5" />
+                    <span>Reset Sandbox (0%)</span>
+                  </button>
+                </div>
+
+                {/* Live Sandbox Snapshot Card */}
+                <div className="mt-3 rounded-xl bg-white/95 dark:bg-slate-900/95 border border-amber-200/60 dark:border-amber-800/40 p-4 text-xs space-y-2.5 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <span className="font-bold text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                      <UserCheck className="size-4 text-amber-600 dark:text-amber-400" />
+                      Live Sandbox Snapshot ({profileStrength}% Strength)
+                    </span>
+                    <span
+                      className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full ${
+                        profileStrength >= 30
+                          ? "bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300"
+                          : "bg-slate-100 dark:bg-slate-800 text-slate-500"
+                      }`}
+                    >
+                      {profileStrength >= 30 ? "✓ Matching Engine Active" : "Details Incomplete (<30%)"}
+                    </span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
+                    <div
+                      style={{ width: `${profileStrength}%` }}
+                      className={`h-full transition-all duration-500 rounded-full ${
+                        profileStrength >= 80
+                          ? "bg-emerald-500"
+                          : profileStrength >= 30
+                          ? "bg-blue-600 dark:bg-blue-500"
+                          : "bg-amber-500"
+                      }`}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] text-slate-600 dark:text-slate-300">
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                      <span className="text-slate-400 font-medium block">Name</span>
+                      <strong className="text-slate-800 dark:text-slate-100 truncate block">{storedProfile.name || "—"}</strong>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                      <span className="text-slate-400 font-medium block">College / Course</span>
+                      <strong className="text-slate-800 dark:text-slate-100 truncate block">
+                        {storedProfile.collegeName || storedProfile.currentCourse || "—"}
+                      </strong>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                      <span className="text-slate-400 font-medium block">10th / 12th / Marks</span>
+                      <strong className="text-slate-800 dark:text-slate-100 block">
+                        {storedProfile.tenthPercentage || "—"} | {storedProfile.twelfthPercentage || "—"} | {storedProfile.marksPercentage || "—"}
+                      </strong>
+                    </div>
+                    <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
+                      <span className="text-slate-400 font-medium block">Living / Cat / State</span>
+                      <strong className="text-slate-800 dark:text-slate-100 truncate block">
+                        {storedProfile.livingType || "—"} | {storedProfile.category || "—"} ({storedProfile.domicileState || "—"})
+                      </strong>
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              {/* Progress bar */}
-              <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                <div
-                  style={{ width: `${profileStrength}%` }}
-                  className={`h-full transition-all duration-500 rounded-full ${
-                    profileStrength >= 80
-                      ? "bg-emerald-500"
-                      : profileStrength >= 30
-                      ? "bg-blue-600 dark:bg-blue-500"
-                      : "bg-amber-500"
-                  }`}
-                />
+              {/* Interactive Sandbox Event Triggers */}
+              <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm space-y-3">
+                <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                  <FlaskConical className="size-4 text-purple-600 dark:text-purple-400" />
+                  <h3 className="text-sm font-bold text-slate-900 dark:text-white">
+                    Simulated Event Triggers
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Trigger simulated events to test urgency countdowns, new high-match grants (95%), or instant verification:
+                </p>
+                <div className="flex flex-wrap gap-2.5 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerToast("⏳ Simulation Triggered: Application deadline shifted 5 days closer (Urgent Status)!");
+                      window.dispatchEvent(new Event("scholarhub_notifications_updated"));
+                    }}
+                    className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Clock className="size-3.5 text-amber-500" />
+                    <span>Simulate Urgent Deadline</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerToast("✨ Simulation Triggered: Injected 1 New High-Match Grant (95% Match)!");
+                      window.dispatchEvent(new Event("scholarhub_notifications_updated"));
+                    }}
+                    className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Sparkles className="size-3.5 text-purple-500" />
+                    <span>Simulate New Grant Match (95%)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      triggerToast("🛡️ Simulation Triggered: Student Profile Credentials Verified (100% Match Eligibility)!");
+                      window.dispatchEvent(new Event("scholarhub_profile_updated"));
+                    }}
+                    className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <ShieldCheck className="size-3.5 text-emerald-500" />
+                    <span>Simulate Instant Verification</span>
+                  </button>
+                </div>
               </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 text-[11px] text-slate-600 dark:text-slate-300">
-                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-slate-400 font-medium block">Name</span>
-                  <strong className="text-slate-800 dark:text-slate-100 truncate block">{storedProfile.name || "—"}</strong>
-                </div>
-                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-slate-400 font-medium block">College / Course</span>
-                  <strong className="text-slate-800 dark:text-slate-100 truncate block">
-                    {storedProfile.collegeName || storedProfile.currentCourse || "—"}
-                  </strong>
-                </div>
-                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-slate-400 font-medium block">10th / 12th / Marks</span>
-                  <strong className="text-slate-800 dark:text-slate-100 block">
-                    {storedProfile.tenthPercentage || "—"} | {storedProfile.twelfthPercentage || "—"} | {storedProfile.marksPercentage || "—"}
-                  </strong>
-                </div>
-                <div className="p-2 rounded-lg bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-slate-400 font-medium block">Living / Cat / State</span>
-                  <strong className="text-slate-800 dark:text-slate-100 truncate block">
-                    {storedProfile.livingType || "—"} | {storedProfile.category || "—"} ({storedProfile.domicileState || "—"})
-                  </strong>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Interactive Sandbox Event Triggers */}
-          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-5 sm:p-6 shadow-sm space-y-3">
-            <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
-              <FlaskConical className="size-4 text-purple-600 dark:text-purple-400" />
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                Simulated Event Triggers
-              </h3>
-            </div>
-            <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-              Trigger simulated events to test urgency countdowns, new high-match grants (95%), or instant verification:
-            </p>
-            <div className="flex flex-wrap gap-2.5 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  triggerToast("⏳ Simulation Triggered: Application deadline shifted 5 days closer (Urgent Status)!");
-                  window.dispatchEvent(new Event("scholarhub_notifications_updated"));
-                }}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
-              >
-                <Clock className="size-3.5 text-amber-500" />
-                <span>Simulate Urgent Deadline</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  triggerToast("✨ Simulation Triggered: Injected 1 New High-Match Grant (95% Match)!");
-                  window.dispatchEvent(new Event("scholarhub_notifications_updated"));
-                }}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
-              >
-                <Sparkles className="size-3.5 text-purple-500" />
-                <span>Simulate New Grant Match (95%)</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  triggerToast("🛡️ Simulation Triggered: Student Profile Credentials Verified (100% Match Eligibility)!");
-                  window.dispatchEvent(new Event("scholarhub_profile_updated"));
-                }}
-                className="rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3.5 py-2 text-xs font-semibold text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 shadow-xs transition-all hover:scale-105 active:scale-95 flex items-center gap-1.5 cursor-pointer"
-              >
-                <ShieldCheck className="size-3.5 text-emerald-500" />
-                <span>Simulate Instant Verification</span>
-              </button>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       )}
 
