@@ -79,13 +79,13 @@ export function StudentDashboard() {
     return () => window.removeEventListener("scholarhub_profile_updated", updateStrength);
   }, [user, activeTab]);
 
-  // Dynamic Recommended Count (Match Score >= 50% only when profile passes 30% threshold)
+  // Dynamic Recommended Count (Only 100% eligible scholarships when profile passes 30% threshold)
   const recommendedCount = useMemo(() => {
     try {
       const strength = calculateProfileStrength();
       if (strength < 30) return 0;
       const evaluated = evaluateAllScholarships();
-      return evaluated.filter((s) => (s.eligibilityPercent ?? s.matchScore) >= 50).length;
+      return evaluated.filter((s) => s.isEligible).length;
     } catch {
       return 0;
     }

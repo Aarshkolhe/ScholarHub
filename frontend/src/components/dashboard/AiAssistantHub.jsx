@@ -279,7 +279,7 @@ export function AiAssistantHub() {
 
   const evaluatedScholarships = useMemo(() => evaluateAllScholarships(studentProfile), [studentProfile]);
   const eligibleScholarships = useMemo(
-    () => evaluatedScholarships.filter((s) => (s.eligibilityPercent ?? s.matchScore) >= 50),
+    () => evaluatedScholarships.filter((s) => s.isEligible),
     [evaluatedScholarships]
   );
 

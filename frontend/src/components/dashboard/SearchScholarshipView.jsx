@@ -205,10 +205,10 @@ export function SearchScholarshipView({
       // 1. Saved Tab Filter
       if (activeTab === "Saved" && !savedIds.includes(s.id)) return false;
 
-      // 2. Recommended Tab Filter (requires profile strength >= 30% threshold and match score >= 50%)
+      // 2. Recommended Tab Filter (requires profile strength >= 30% threshold and only 100% eligible scholarships)
       if (activeTab === "Recommended") {
         if (!hasFilledDetails) return false;
-        if ((s.eligibilityPercent ?? s.matchScore) < 50) return false;
+        if (!s.isEligible) return false;
       }
 
       // 3. Portal Source Filter
@@ -575,13 +575,22 @@ export function SearchScholarshipView({
       )}
 
       {activeTab === "Recommended" && hasFilledDetails && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-xs text-slate-500 dark:text-slate-400 px-1">
-          <span className="font-semibold text-slate-700 dark:text-slate-200">
-            Showing {filteredScholarships.length} Recommended Scholarships
-          </span>
-          <span className="text-[11px] font-medium text-slate-400">
-            Filtered for ≥50% match based on your {profileStrength}% completed profile
-          </span>
+        <div className="rounded-2xl border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/80 dark:bg-blue-950/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-blue-900 dark:text-blue-200">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-blue-600 dark:text-blue-400 shrink-0" />
+            <span>
+              Showing <strong>{filteredScholarships.length} 100% eligible scholarships</strong> matching your current profile (<strong>{profileStrength}% complete</strong>). Complete your full details in the <strong>Details</strong> section for maximum recommendation accuracy!
+            </span>
+          </div>
+          {onNavigateTab && (
+            <button
+              type="button"
+              onClick={() => onNavigateTab("Details")}
+              className="shrink-0 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 transition-colors cursor-pointer shadow-xs"
+            >
+              Complete Full Profile &rarr;
+            </button>
+          )}
         </div>
       )}
 

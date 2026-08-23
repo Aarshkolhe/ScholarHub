@@ -52,9 +52,9 @@ export function RecentScholarships({
     });
   }, [studentProfile]);
 
-  // Recommended scholarships count
+  // Recommended scholarships count (only 100% eligible scholarships)
   const recommendedList = useMemo(() => {
-    return evaluatedScholarships.filter((s) => s.matchScore !== null && s.matchScore >= 50);
+    return evaluatedScholarships.filter((s) => s.isEligible);
   }, [evaluatedScholarships]);
 
   const [filter, setFilter] = useState(() => (hasFilledDetails && recommendedList.length > 0 ? "Recommended" : "All"));
@@ -245,7 +245,7 @@ export function RecentScholarships({
           <div className="flex items-center gap-2">
             <Sparkles className="size-4 text-amber-600 dark:text-amber-400 shrink-0" />
             <span>
-              <strong>Profile Below Recommendation Threshold:</strong> Your profile strength is at <strong>{profileStrength}%</strong>. Fill your details above the <strong>30% threshold</strong> in the <strong>Details</strong> tab to unlock personalized AI recommendations.
+              <strong>Profile Below Recommendation Threshold:</strong> Your profile strength is at <strong>{profileStrength}%</strong>. Complete your profile details above the <strong>30% threshold</strong> in the <strong>Details</strong> tab to unlock 100% eligible recommendations.
             </span>
           </div>
           <button
@@ -255,6 +255,27 @@ export function RecentScholarships({
           >
             Complete Profile &rarr;
           </button>
+        </div>
+      )}
+
+      {/* Max Accuracy Recommendation Banner */}
+      {hasFilledDetails && filter === "Recommended" && (
+        <div className="rounded-2xl border border-blue-200/80 dark:border-blue-900/60 bg-blue-50/80 dark:bg-blue-950/40 p-3.5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs text-blue-900 dark:text-blue-200">
+          <div className="flex items-center gap-2">
+            <Sparkles className="size-4 text-blue-600 dark:text-blue-400 shrink-0" />
+            <span>
+              Showing <strong>{recommendedList.length} 100% eligible scholarships</strong> for your verified profile (<strong>{profileStrength}% complete</strong>). Complete your full details for maximum recommendation accuracy!
+            </span>
+          </div>
+          {onNavigateTab && (
+            <button
+              type="button"
+              onClick={() => onNavigateTab("Details")}
+              className="shrink-0 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold px-3.5 py-1.5 transition-colors cursor-pointer shadow-xs"
+            >
+              Complete Full Profile &rarr;
+            </button>
+          )}
         </div>
       )}
 
