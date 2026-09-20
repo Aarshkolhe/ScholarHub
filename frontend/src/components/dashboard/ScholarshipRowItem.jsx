@@ -1,4 +1,5 @@
 import { Bookmark } from "lucide-react";
+import SpotlightCard from "../ui/SpotlightCard";
 
 export function ScholarshipRowItem({
   scholarship,
@@ -9,12 +10,13 @@ export function ScholarshipRowItem({
   onOpenApply,
 }) {
   return (
-    <div
+    <SpotlightCard
+      spotlightColor="rgba(99, 102, 241, 0.18)"
       onClick={() => onOpenDetails(scholarship)}
       className="group relative flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 border-b border-slate-100 dark:border-slate-800/60 last:border-0 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors cursor-pointer"
     >
       {/* Main Left Content */}
-      <div className="space-y-1.5 min-w-0 flex-1">
+      <div className="space-y-1.5 min-w-0 flex-1 relative z-10">
         {/* Badges & Provider Line */}
         <div className="flex items-center gap-2 flex-wrap text-xs">
           {/* Prominent Eligibility Percentage Badge */}
@@ -98,7 +100,7 @@ export function ScholarshipRowItem({
       </div>
 
       {/* Right Controls: Bookmark & Apply Now Pill Button */}
-      <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0">
+      <div className="flex items-center justify-between sm:justify-end gap-3 shrink-0 pt-2 sm:pt-0 relative z-10">
         <button
           type="button"
           onClick={(e) => onToggleSave(scholarship.id, e)}
@@ -126,7 +128,7 @@ export function ScholarshipRowItem({
           </button>
         )}
       </div>
-    </div>
+    </SpotlightCard>
   );
 }
 

@@ -43,21 +43,21 @@ export function LatestNotificationsTicker() {
 
   return (
     <div className="hidden min-w-0 flex-1 items-center gap-3 md:flex">
-      <span className="shrink-0 text-xs font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+      <span className="shrink-0 text-[10px] font-extrabold uppercase tracking-widest text-violet-600 dark:text-violet-400 bg-violet-50 dark:bg-violet-950/70 border border-violet-200 dark:border-violet-800/80 px-2.5 py-1 rounded-full shadow-2xs">
         Latest
       </span>
-      <div className="relative flex min-w-0 items-center gap-2.5 rounded-full border border-slate-300 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 px-3.5 py-1.5">
+      <div className="relative flex min-w-0 items-center gap-2.5 rounded-full border border-slate-200/80 dark:border-slate-800/80 bg-white/80 dark:bg-slate-900/80 px-3.5 py-1.5 shadow-2xs backdrop-blur-md">
         <span
           key={index}
-          className={`flex size-6 shrink-0 animate-rise-in items-center justify-center rounded-full ${active.tint}`}
+          className={`flex size-5 shrink-0 animate-rise-in items-center justify-center rounded-full ${active.tint}`}
         >
-          <Icon className="size-3.5" />
+          <Icon className="size-3" />
         </span>
         <p
           key={`text-${index}`}
-          className="animate-rise-in truncate text-sm text-slate-700 dark:text-slate-200"
+          className="animate-rise-in truncate text-xs text-slate-700 dark:text-slate-200 font-medium"
         >
-          <span className="font-semibold">{active.label}:</span>{" "}
+          <span className="font-bold">{active.label}:</span>{" "}
           <span className="text-slate-500 dark:text-slate-400">{active.text}</span>
         </p>
         <span className="ml-1 flex shrink-0 gap-1">
@@ -65,7 +65,7 @@ export function LatestNotificationsTicker() {
             <span
               key={i}
               className={`size-1.5 rounded-full transition-colors ${
-                i === index ? "bg-blue-600 dark:bg-blue-400" : "bg-slate-300 dark:bg-slate-700"
+                i === index ? "bg-violet-600 dark:bg-violet-400" : "bg-slate-300 dark:bg-slate-700"
               }`}
             />
           ))}
@@ -103,19 +103,19 @@ export function NotificationsBell() {
         aria-label="Notifications"
         aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
-        className="relative rounded-full p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+        className="relative rounded-2xl p-2.5 border border-slate-200/80 dark:border-slate-800/80 bg-white/90 dark:bg-slate-900/90 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white shadow-xs transition-all outline-none"
       >
-        <Bell className="size-5" />
-        <span className="absolute right-1.5 top-1.5 flex size-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900" />
+        <Bell className="size-4.5" />
+        <span className="absolute right-2 top-2 flex size-2 rounded-full bg-rose-500 ring-2 ring-white dark:ring-slate-900" />
       </button>
 
       {open && (
-        <div className="animate-rise-in absolute right-0 top-full z-20 mt-2 w-80 origin-top-right rounded-2xl border border-slate-300 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 shadow-xl">
+        <div className="animate-fade-in-up absolute right-0 top-full z-20 mt-2.5 w-80 origin-top-right rounded-3xl border border-slate-200/80 dark:border-slate-800/80 bg-white/95 dark:bg-[#151929]/95 p-4 shadow-2xl backdrop-blur-2xl">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900 dark:text-white">
-              Your notifications
+            <h2 className="text-sm font-bold text-slate-900 dark:text-white">
+              Notifications
             </h2>
-            <span className="rounded-full bg-blue-50 dark:bg-blue-950/80 px-2 py-0.5 text-xs font-semibold text-blue-600 dark:text-blue-400">
+            <span className="rounded-full bg-violet-50 dark:bg-violet-950/80 px-2.5 py-0.5 text-xs font-bold text-violet-600 dark:text-violet-400">
               {personalNotifications.length} new
             </span>
           </div>
@@ -125,12 +125,12 @@ export function NotificationsBell() {
               <li
                 key={note.text}
                 style={{ animationDelay: `${i * 80 + 60}ms` }}
-                className="group flex animate-rise-in items-start gap-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
+                className="group flex animate-rise-in items-start gap-2.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 px-3 py-2.5 transition-colors hover:bg-slate-100 dark:hover:bg-slate-800"
               >
-                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-blue-600 dark:bg-blue-400 transition-transform duration-300 group-hover:scale-150" />
+                <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-violet-600 dark:bg-violet-400 transition-transform duration-300 group-hover:scale-150" />
                 <div className="min-w-0">
-                  <p className="text-sm text-slate-800 dark:text-slate-200">{note.text}</p>
-                  <p className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">{note.time}</p>
+                  <p className="text-xs font-medium text-slate-800 dark:text-slate-200">{note.text}</p>
+                  <p className="mt-0.5 text-[10px] font-semibold text-slate-400">{note.time}</p>
                 </div>
               </li>
             ))}
