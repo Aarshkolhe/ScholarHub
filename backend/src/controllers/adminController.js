@@ -110,7 +110,8 @@ export async function getUserProfile(req, res) {
 
   try {
     const userRes = await pool.query(
-      `SELECT id, name, email, role, status, blocked_at, block_reason, created_at FROM users WHERE id = $1`,
+      `SELECT id, name, email, role, status, blocked_by, blocked_at, block_reason, is_email_verified, created_at, updated_at 
+       FROM users WHERE id = $1`,
       [userId]
     );
 
@@ -121,21 +122,55 @@ export async function getUserProfile(req, res) {
     const userObj = userRes.rows[0];
     userObj.role = getUserRole(userObj);
 
+    if (userObj.blocked_by) {
+      try {
+        const blockerRes = await pool.query(`SELECT name, email FROM users WHERE id = $1`, [userObj.blocked_by]);
+        if (blockerRes.rowCount > 0) {
+          userObj.blocked_by_name = blockerRes.rows[0].name;
+          userObj.blocked_by_email = blockerRes.rows[0].email;
+        }
+      } catch (err) {
+        console.warn("Could not resolve blocker admin details:", err);
+      }
+    }
+
     const profileRes = await pool.query(
       `SELECT * FROM student_profiles WHERE user_id = $1`,
       [userId]
     );
 
     const docsRes = await pool.query(
-      `SELECT id, doc_type, file_name, status, created_at FROM student_documents WHERE user_id = $1`,
+      `SELECT id, doc_type, file_name, status, created_at FROM student_documents WHERE user_id = $1 ORDER BY created_at DESC`,
       [userId]
     );
+
+    let applicationsCount = 0;
+    let savedCount = 0;
+    try {
+      const appsRes = await pool.query(
+        `SELECT COUNT(*)::int AS count FROM user_scholarship_applications WHERE user_id = $1`,
+        [userId]
+      );
+      applicationsCount = appsRes.rows[0]?.count || 0;
+    } catch (_) {}
+
+    try {
+      const savedRes = await pool.query(
+        `SELECT COUNT(*)::int AS count FROM user_saved_scholarships WHERE user_id = $1`,
+        [userId]
+      );
+      savedCount = savedRes.rows[0]?.count || 0;
+    } catch (_) {}
 
     return res.status(200).json({
       success: true,
       user: userObj,
       profile: profileRes.rows[0] || null,
       documents: docsRes.rows,
+      stats: {
+        applicationsCount,
+        savedCount,
+      }
     });
   } catch (error) {
     console.error("Error fetching user profile:", error);

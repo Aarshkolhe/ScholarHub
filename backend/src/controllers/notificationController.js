@@ -18,9 +18,11 @@ export async function getUserNotifications(req, res) {
           n.message,
           n.type,
           n.scholarship_id AS "scholarshipId",
-          n.created_at AS "createdAt"
+          n.created_at AS "createdAt",
+          u.name AS "senderName"
         FROM user_notifications un
         JOIN notifications n ON un.notification_id = n.id
+        LEFT JOIN users u ON n.created_by = u.id
         WHERE un.user_id = $1
         ORDER BY n.created_at DESC
         LIMIT 50
@@ -93,16 +95,43 @@ export async function markAllNotificationsAsRead(req, res) {
   }
 }
 
-// 4. Preview Notification Recipient Count (Admin Only)
-export async function previewNotificationRecipients(req, res) {
-  try {
-    const { category, state, qualification } = req.body || {};
+// Helper: resolve target user IDs based on audience selection
+async function getTargetUserIds({ targetType = "all", targetUserId = null, filters = {} }) {
+  if (targetType === "single_user" && targetUserId) {
+    const res = await pool.query(
+      `SELECT id FROM users WHERE id = $1 AND status = 'active'`,
+      [targetUserId]
+    );
+    return res.rows.map((r) => r.id);
+  }
 
-    let queryText = `
-      SELECT COUNT(DISTINCT u.id)
+  if (targetType === "incomplete_profile") {
+    const res = await pool.query(`
+      SELECT DISTINCT u.id
       FROM users u
       LEFT JOIN student_profiles p ON u.id = p.user_id
       WHERE u.status = 'active'
+        AND u.role = 'user'
+        AND (
+          p.id IS NULL
+          OR p.current_course IS NULL OR TRIM(p.current_course) = ''
+          OR p.college_name IS NULL OR TRIM(p.college_name) = ''
+          OR p.marks_percentage IS NULL OR TRIM(p.marks_percentage) = ''
+          OR p.annual_income IS NULL
+          OR p.category IS NULL OR TRIM(p.category) = ''
+          OR p.domicile_state IS NULL OR TRIM(p.domicile_state) = ''
+        )
+    `);
+    return res.rows.map((r) => r.id);
+  }
+
+  if (targetType === "filters") {
+    const { category, state, qualification } = filters || {};
+    let queryText = `
+      SELECT DISTINCT u.id
+      FROM users u
+      LEFT JOIN student_profiles p ON u.id = p.user_id
+      WHERE u.status = 'active' AND u.role = 'user'
     `;
     const queryParams = [];
 
@@ -121,11 +150,34 @@ export async function previewNotificationRecipients(req, res) {
       queryText += ` AND (LOWER(p.qualification) LIKE LOWER('%' || $${queryParams.length} || '%') OR LOWER(p.current_course) LIKE LOWER('%' || $${queryParams.length} || '%'))`;
     }
 
-    const result = await pool.query(queryText, queryParams);
+    const res = await pool.query(queryText, queryParams);
+    return res.rows.map((r) => r.id);
+  }
+
+  // Default: All active student users
+  const res = await pool.query(
+    `SELECT id FROM users WHERE status = 'active' AND role = 'user'`
+  );
+  return res.rows.map((r) => r.id);
+}
+
+// 4. Preview Notification Recipient Count (Admin Only)
+export async function previewNotificationRecipients(req, res) {
+  try {
+    const { targetType, targetUserId, filters, category, state, qualification } = req.body || {};
+    // Fallback if filters passed directly at top-level
+    const effectiveFilters = filters || { category, state, qualification };
+    const effectiveTargetType = targetType || (category || state || qualification ? "filters" : "all");
+
+    const userIds = await getTargetUserIds({
+      targetType: effectiveTargetType,
+      targetUserId,
+      filters: effectiveFilters,
+    });
 
     return res.status(200).json({
       success: true,
-      count: parseInt(result.rows[0].count, 10),
+      count: userIds.length,
     });
   } catch (error) {
     console.error("Error calculating notification recipients preview:", error);
@@ -135,7 +187,7 @@ export async function previewNotificationRecipients(req, res) {
 
 // 5. Send Notification Asynchronously (Admin Only)
 export async function sendAdminNotification(req, res) {
-  const { title, message, type, scholarshipId, filters } = req.body || {};
+  const { title, message, type, scholarshipId, targetType, targetUserId, filters, category, state, qualification } = req.body || {};
 
   if (!title || !message) {
     return res.status(400).json({
@@ -144,8 +196,11 @@ export async function sendAdminNotification(req, res) {
     });
   }
 
-  const validTypes = ["new_scholarship", "deadline_reminder", "announcement"];
-  const notifType = validTypes.includes(type) ? type : "announcement";
+  const validTypes = ["alert", "announcement", "profile_reminder", "document_reminder", "new_scholarship", "deadline_reminder"];
+  const notifType = validTypes.includes(type) ? type : "alert";
+
+  const effectiveFilters = filters || { category, state, qualification };
+  const effectiveTargetType = targetType || (targetUserId ? "single_user" : (category || state || qualification ? "filters" : "all"));
 
   // Asynchronous Non-Blocking Execution
   setImmediate(async () => {
@@ -162,43 +217,22 @@ export async function sendAdminNotification(req, res) {
 
       const notificationId = notifRes.rows[0].id;
 
-      // 2. Query target users matching filters
-      const { category, state, qualification } = filters || {};
-      let queryText = `
-        SELECT DISTINCT u.id
-        FROM users u
-        LEFT JOIN student_profiles p ON u.id = p.user_id
-        WHERE u.status = 'active'
-      `;
-      const queryParams = [];
+      // 2. Query target users
+      const targetUserIds = await getTargetUserIds({
+        targetType: effectiveTargetType,
+        targetUserId,
+        filters: effectiveFilters,
+      });
 
-      if (category && category !== "all") {
-        queryParams.push(category);
-        queryText += ` AND LOWER(p.category) = LOWER($${queryParams.length})`;
-      }
-
-      if (state && state !== "all") {
-        queryParams.push(state);
-        queryText += ` AND LOWER(p.domicile_state) = LOWER($${queryParams.length})`;
-      }
-
-      if (qualification && qualification !== "all") {
-        queryParams.push(qualification);
-        queryText += ` AND (LOWER(p.qualification) LIKE LOWER('%' || $${queryParams.length} || '%') OR LOWER(p.current_course) LIKE LOWER('%' || $${queryParams.length} || '%'))`;
-      }
-
-      const usersRes = await pool.query(queryText, queryParams);
-      const targetUsers = usersRes.rows;
-
-      // 3. Batch insert user_notifications (Do not duplicate - Rule 4)
-      for (const target of targetUsers) {
+      // 3. Batch insert user_notifications (Do not duplicate)
+      for (const uid of targetUserIds) {
         await pool.query(
           `
             INSERT INTO user_notifications (user_id, notification_id)
             VALUES ($1, $2)
             ON CONFLICT (user_id, notification_id) DO NOTHING
           `,
-          [target.id, notificationId]
+          [uid, notificationId]
         );
       }
 
@@ -209,12 +243,14 @@ export async function sendAdminNotification(req, res) {
         details: {
           title,
           type: notifType,
+          targetType: effectiveTargetType,
+          targetUserId: targetUserId || null,
           scholarshipId: scholarshipId || null,
-          recipientCount: targetUsers.length,
+          recipientCount: targetUserIds.length,
         },
       });
 
-      console.log(`Notification '${title}' sent to ${targetUsers.length} user(s).`);
+      console.log(`Notification '${title}' sent to ${targetUserIds.length} user(s).`);
     } catch (err) {
       console.error("Background notification processing error:", err);
     }

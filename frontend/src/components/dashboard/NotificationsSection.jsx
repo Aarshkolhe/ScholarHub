@@ -62,6 +62,29 @@ export function NotificationsSection({ onNavigateTab }) {
     setTimeout(() => setActionFeedback(""), 3500);
   };
 
+  const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+  const [backendNotifications, setBackendNotifications] = useState([]);
+
+  useEffect(() => {
+    const fetchBackendAlerts = async () => {
+      const token = localStorage.getItem("scholarhub_token");
+      if (!token) return;
+      try {
+        const res = await fetch(`${BACKEND_URL}/api/notifications`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        if (data.success && Array.isArray(data.notifications)) {
+          setBackendNotifications(data.notifications);
+        }
+      } catch (err) {
+        console.warn("Unable to fetch backend alerts:", err);
+      }
+    };
+
+    fetchBackendAlerts();
+  }, []);
+
   const studentName = (user?.fullName || user?.name || "Student").split(" ")[0];
   const profileStrength = calculateProfileStrength();
   const storedProfile = getStoredStudentProfile();
@@ -69,6 +92,33 @@ export function NotificationsSection({ onNavigateTab }) {
   // Generate dynamic notification items based on current scholarships and user profile
   const baseNotifications = useMemo(() => {
     const list = [];
+
+    // 0. High-Priority Backend Admin Alerts
+    backendNotifications.forEach((bn) => {
+      const isProfile = bn.type === "profile_reminder";
+      const isDoc = bn.type === "document_reminder";
+      const isDeadline = bn.type === "deadline_reminder";
+      list.push({
+        id: `backend_${bn.userNotificationId || bn.notificationId}`,
+        backendNotifId: bn.userNotificationId,
+        category: isDeadline ? "deadline" : (isProfile || isDoc ? "system" : "system"),
+        type: isProfile ? "Profile Action Required" : (isDoc ? "Document Verification" : (bn.type === "alert" ? "Admin Alert" : "Official Notice")),
+        title: bn.title,
+        message: `${bn.message}${bn.senderName ? ` — Sent by ${bn.senderName}` : ""}`,
+        time: new Date(bn.createdAt).toLocaleDateString("en-IN", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date(bn.createdAt).getTime(),
+        urgency: "urgent",
+        actionLabel: isProfile ? "Complete Profile" : (isDoc ? "Upload Documents" : "Open Details"),
+        actionTab: isProfile ? "Details" : (isDoc ? "Documents" : "Details"),
+        icon: isProfile ? UserCheck : (isDoc ? AlertTriangle : Bell),
+        tint: isProfile
+          ? "text-amber-600 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800"
+          : isDoc
+          ? "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/60 border-purple-200 dark:border-purple-800"
+          : "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/60 border-blue-200 dark:border-blue-800",
+      });
+    });
+
     const evaluated = evaluateAllScholarships();
 
     // 1. High AI Match Schemes (>= 80%)

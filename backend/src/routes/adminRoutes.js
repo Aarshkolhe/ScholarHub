@@ -43,19 +43,21 @@ router.post("/api/admin/notifications/preview", requireAdminOrSuper, previewNoti
 router.post("/api/admin/notifications/send", requireAdminOrSuper, sendAdminNotification);
 router.get("/api/admin/notifications/history", requireAdminOrSuper, getNotificationHistory);
 
-// Scholarship & Portal Administration (Admin & Super Admin)
+// Scholarship & Portal Administration
+// All admins can view portals; only Super Admins can add, edit, toggle, or delete portals
 router.post("/api/admin/scholarships", requireAdminOrSuper, createScholarship);
 router.put("/api/admin/scholarships/:id", requireAdminOrSuper, updateScholarship);
 router.delete("/api/admin/scholarships/:id", requireAdminOrSuper, deleteScholarship);
 
 router.get("/api/admin/portals", requireAdminOrSuper, getAdminPortals);
-router.post("/api/admin/portals", requireAdminOrSuper, createAdminPortal);
-router.put("/api/admin/portals/:id", requireAdminOrSuper, updateAdminPortal);
-router.patch("/api/admin/portals/:id/status", requireAdminOrSuper, toggleAdminPortalStatus);
-router.delete("/api/admin/portals/:id", requireAdminOrSuper, deleteAdminPortal);
 
-// Super Admin Only routes (Rule 1, Rule 3)
+// Super Admin Only routes (Portal Mutations, Promotions, Demotions, Audit Logs)
 const requireSuperAdmin = requireRole("super_admin");
+
+router.post("/api/admin/portals", requireSuperAdmin, createAdminPortal);
+router.put("/api/admin/portals/:id", requireSuperAdmin, updateAdminPortal);
+router.patch("/api/admin/portals/:id/status", requireSuperAdmin, toggleAdminPortalStatus);
+router.delete("/api/admin/portals/:id", requireSuperAdmin, deleteAdminPortal);
 
 router.post("/api/admin/users/:id/promote", requireSuperAdmin, promoteUser);
 router.post("/api/admin/users/:id/demote", requireSuperAdmin, demoteUser);

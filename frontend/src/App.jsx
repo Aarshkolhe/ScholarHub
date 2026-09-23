@@ -10,6 +10,8 @@ import ProtectedRoute from "./routes/ProtectedRoute";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
 import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminScholarshipsPage from "./pages/admin/AdminScholarshipsPage";
+import AdminNotificationsPage from "./pages/admin/AdminNotificationsPage";
 import AdminAdminsPage from "./pages/admin/AdminAdminsPage";
 import AdminAuditLogPage from "./pages/admin/AdminAuditLogPage";
 
@@ -106,6 +108,22 @@ function App() {
               element={
                 <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
                   <AdminUsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/scholarships"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <AdminScholarshipsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/notifications"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <AdminNotificationsPage />
                 </ProtectedRoute>
               }
             />

@@ -133,11 +133,18 @@ export async function initializeDatabase() {
       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
       title TEXT NOT NULL,
       message TEXT NOT NULL,
-      type VARCHAR(50) NOT NULL CHECK (type IN ('new_scholarship', 'deadline_reminder', 'announcement')),
+      type VARCHAR(50) NOT NULL,
       scholarship_id VARCHAR(50) REFERENCES scholarships(id) ON DELETE SET NULL,
       created_by UUID REFERENCES users(id) ON DELETE SET NULL,
       created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
+
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'notifications_type_check') THEN
+        ALTER TABLE notifications DROP CONSTRAINT notifications_type_check;
+      END IF;
+    END $$;
 
     -- User Notifications Table
     CREATE TABLE IF NOT EXISTS user_notifications (

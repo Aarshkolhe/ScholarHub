@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FileText, ShieldAlert, RefreshCw, AlertCircle, Clock, User } from "lucide-react";
+import { FileText, ShieldAlert, RefreshCw, AlertCircle, Clock, User, X } from "lucide-react";
 import AdminLayout from "../../components/admin/AdminLayout";
 import useAuth from "../../hooks/useAuth";
 
@@ -39,25 +39,27 @@ export default function AdminAuditLogPage() {
   const getActionBadge = (action) => {
     switch (action) {
       case "BLOCK_USER":
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/30">BLOCK USER</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-red-500/10 text-red-600 dark:text-red-400 border border-red-500/30">BLOCK USER</span>;
       case "UNBLOCK_USER":
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">UNBLOCK USER</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">UNBLOCK USER</span>;
       case "PROMOTE_ADMIN":
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-400 border border-purple-500/30">PROMOTE ADMIN</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/30">PROMOTE ADMIN</span>;
       case "DEMOTE_ADMIN":
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/30">DEMOTE ADMIN</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30">DEMOTE ADMIN</span>;
+      case "SEND_NOTIFICATION":
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/30">NOTIFICATION SENT</span>;
       default:
-        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/30">{action}</span>;
+        return <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700">{action}</span>;
     }
   };
 
   if (user?.role !== "super_admin") {
     return (
       <AdminLayout title="Audit Log">
-        <div className="p-8 rounded-2xl bg-red-500/10 border border-red-500/30 text-center space-y-3">
-          <ShieldAlert size={48} className="mx-auto text-red-400" />
-          <h3 className="text-lg font-bold text-white">Access Restricted</h3>
-          <p className="text-sm text-slate-400">The Audit Log is restricted to Super Admin accounts only.</p>
+        <div className="p-8 rounded-2xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-center space-y-3">
+          <ShieldAlert size={48} className="mx-auto text-red-500" />
+          <h3 className="text-lg font-bold text-slate-900 dark:text-white">Access Restricted</h3>
+          <p className="text-sm text-slate-500 dark:text-slate-400">The Audit Log is restricted to Super Admin accounts only.</p>
         </div>
       </AdminLayout>
     );
@@ -69,13 +71,13 @@ export default function AdminAuditLogPage() {
         {/* Title Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h2 className="text-2xl font-bold text-white tracking-tight">Security Audit Log</h2>
-            <p className="text-sm text-slate-400">Immutable history of administrative actions, block events, and role changes</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Security Audit Log</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Immutable history of administrative actions, block events, portal changes, and role changes</p>
           </div>
           <button
             onClick={fetchAuditLogs}
             disabled={isLoading}
-            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm font-medium text-slate-300 hover:bg-slate-800 hover:text-white transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white transition-colors shadow-sm"
           >
             <RefreshCw size={16} className={isLoading ? "animate-spin" : ""} />
             <span>Refresh Logs</span>
@@ -83,16 +85,16 @@ export default function AdminAuditLogPage() {
         </div>
 
         {error && (
-          <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-2">
+          <div className="p-4 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 text-sm flex items-center gap-2">
             <AlertCircle size={18} />
             <span>{error}</span>
           </div>
         )}
 
         {/* Audit Log Table */}
-        <div className="overflow-x-auto rounded-2xl bg-slate-900 border border-slate-800">
-          <table className="w-full text-left text-sm text-slate-300">
-            <thead className="bg-slate-800/80 text-xs uppercase font-semibold text-slate-400 border-b border-slate-800">
+        <div className="overflow-x-auto rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm">
+          <table className="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+            <thead className="bg-slate-50 dark:bg-slate-800/80 text-xs uppercase font-semibold text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-800">
               <tr>
                 <th className="px-6 py-4">Timestamp</th>
                 <th className="px-6 py-4">Actor</th>
@@ -101,7 +103,7 @@ export default function AdminAuditLogPage() {
                 <th className="px-6 py-4">Details</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
               {isLoading ? (
                 <tr>
                   <td colSpan="5" className="px-6 py-12 text-center text-slate-400">
@@ -117,17 +119,17 @@ export default function AdminAuditLogPage() {
                 </tr>
               ) : (
                 logs.map((log) => (
-                  <tr key={log.id} className="hover:bg-slate-800/50 transition-colors">
-                    <td className="px-6 py-4 text-xs text-slate-400 whitespace-nowrap">
+                  <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+                    <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 whitespace-nowrap">
                       <div className="flex items-center gap-1.5">
-                        <Clock size={14} className="text-slate-500" />
+                        <Clock size={14} className="text-slate-400" />
                         <span>{new Date(log.createdAt).toLocaleString()}</span>
                       </div>
                     </td>
 
-                    <td className="px-6 py-4 font-medium text-white">
+                    <td className="px-6 py-4 font-medium text-slate-900 dark:text-white">
                       <div className="flex items-center gap-2">
-                        <User size={14} className="text-blue-400" />
+                        <User size={14} className="text-blue-500" />
                         <div>
                           <div>{log.actorName || "System"}</div>
                           <div className="text-xs text-slate-400">{log.actorEmail}</div>
@@ -139,18 +141,18 @@ export default function AdminAuditLogPage() {
                       {getActionBadge(log.action)}
                     </td>
 
-                    <td className="px-6 py-4 text-slate-300">
+                    <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
                       {log.targetEmail ? (
                         <div>
-                          <div>{log.targetName || "User"}</div>
+                          <div className="font-medium text-slate-900 dark:text-white">{log.targetName || "User"}</div>
                           <div className="text-xs text-slate-400">{log.targetEmail}</div>
                         </div>
                       ) : (
-                        <span className="text-slate-500 text-xs">—</span>
+                        <span className="text-slate-400 text-xs">—</span>
                       )}
                     </td>
 
-                    <td className="px-6 py-4 text-xs text-slate-400 max-w-xs truncate">
+                    <td className="px-6 py-4 text-xs text-slate-500 dark:text-slate-400 max-w-xs truncate">
                       {log.details ? JSON.stringify(log.details) : "—"}
                     </td>
                   </tr>
