@@ -1,20 +1,61 @@
 import pg from "pg";
 import dotenv from "dotenv";
+import dns from "node:dns/promises";
 
 dotenv.config();
 
 const { Pool } = pg;
 
-const pool = new Pool({
-  host: process.env.DB_HOST || "localhost",
-  port: Number(process.env.DB_PORT || 5432),
-  database: process.env.DB_NAME || "scholarhub",
-  user: String(process.env.DB_USER || "postgres"),
-  password: String(process.env.DB_PASSWORD || ""),
-  max: Number(process.env.DB_POOL_MAX || 20),
-  idleTimeoutMillis: 30000,
-  connectionTimeoutMillis: 5000,
-});
+const connectionUri = process.env.PG_URI || process.env.DATABASE_URL;
+const isLocalhost = connectionUri && (connectionUri.includes("localhost") || connectionUri.includes("127.0.0.1"));
+
+async function createPoolConfig() {
+  if (connectionUri) {
+    if (!isLocalhost) {
+      try {
+        const url = new URL(connectionUri);
+        const hostname = url.hostname;
+        const resolver = new dns.Resolver();
+        resolver.setServers(["8.8.8.8", "1.1.1.1"]);
+        const addrs = await resolver.resolve4(hostname);
+        if (addrs && addrs.length > 0) {
+          return {
+            host: addrs[0],
+            port: Number(url.port || 5432),
+            user: decodeURIComponent(url.username),
+            password: decodeURIComponent(url.password),
+            database: url.pathname.replace(/^\//, ""),
+            ssl: { rejectUnauthorized: false, servername: hostname },
+            max: Number(process.env.DB_POOL_MAX || 20),
+            idleTimeoutMillis: 30000,
+            connectionTimeoutMillis: 5000,
+          };
+        }
+      } catch (err) {
+        // Fallback to standard connection string
+      }
+    }
+    return {
+      connectionString: connectionUri,
+      ssl: isLocalhost ? false : { rejectUnauthorized: false },
+      max: Number(process.env.DB_POOL_MAX || 20),
+      idleTimeoutMillis: 30000,
+      connectionTimeoutMillis: 5000,
+    };
+  }
+  return {
+    host: process.env.DB_HOST || "localhost",
+    port: Number(process.env.DB_PORT || 5432),
+    database: process.env.DB_NAME || "scholarhub",
+    user: String(process.env.DB_USER || "postgres"),
+    password: String(process.env.DB_PASSWORD || ""),
+    max: Number(process.env.DB_POOL_MAX || 20),
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 5000,
+  };
+}
+
+const pool = new Pool(await createPoolConfig());
 
 pool.on("error", (error) => {
   console.error("Unexpected PostgreSQL pool error:", error);
