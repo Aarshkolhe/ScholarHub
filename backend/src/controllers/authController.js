@@ -2,6 +2,7 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
 import pool from "../config/db.js";
+import { getUserRole } from "../utils/roleUtils.js";
 
 import {
   requestPasswordResetOtp,
@@ -14,11 +15,13 @@ import {
  * user data back to the frontend.
  */
 function sanitizeUser(user) {
+  const effectiveRole = getUserRole(user);
   return {
     id: user.id,
     name: user.name,
     email: user.email,
-    role: user.role
+    role: effectiveRole,
+    status: user.status || "active"
   };
 }
 
@@ -35,7 +38,8 @@ function generateToken(user) {
       sub: user.id,
       name: user.name,
       email: user.email,
-      role: user.role
+      role: user.role,
+      status: user.status || "active"
     },
     process.env.JWT_SECRET,
     {
@@ -142,20 +146,23 @@ export async function register(req, res) {
             name,
             email,
             password_hash,
-            role
+            role,
+            status
           )
-          VALUES ($1, $2, $3, $4)
+          VALUES ($1, $2, $3, $4, $5)
           RETURNING
             id,
             name,
             email,
-            role
+            role,
+            status
         `,
         [
           name,
           email,
           passwordHash,
-          "Student"
+          "user",
+          "active"
         ]
       );
     } catch (error) {
@@ -222,7 +229,9 @@ export async function login(req, res) {
           name,
           email,
           password_hash,
-          role
+          role,
+          status,
+          block_reason
         FROM users
         WHERE LOWER(email) = LOWER($1)
         LIMIT 1
@@ -253,6 +262,17 @@ export async function login(req, res) {
         error: {
           code: "INVALID_CREDENTIALS",
           message: "Invalid email or password."
+        }
+      });
+    }
+
+    // Check if account is blocked (Login Redirect Requirement)
+    if (user.status === "blocked") {
+      return res.status(403).json({
+        success: false,
+        error: {
+          code: "ACCOUNT_BLOCKED",
+          message: "Your account is blocked"
         }
       });
     }

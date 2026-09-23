@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }) => {
               name: userName,
               fullName: userName,
               avatar: userAvatar,
-              role: parsedUser.role || "Student",
+              role: parsedUser.role || "user",
             };
             setUser(restored);
           }
@@ -135,7 +135,7 @@ export const AuthProvider = ({ children }) => {
         name: userName,
         fullName: userName,
         email: u.email,
-        role: u.role || "Student",
+        role: u.role || "user",
         avatar: userAvatar,
       };
 

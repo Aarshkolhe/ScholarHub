@@ -1,4 +1,6 @@
 import pool from "../config/db.js";
+import { getUserRole } from "../utils/roleUtils.js";
+import { logAudit } from "../utils/auditLogger.js";
 
 const UUID_REGEX = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
 
@@ -6,21 +8,30 @@ function isValidUUID(id) {
   return typeof id === "string" && UUID_REGEX.test(id);
 }
 
-// 1. Get Admin System Stats
+// 1. Get Admin System Stats (Dashboard)
 export async function getAdminStats(req, res) {
   try {
-    const userCountRes = await pool.query(`SELECT COUNT(*) FROM users WHERE role = 'Student'`);
-    const scholarshipCountRes = await pool.query(`SELECT COUNT(*) FROM scholarships`);
-    const pendingAppCountRes = await pool.query(`SELECT COUNT(*) FROM user_scholarship_applications WHERE status = 'Pending'`);
-    const totalAppCountRes = await pool.query(`SELECT COUNT(*) FROM user_scholarship_applications`);
+    const totalUsersRes = await pool.query(`SELECT COUNT(*) FROM users`);
+    const blockedUsersRes = await pool.query(`SELECT COUNT(*) FROM users WHERE status = 'blocked'`);
+    const notificationsCountRes = await pool.query(`SELECT COUNT(*) FROM notifications`);
+
+    // Fetch all users to compute effective admin count (including SUPER_ADMIN_EMAILS)
+    const allUsersRes = await pool.query(`SELECT id, email, role FROM users`);
+    let adminsCount = 0;
+    for (const u of allUsersRes.rows) {
+      const effRole = getUserRole(u);
+      if (effRole === "admin" || effRole === "super_admin") {
+        adminsCount++;
+      }
+    }
 
     return res.status(200).json({
       success: true,
       stats: {
-        totalApplicants: parseInt(userCountRes.rows[0].count, 10),
-        activeScholarships: parseInt(scholarshipCountRes.rows[0].count, 10),
-        pendingApprovals: parseInt(pendingAppCountRes.rows[0].count, 10),
-        totalApplications: parseInt(totalAppCountRes.rows[0].count, 10),
+        totalUsers: parseInt(totalUsersRes.rows[0].count, 10),
+        blockedUsers: parseInt(blockedUsersRes.rows[0].count, 10),
+        adminsCount,
+        notificationsSent: parseInt(notificationsCountRes.rows[0].count, 10),
       },
     });
   } catch (error) {
@@ -29,26 +40,56 @@ export async function getAdminStats(req, res) {
   }
 }
 
-// 2. Get User List (Admin Only)
+// 2. Get User List (Admin Only with search & role/status filters)
 export async function getAdminUsers(req, res) {
   try {
     const q = (req.query.q || "").trim().toLowerCase();
-    let queryText = `SELECT id, name, email, role, created_at AS "createdAt" FROM users`;
+    const roleFilter = (req.query.role || "all").toLowerCase();
+    const statusFilter = (req.query.status || "all").toLowerCase();
+
+    let queryText = `
+      SELECT 
+        u.id, 
+        u.name, 
+        u.email, 
+        u.role, 
+        u.status, 
+        u.blocked_at AS "blockedAt",
+        u.block_reason AS "blockReason",
+        u.created_at AS "createdAt",
+        b.name AS "blockedByName"
+      FROM users u
+      LEFT JOIN users b ON u.blocked_by = b.id
+    `;
     let queryParams = [];
 
     if (q) {
-      queryText += ` WHERE LOWER(name) LIKE $1 OR LOWER(email) LIKE $1`;
+      queryText += ` WHERE (LOWER(u.name) LIKE $1 OR LOWER(u.email) LIKE $1)`;
       queryParams.push(`%${q}%`);
     }
 
-    queryText += ` ORDER BY created_at DESC LIMIT 100`;
+    queryText += ` ORDER BY u.created_at DESC`;
 
     const result = await pool.query(queryText, queryParams);
 
+    // Map each user to attach their computed effective role
+    let users = result.rows.map((row) => ({
+      ...row,
+      role: getUserRole(row),
+    }));
+
+    if (roleFilter !== "all") {
+      users = users.filter((u) => u.role === roleFilter);
+    }
+
+    if (statusFilter !== "all") {
+      users = users.filter((u) => u.status === statusFilter);
+    }
+
     return res.status(200).json({
       success: true,
-      count: result.rows.length,
-      users: result.rows,
+      count: users.length,
+      users,
     });
   } catch (error) {
     console.error("Error fetching admin users:", error);
@@ -56,10 +97,56 @@ export async function getAdminUsers(req, res) {
   }
 }
 
-// 3. Update User Role (Admin Only)
-export async function updateUserRole(req, res) {
-  const targetUserId = req.body?.userId || req.params?.id;
-  const role = req.body?.role;
+// 3. Get Single User Full Profile
+export async function getUserProfile(req, res) {
+  const userId = req.params?.id;
+
+  if (!userId || !isValidUUID(userId)) {
+    return res.status(400).json({
+      success: false,
+      error: { code: "VALIDATION_ERROR", message: "Valid user ID is required" }
+    });
+  }
+
+  try {
+    const userRes = await pool.query(
+      `SELECT id, name, email, role, status, blocked_at, block_reason, created_at FROM users WHERE id = $1`,
+      [userId]
+    );
+
+    if (userRes.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const userObj = userRes.rows[0];
+    userObj.role = getUserRole(userObj);
+
+    const profileRes = await pool.query(
+      `SELECT * FROM student_profiles WHERE user_id = $1`,
+      [userId]
+    );
+
+    const docsRes = await pool.query(
+      `SELECT id, doc_type, file_name, status, created_at FROM student_documents WHERE user_id = $1`,
+      [userId]
+    );
+
+    return res.status(200).json({
+      success: true,
+      user: userObj,
+      profile: profileRes.rows[0] || null,
+      documents: docsRes.rows,
+    });
+  } catch (error) {
+    console.error("Error fetching user profile:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch user profile" });
+  }
+}
+
+// 4. Block User (Admins can block only regular users; Super Admins cannot be blocked)
+export async function blockUser(req, res) {
+  const targetUserId = req.params?.id;
+  const reason = String(req.body?.reason || "").trim();
 
   if (!targetUserId || !isValidUUID(targetUserId)) {
     return res.status(400).json({
@@ -68,116 +155,247 @@ export async function updateUserRole(req, res) {
     });
   }
 
-  const ALLOWED_ROLES = ["Student", "Admin"];
-  if (!role || typeof role !== "string" || !ALLOWED_ROLES.includes(role)) {
-    return res.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "Role must be 'Student' or 'Admin'." }
-    });
-  }
-
   try {
-    const result = await pool.query(
-      `UPDATE users SET role = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, name, email, role`,
-      [role, targetUserId]
-    );
+    const targetRes = await pool.query(`SELECT id, email, role, status FROM users WHERE id = $1`, [targetUserId]);
+    if (targetRes.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
 
-    if (result.rowCount === 0) {
-      return res.status(404).json({
+    const targetUser = targetRes.rows[0];
+    const targetRole = getUserRole(targetUser);
+
+    // Rule 4: Super Admin cannot be blocked
+    if (targetRole === "super_admin") {
+      return res.status(403).json({
         success: false,
-        error: { code: "USER_NOT_FOUND", message: "User not found" }
+        error: { code: "FORBIDDEN", message: "Super Admin accounts cannot be blocked." }
       });
     }
 
+    // Rule 2: Admins can block only regular users, never other admins
+    if (targetRole === "admin") {
+      return res.status(403).json({
+        success: false,
+        error: { code: "FORBIDDEN", message: "Admins can block only regular users, never other admins." }
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE users
+       SET status = 'blocked', blocked_by = $1, blocked_at = CURRENT_TIMESTAMP, block_reason = $2, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $3
+       RETURNING id, name, email, status, block_reason`,
+      [req.user.id, reason || null, targetUserId]
+    );
+
+    // Rule 6: Log block action in audit_log
+    await logAudit({
+      actorId: req.user.id,
+      action: "BLOCK_USER",
+      targetUserId,
+      details: { reason: reason || "No reason provided", targetEmail: targetUser.email },
+    });
+
     return res.status(200).json({
       success: true,
-      message: `User role updated to '${role}'`,
+      message: "User account has been blocked successfully.",
       user: result.rows[0],
     });
   } catch (error) {
-    console.error("Error updating user role:", error);
-    return res.status(500).json({ success: false, message: "Failed to update user role" });
+    console.error("Error blocking user:", error);
+    return res.status(500).json({ success: false, message: "Failed to block user" });
   }
 }
 
-// 4. Get Applications List (Admin Only)
-export async function getAdminApplications(req, res) {
+// 5. Unblock User
+export async function unblockUser(req, res) {
+  const targetUserId = req.params?.id;
+
+  if (!targetUserId || !isValidUUID(targetUserId)) {
+    return res.status(400).json({
+      success: false,
+      error: { code: "VALIDATION_ERROR", message: "Valid user ID is required" }
+    });
+  }
+
   try {
+    const targetRes = await pool.query(`SELECT id, email, role, status FROM users WHERE id = $1`, [targetUserId]);
+    if (targetRes.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const targetUser = targetRes.rows[0];
+    const targetRole = getUserRole(targetUser);
+
+    if (targetRole === "admin" && req.user.role !== "super_admin") {
+      return res.status(403).json({
+        success: false,
+        error: { code: "FORBIDDEN", message: "Only a Super Admin can unblock an Admin account." }
+      });
+    }
+
     const result = await pool.query(
-      `SELECT
-        a.id,
-        a.user_id AS "userId",
-        a.scholarship_id AS "scholarshipId",
-        a.applicant_name AS "applicantName",
-        a.course_name AS "courseName",
-        a.gpa_score AS "gpaScore",
-        a.statement,
-        a.status,
-        a.created_at AS "createdAt",
-        u.email AS "applicantEmail",
-        s.name AS "scholarshipName"
-       FROM user_scholarship_applications a
-       JOIN users u ON a.user_id = u.id
-       JOIN scholarships s ON a.scholarship_id = s.id
-       ORDER BY a.created_at DESC`
+      `UPDATE users
+       SET status = 'active', blocked_by = NULL, blocked_at = NULL, block_reason = NULL, updated_at = CURRENT_TIMESTAMP
+       WHERE id = $1
+       RETURNING id, name, email, status`,
+      [targetUserId]
     );
+
+    // Rule 6: Log unblock action in audit_log
+    await logAudit({
+      actorId: req.user.id,
+      action: "UNBLOCK_USER",
+      targetUserId,
+      details: { targetEmail: targetUser.email },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: "User account has been unblocked.",
+      user: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error unblocking user:", error);
+    return res.status(500).json({ success: false, message: "Failed to unblock user" });
+  }
+}
+
+// 6. Promote User to Admin (Super Admin Only - Phase 3 Backend)
+export async function promoteUser(req, res) {
+  const targetUserId = req.params?.id || req.body?.userId;
+
+  if (!targetUserId || !isValidUUID(targetUserId)) {
+    return res.status(400).json({
+      success: false,
+      error: { code: "VALIDATION_ERROR", message: "Valid user ID is required" }
+    });
+  }
+
+  try {
+    const targetRes = await pool.query(`SELECT id, email, role FROM users WHERE id = $1`, [targetUserId]);
+    if (targetRes.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const targetUser = targetRes.rows[0];
+    const effRole = getUserRole(targetUser);
+
+    if (effRole === "super_admin") {
+      return res.status(400).json({
+        success: false,
+        error: { code: "INVALID_ACTION", message: "User is already a Super Admin." }
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE users SET role = 'admin', updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id, name, email, role`,
+      [targetUserId]
+    );
+
+    // Rule 6: Log promote action in audit_log
+    await logAudit({
+      actorId: req.user.id,
+      action: "PROMOTE_ADMIN",
+      targetUserId,
+      details: { targetEmail: targetUser.email },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `${targetUser.email} has been promoted to Admin.`,
+      user: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error promoting user:", error);
+    return res.status(500).json({ success: false, message: "Failed to promote user" });
+  }
+}
+
+// 7. Demote Admin to User (Super Admin Only - Phase 3 Backend)
+export async function demoteUser(req, res) {
+  const targetUserId = req.params?.id || req.body?.userId;
+
+  if (!targetUserId || !isValidUUID(targetUserId)) {
+    return res.status(400).json({
+      success: false,
+      error: { code: "VALIDATION_ERROR", message: "Valid user ID is required" }
+    });
+  }
+
+  try {
+    const targetRes = await pool.query(`SELECT id, email, role FROM users WHERE id = $1`, [targetUserId]);
+    if (targetRes.rowCount === 0) {
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+
+    const targetUser = targetRes.rows[0];
+    const effRole = getUserRole(targetUser);
+
+    // Rule 4: Super admin cannot be demoted
+    if (effRole === "super_admin") {
+      return res.status(403).json({
+        success: false,
+        error: { code: "FORBIDDEN", message: "Super Admin accounts cannot be demoted or removed." }
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE users SET role = 'user', updated_at = CURRENT_TIMESTAMP WHERE id = $1 RETURNING id, name, email, role`,
+      [targetUserId]
+    );
+
+    // Rule 6: Log demote action in audit_log
+    await logAudit({
+      actorId: req.user.id,
+      action: "DEMOTE_ADMIN",
+      targetUserId,
+      details: { targetEmail: targetUser.email },
+    });
+
+    return res.status(200).json({
+      success: true,
+      message: `Admin access removed for ${targetUser.email}.`,
+      user: result.rows[0],
+    });
+  } catch (error) {
+    console.error("Error demoting admin:", error);
+    return res.status(500).json({ success: false, message: "Failed to demote admin" });
+  }
+}
+
+// 8. Get Audit Log Records (Super Admin Only)
+export async function getAuditLogs(req, res) {
+  try {
+    const result = await pool.query(`
+      SELECT 
+        a.id,
+        a.action,
+        a.details,
+        a.created_at AS "createdAt",
+        actor.name AS "actorName",
+        actor.email AS "actorEmail",
+        target.name AS "targetName",
+        target.email AS "targetEmail"
+      FROM audit_log a
+      LEFT JOIN users actor ON a.actor_id = actor.id
+      LEFT JOIN users target ON a.target_user_id = target.id
+      ORDER BY a.created_at DESC
+      LIMIT 200
+    `);
 
     return res.status(200).json({
       success: true,
       count: result.rows.length,
-      applications: result.rows,
+      logs: result.rows,
     });
   } catch (error) {
-    console.error("Error fetching admin applications:", error);
-    return res.status(500).json({ success: false, message: "Failed to fetch applications" });
+    console.error("Error fetching audit logs:", error);
+    return res.status(500).json({ success: false, message: "Failed to fetch audit logs" });
   }
 }
 
-// 5. Update Application Status (Admin Only)
-export async function updateApplicationStatus(req, res) {
-  const applicationId = req.params?.id || req.body?.applicationId;
-  const status = req.body?.status;
-
-  if (!applicationId || !isValidUUID(applicationId)) {
-    return res.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "Valid application ID is required" }
-    });
-  }
-
-  const ALLOWED_STATUSES = ["Pending", "Approved", "Rejected", "Submitted"];
-  if (!status || typeof status !== "string" || !ALLOWED_STATUSES.includes(status)) {
-    return res.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "Status must be 'Pending', 'Approved', or 'Rejected'." }
-    });
-  }
-
-  try {
-    const result = await pool.query(
-      `UPDATE user_scholarship_applications SET status = $1 WHERE id = $2 RETURNING id, status`,
-      [status, applicationId]
-    );
-
-    if (result.rowCount === 0) {
-      return res.status(404).json({
-        success: false,
-        error: { code: "NOT_FOUND", message: "Application not found" }
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      message: `Application status updated to '${status}'`,
-      application: result.rows[0],
-    });
-  } catch (error) {
-    console.error("Error updating application status:", error);
-    return res.status(500).json({ success: false, message: "Failed to update application status" });
-  }
-}
-
-// 6. Create Scholarship (Admin Only)
+// 9. Legacy / Portal & Scholarship CRUD methods (Preserved)
 export async function createScholarship(req, res) {
   const { id, name, deadline, daysLeft, amount, amountFormatted, category, degree, stream, provider, portalUrl, isGovt, minScore, description, requirements } = req.body;
 
@@ -225,7 +443,7 @@ export async function createScholarship(req, res) {
 
     return res.status(201).json({
       success: true,
-      message: "Scholarship created successfully in PostgreSQL!",
+      message: "Scholarship created successfully!",
       scholarship: result.rows[0],
     });
   } catch (error) {
@@ -240,7 +458,6 @@ export async function createScholarship(req, res) {
   }
 }
 
-// 7. Update Scholarship (Admin Only)
 export async function updateScholarship(req, res) {
   const scholarshipId = req.params?.id || req.body?.id;
   if (!scholarshipId) {
@@ -297,7 +514,7 @@ export async function updateScholarship(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Scholarship updated successfully in PostgreSQL!",
+      message: "Scholarship updated successfully!",
       scholarship: result.rows[0],
     });
   } catch (error) {
@@ -306,7 +523,6 @@ export async function updateScholarship(req, res) {
   }
 }
 
-// 8. Delete Scholarship (Admin Only)
 export async function deleteScholarship(req, res) {
   const scholarshipId = req.params?.id || req.query?.id || req.body?.id;
   if (!scholarshipId) {
@@ -328,7 +544,7 @@ export async function deleteScholarship(req, res) {
 
     return res.status(200).json({
       success: true,
-      message: "Scholarship deleted successfully from PostgreSQL!",
+      message: "Scholarship deleted successfully!",
       deletedId: scholarshipId,
     });
   } catch (error) {
@@ -337,53 +553,34 @@ export async function deleteScholarship(req, res) {
   }
 }
 
-// 9. Get Admin Scholarship Portals
 export async function getAdminPortals(req, res) {
   try {
     const result = await pool.query(`
       SELECT 
-        p.id,
-        p.name,
-        p.description,
-        p.url,
-        p.logo_url AS "logoUrl",
-        p.is_active AS "isActive",
-        p.created_at AS "createdAt",
-        p.updated_at AS "updatedAt",
-        COUNT(s.id)::int AS "scholarshipsCount"
+        p.id, p.name, p.description, p.url, p.logo_url AS "logoUrl", p.is_active AS "isActive",
+        p.created_at AS "createdAt", p.updated_at AS "updatedAt", COUNT(s.id)::int AS "scholarshipsCount"
       FROM scholarship_portals p
       LEFT JOIN scholarships s ON s.portal_id = p.id
       GROUP BY p.id
       ORDER BY p.name ASC
     `);
 
-    return res.status(200).json({
-      success: true,
-      count: result.rows.length,
-      portals: result.rows,
-    });
+    return res.status(200).json({ success: true, count: result.rows.length, portals: result.rows });
   } catch (error) {
     console.error("Error fetching scholarship portals:", error);
     return res.status(500).json({ success: false, message: "Failed to fetch portals" });
   }
 }
 
-// 10. Create Scholarship Portal (Admin Only)
 export async function createAdminPortal(req, res) {
   const { name, description, url, logoUrl, isActive } = req.body || {};
 
   if (!name || typeof name !== "string" || !name.trim()) {
-    return res.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "Portal name is required." }
-    });
+    return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Portal name is required." } });
   }
 
   if (!url || typeof url !== "string" || !url.trim().startsWith("http")) {
-    return res.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "A valid URL (http:// or https://) is required." }
-    });
+    return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Valid URL is required." } });
   }
 
   try {
@@ -394,160 +591,95 @@ export async function createAdminPortal(req, res) {
       [name.trim(), description || "", url.trim(), logoUrl || "", isActive !== false]
     );
 
-    return res.status(201).json({
-      success: true,
-      message: "Scholarship portal created successfully!",
-      portal: result.rows[0],
-    });
+    return res.status(201).json({ success: true, message: "Scholarship portal created successfully!", portal: result.rows[0] });
   } catch (error) {
-    if (error.code === "23505") { // Unique violation
-      return res.status(409).json({
-        success: false,
-        error: { code: "DUPLICATE_ERROR", message: "A portal with this name already exists." }
-      });
+    if (error.code === "23505") {
+      return res.status(409).json({ success: false, error: { code: "DUPLICATE_ERROR", message: "A portal with this name already exists." } });
     }
     console.error("Error creating portal:", error);
     return res.status(500).json({ success: false, message: "Failed to create portal" });
   }
 }
 
-// 11. Update Scholarship Portal (Admin Only)
 export async function updateAdminPortal(req, res) {
   const portalId = req.params?.id;
   const { name, description, url, logoUrl, isActive } = req.body || {};
 
   if (!portalId || !isValidUUID(portalId)) {
-    return res.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "Valid portal UUID is required." }
-    });
-  }
-
-  if (url && (typeof url !== "string" || !url.trim().startsWith("http"))) {
-    return res.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "Valid portal URL must start with http:// or https://" }
-    });
+    return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Valid portal UUID is required." } });
   }
 
   try {
     const result = await pool.query(
       `UPDATE scholarship_portals
-       SET name = COALESCE($1, name),
-           description = COALESCE($2, description),
-           url = COALESCE($3, url),
-           logo_url = COALESCE($4, logo_url),
-           is_active = COALESCE($5, is_active),
-           updated_at = CURRENT_TIMESTAMP
+       SET name = COALESCE($1, name), description = COALESCE($2, description), url = COALESCE($3, url),
+           logo_url = COALESCE($4, logo_url), is_active = COALESCE($5, is_active), updated_at = CURRENT_TIMESTAMP
        WHERE id = $6
-       RETURNING id, name, description, url, logo_url AS "logoUrl", is_active AS "isActive", updated_at AS "updatedAt"`,
+       RETURNING id, name, description, url, logo_url AS "logoUrl", is_active AS "isActive"`,
       [name ? name.trim() : null, description, url ? url.trim() : null, logoUrl, isActive, portalId]
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).json({
-        success: false,
-        error: { code: "NOT_FOUND", message: "Scholarship portal not found." }
-      });
+      return res.status(404).json({ success: false, error: { code: "NOT_FOUND", message: "Scholarship portal not found." } });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Scholarship portal updated successfully!",
-      portal: result.rows[0],
-    });
+    return res.status(200).json({ success: true, message: "Scholarship portal updated successfully!", portal: result.rows[0] });
   } catch (error) {
     console.error("Error updating portal:", error);
     return res.status(500).json({ success: false, message: "Failed to update portal" });
   }
 }
 
-// 12. Toggle Scholarship Portal Active Status (Admin Only)
 export async function toggleAdminPortalStatus(req, res) {
   const portalId = req.params?.id;
   const { isActive } = req.body || {};
 
   if (!portalId || !isValidUUID(portalId)) {
-    return res.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "Valid portal UUID is required." }
-    });
-  }
-
-  if (typeof isActive !== "boolean") {
-    return res.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "isActive boolean value is required." }
-    });
+    return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Valid portal UUID is required." } });
   }
 
   try {
     const result = await pool.query(
-      `UPDATE scholarship_portals
-       SET is_active = $1, updated_at = CURRENT_TIMESTAMP
-       WHERE id = $2
-       RETURNING id, name, is_active AS "isActive"`,
+      `UPDATE scholarship_portals SET is_active = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2 RETURNING id, name, is_active AS "isActive"`,
       [isActive, portalId]
     );
 
     if (result.rowCount === 0) {
-      return res.status(404).json({
-        success: false,
-        error: { code: "NOT_FOUND", message: "Scholarship portal not found." }
-      });
+      return res.status(404).json({ success: false, error: { code: "NOT_FOUND", message: "Scholarship portal not found." } });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: `Portal status updated to ${isActive ? "Active" : "Disabled"}.`,
-      portal: result.rows[0],
-    });
+    return res.status(200).json({ success: true, message: "Portal status updated.", portal: result.rows[0] });
   } catch (error) {
     console.error("Error toggling portal status:", error);
     return res.status(500).json({ success: false, message: "Failed to update portal status" });
   }
 }
 
-// 13. Delete Scholarship Portal (Admin Only - Phase 4 Safe Delete Rule)
 export async function deleteAdminPortal(req, res) {
   const portalId = req.params?.id;
 
   if (!portalId || !isValidUUID(portalId)) {
-    return res.status(400).json({
-      success: false,
-      error: { code: "VALIDATION_ERROR", message: "Valid portal UUID is required." }
-    });
+    return res.status(400).json({ success: false, error: { code: "VALIDATION_ERROR", message: "Valid portal UUID is required." } });
   }
 
   try {
-    // Check if scholarships currently reference this portal
     const checkRes = await pool.query(`SELECT COUNT(*) FROM scholarships WHERE portal_id = $1`, [portalId]);
     const linkedCount = parseInt(checkRes.rows[0].count, 10);
 
     if (linkedCount > 0) {
       return res.status(409).json({
         success: false,
-        error: {
-          code: "PORTAL_IN_USE",
-          message: `Cannot delete portal because ${linkedCount} scholarship(s) are currently linked to it. Consider disabling the portal instead.`
-        }
+        error: { code: "PORTAL_IN_USE", message: `Cannot delete portal because ${linkedCount} scholarship(s) are linked to it.` }
       });
     }
 
     const delRes = await pool.query(`DELETE FROM scholarship_portals WHERE id = $1 RETURNING id`, [portalId]);
 
     if (delRes.rowCount === 0) {
-      return res.status(404).json({
-        success: false,
-        error: { code: "NOT_FOUND", message: "Scholarship portal not found." }
-      });
+      return res.status(404).json({ success: false, error: { code: "NOT_FOUND", message: "Scholarship portal not found." } });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Scholarship portal deleted successfully!",
-      deletedId: portalId,
-    });
+    return res.status(200).json({ success: true, message: "Scholarship portal deleted successfully!", deletedId: portalId });
   } catch (error) {
     console.error("Error deleting portal:", error);
     return res.status(500).json({ success: false, message: "Failed to delete portal" });

@@ -48,12 +48,65 @@ export async function initializeDatabase() {
       name VARCHAR(120) NOT NULL,
       email VARCHAR(320) NOT NULL,
       password_hash TEXT NOT NULL,
-      role VARCHAR(20) NOT NULL DEFAULT 'Student' CHECK (role IN ('Student', 'Admin')),
+      role VARCHAR(20) NOT NULL DEFAULT 'user',
+      status VARCHAR(20) NOT NULL DEFAULT 'active',
+      blocked_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      blocked_at TIMESTAMPTZ,
+      block_reason TEXT,
+      is_email_verified BOOLEAN DEFAULT TRUE,
       created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE UNIQUE INDEX IF NOT EXISTS users_email_unique_idx ON users (LOWER(email));
+
+    DO $$
+    BEGIN
+      IF EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'users_role_check') THEN
+        ALTER TABLE users DROP CONSTRAINT users_role_check;
+      END IF;
+    END $$;
+
+    ALTER TABLE users ALTER COLUMN role SET DEFAULT 'user';
+    UPDATE users SET role = 'user' WHERE role = 'Student' OR role IS NULL;
+    UPDATE users SET role = 'admin' WHERE role = 'Admin';
+
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'active';
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS blocked_by UUID REFERENCES users(id) ON DELETE SET NULL;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS blocked_at TIMESTAMPTZ;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS block_reason TEXT;
+    ALTER TABLE users ADD COLUMN IF NOT EXISTS is_email_verified BOOLEAN DEFAULT TRUE;
+
+    -- Audit Log Table
+    CREATE TABLE IF NOT EXISTS audit_log (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      actor_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      action VARCHAR(100) NOT NULL,
+      target_user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+      details JSONB,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- Notifications Table
+    CREATE TABLE IF NOT EXISTS notifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      title TEXT NOT NULL,
+      message TEXT NOT NULL,
+      type VARCHAR(50) NOT NULL CHECK (type IN ('new_scholarship', 'deadline_reminder', 'announcement')),
+      scholarship_id VARCHAR(50) REFERENCES scholarships(id) ON DELETE SET NULL,
+      created_by UUID REFERENCES users(id) ON DELETE SET NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+
+    -- User Notifications Table
+    CREATE TABLE IF NOT EXISTS user_notifications (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      notification_id UUID NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,
+      is_read BOOLEAN DEFAULT FALSE,
+      read_at TIMESTAMPTZ,
+      UNIQUE(user_id, notification_id)
+    );
 
     -- Student Profiles Table
     CREATE TABLE IF NOT EXISTS student_profiles (

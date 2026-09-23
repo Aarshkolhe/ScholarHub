@@ -249,23 +249,23 @@ export default function LandingPage() {
                   onSubmit={handleNameSubmit}
                   className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-md border border-slate-200/80 dark:border-slate-700/80 p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row gap-3 shadow-lg relative z-20"
                 >
-                  <div className="relative flex-grow">
-                    <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-[#737686] dark:text-slate-400">
+                  <div className="relative flex-grow flex items-center">
+                    <span className="material-symbols-outlined absolute left-4 text-[#737686] dark:text-slate-400 select-none pointer-events-none text-xl">
                       person
                     </span>
                     <input
                       name="name"
                       value={userName}
                       onChange={handleNameChange}
-                      className={`w-full pl-12 ${
-                        isNameSaved ? "pr-12" : "pr-4"
+                      className={`w-full pl-11 ${
+                        isNameSaved ? "pr-11" : "pr-4"
                       } py-3.5 rounded-xl border border-[#c3c6d7] dark:border-slate-700 focus:border-[#004ac6] dark:focus:border-blue-500 focus:ring-2 focus:ring-[#004ac6]/20 bg-white dark:bg-slate-800 text-[#191c1e] dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 text-sm transition-all h-full min-h-[48px] outline-none`}
                       placeholder="Enter your name..."
                       type="text"
                     />
                     {isNameSaved && (
                       <span
-                        className="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-emerald-500 font-bold text-xl animate-fade-in"
+                        className="material-symbols-outlined absolute right-4 text-emerald-500 font-bold text-xl animate-fade-in select-none"
                         title="Name already saved"
                       >
                         check_circle
@@ -282,7 +282,7 @@ export default function LandingPage() {
 
                 {isNameSaved && (
                   <div className="mt-2.5 flex items-center justify-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 animate-fade-in">
-                    <span className="material-symbols-outlined text-base text-emerald-500">check_circle</span>
+                    <span className="material-symbols-outlined text-base text-emerald-500 select-none">check_circle</span>
                     Name saved! Click "Go to Dashboard" to proceed.
                   </div>
                 )}
@@ -291,11 +291,11 @@ export default function LandingPage() {
               {/* Cleaned Trust Badges */}
               <div className="mt-8 flex flex-wrap justify-center items-center gap-6 text-[#434655] dark:text-slate-400 text-xs">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px]">check_circle</span>
+                  <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px] select-none">check_circle</span>
                   Free to Use
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px]">check_circle</span>
+                  <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-[18px] select-none">check_circle</span>
                   Smart Matching AI
                 </div>
               </div>
@@ -314,8 +314,8 @@ export default function LandingPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-5xl mx-auto">
             <div className="bg-white dark:bg-slate-900 border border-[#c3c6d7] dark:border-slate-800 rounded-2xl p-8 flex flex-col shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 rounded-xl bg-[#dae2fd] dark:bg-blue-950/80 flex items-center justify-center mb-6">
-                <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-2xl">manage_search</span>
+              <div className="w-12 h-12 rounded-xl bg-[#dae2fd] dark:bg-blue-950/80 flex items-center justify-center mb-6 shrink-0">
+                <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400 text-2xl select-none leading-none flex items-center justify-center">manage_search</span>
               </div>
               <h3 className="text-lg font-semibold text-[#191c1e] dark:text-white mb-2">Smart Search</h3>
               <p className="text-sm text-[#434655] dark:text-slate-300 flex-grow leading-relaxed">
@@ -324,8 +324,8 @@ export default function LandingPage() {
             </div>
 
             <div className="bg-white dark:bg-slate-900 border border-[#c3c6d7] dark:border-slate-800 rounded-2xl p-8 flex flex-col shadow-sm hover:shadow-md transition-all hover:-translate-y-1">
-              <div className="w-12 h-12 rounded-xl bg-[#007d55] dark:bg-emerald-950/80 flex items-center justify-center mb-6">
-                <span className="material-symbols-outlined text-[#bdffdb] dark:text-emerald-400 text-2xl">recommend</span>
+              <div className="w-12 h-12 rounded-xl bg-[#007d55]/10 dark:bg-emerald-950/80 flex items-center justify-center mb-6 shrink-0">
+                <span className="material-symbols-outlined text-[#007d55] dark:text-emerald-400 text-2xl select-none leading-none flex items-center justify-center">recommend</span>
               </div>
               <h3 className="text-lg font-semibold text-[#191c1e] dark:text-white mb-2">Personalized Matches</h3>
               <p className="text-sm text-[#434655] dark:text-slate-300 flex-grow leading-relaxed">

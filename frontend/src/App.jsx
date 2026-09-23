@@ -8,7 +8,10 @@ import LandingPage from "./pages/LandingPage";
 import AuthPage from "./pages/auth/AuthPage";
 import ProtectedRoute from "./routes/ProtectedRoute";
 import StudentDashboard from "./pages/dashboard/StudentDashboard";
-import AdminDashboard from "./pages/dashboard/AdminDashboard";
+import AdminDashboardPage from "./pages/admin/AdminDashboardPage";
+import AdminUsersPage from "./pages/admin/AdminUsersPage";
+import AdminAdminsPage from "./pages/admin/AdminAdminsPage";
+import AdminAuditLogPage from "./pages/admin/AdminAuditLogPage";
 
 function LogoutHandler() {
   const { signOut } = useAuth();
@@ -31,17 +34,20 @@ function DashboardRedirect() {
     return <Navigate to="/login" replace />;
   }
 
-  const targetPath = user?.role === "Admin" ? "/admin/dashboard" : "/student/dashboard";
+  const isAdmin = user?.role === "admin" || user?.role === "super_admin";
+  const targetPath = isAdmin ? "/admin/dashboard" : "/student/dashboard";
   return <Navigate to={`${targetPath}${location.search}`} replace />;
 }
 
 function AuthRoute({ initialMode }) {
-  const { isAuthenticated, isInitializing } = useAuth();
+  const { user, isAuthenticated, isInitializing } = useAuth();
 
   if (isInitializing) return null;
 
-  // If already authenticated, redirect to Step 2: Landing Page
   if (isAuthenticated) {
+    if (user?.role === "admin" || user?.role === "super_admin") {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
     return <Navigate to="/landing" replace />;
   }
 
@@ -65,7 +71,7 @@ function App() {
             <Route
               path="/landing"
               element={
-                <ProtectedRoute>
+                <ProtectedRoute allowedRoles={["user", "Student"]}>
                   <LandingPage />
                 </ProtectedRoute>
               }
@@ -77,17 +83,45 @@ function App() {
             <Route
               path="/student/dashboard"
               element={
-                <ProtectedRoute allowedRoles={["Student"]}>
+                <ProtectedRoute allowedRoles={["user", "Student"]}>
                   <StudentDashboard />
                 </ProtectedRoute>
               }
             />
 
             <Route
+              path="/admin"
+              element={<Navigate to="/admin/dashboard" replace />}
+            />
+            <Route
               path="/admin/dashboard"
               element={
-                <ProtectedRoute allowedRoles={["Admin"]}>
-                  <AdminDashboard />
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <AdminDashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute allowedRoles={["admin", "super_admin"]}>
+                  <AdminUsersPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/admins"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <AdminAdminsPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/audit-log"
+              element={
+                <ProtectedRoute allowedRoles={["super_admin"]}>
+                  <AdminAuditLogPage />
                 </ProtectedRoute>
               }
             />

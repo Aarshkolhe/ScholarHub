@@ -10,6 +10,8 @@ import notificationRoutes from "./src/routes/notificationRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
 import { testEmailConnection } from "./src/services/emailService.js";
 
+import { initDeadlineScheduler } from "./src/services/schedulerService.js";
+
 import {
   testDatabaseConnection,
   initializeDatabase
@@ -85,6 +87,9 @@ async function startServer() {
 
     // Create required database tables/indexes & seed government schemes.
     await initializeDatabase();
+
+    // Initialize daily deadline reminder scheduler service
+    initDeadlineScheduler();
 
     // Test Gmail SMTP connection.
     await testEmailConnection();

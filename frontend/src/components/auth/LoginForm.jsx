@@ -37,8 +37,12 @@ const LoginForm = ({ defaultEmail = "", onRegister, onForgotPassword }) => {
 
     if (result.success) {
       reactCorrect();
-      // Redirect to Step 2: Landing Page
-      navigate("/landing", { replace: true });
+      const role = result.user?.role;
+      if (role === "admin" || role === "super_admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        navigate("/landing", { replace: true });
+      }
       return;
     }
 

@@ -23,7 +23,11 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
   }
 
   if (allowedRoles && !allowedRoles.includes(user?.role)) {
-    return <Navigate to="/login" replace />;
+    // If admin/super_admin attempts to view student page or vice versa, redirect appropriately
+    if (user?.role === "admin" || user?.role === "super_admin") {
+      return <Navigate to="/admin/dashboard" replace />;
+    }
+    return <Navigate to="/landing" replace />;
   }
 
   return children;
