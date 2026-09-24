@@ -1,4 +1,4 @@
-# ScholarHub Development Progress
+# ScholarHub Finder Development Progress
 
 ## Status: All Core Features, Deadline Email Alerts, Simulation/Real-Time Mode & Portal Integrations Complete
 

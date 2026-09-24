@@ -61,7 +61,7 @@ app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
     status: "ok",
-    message: "ScholarHub backend is running"
+    message: "ScholarHub Finder backend is running"
   });
 });
 
@@ -95,9 +95,9 @@ async function startServer() {
     await testEmailConnection();
 
     // Start Express only after all services are ready.
-    app.listen(PORT, () => {
+    app.listen(PORT, "0.0.0.0", () => {
       console.log(
-        `ScholarHub backend running on http://localhost:${PORT}`
+        `ScholarHub Finder backend running on http://localhost:${PORT}`
       );
 
       console.log("Authentication, Profile, Scholarships & AI routes:");
@@ -110,7 +110,7 @@ async function startServer() {
     });
   } catch (error) {
     console.error(
-      "Failed to start ScholarHub backend:",
+      "Failed to start ScholarHub Finder backend:",
       error
     );
 

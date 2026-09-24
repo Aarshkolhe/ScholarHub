@@ -1,6 +1,6 @@
-# 🎓 ScholarHub — Platform Overview & System Summary
+# 🎓 ScholarHub Finder — Platform Overview & System Summary
 
-**ScholarHub** is a full-stack, AI-powered academic scholarship and financial aid matching platform designed to empower students across India. It connects students—ranging from Class 10th and 12th school board graduates to Undergraduate (B.Tech, B.Sc, MBBS), Postgraduate (M.Tech, M.Sc, MD), and Doctorate (PhD, MPhil) scholars—with official government schemes, state quota benefits, corporate CSR grants, and merit fellowships tailored to their unique academic, financial, and category profiles.
+**ScholarHub Finder** is a full-stack, AI-powered academic scholarship and financial aid matching platform designed to empower students across India. It connects students—ranging from Class 10th and 12th school board graduates to Undergraduate (B.Tech, B.Sc, MBBS), Postgraduate (M.Tech, M.Sc, MD), and Doctorate (PhD, MPhil) scholars—with official government schemes, state quota benefits, corporate CSR grants, and merit fellowships tailored to their unique academic, financial, and category profiles.
 
 ---
 
@@ -190,4 +190,4 @@ flowchart TD
 
 ## 🎯 Summary
 
-**ScholarHub** bridges the gap between students and financial support by transforming scholarship searching from an overwhelming manual process into a smart, automated, AI-assisted experience. With real-time database persistence, interactive sandbox testing, automated deadline notifications, and government portal integrations, ScholarHub ensures students never miss a financial aid opportunity.
+**ScholarHub Finder** bridges the gap between students and financial support by transforming scholarship searching from an overwhelming manual process into a smart, automated, AI-assisted experience. With real-time database persistence, interactive sandbox testing, automated deadline notifications, and government portal integrations, ScholarHub Finder ensures students never miss a financial aid opportunity.

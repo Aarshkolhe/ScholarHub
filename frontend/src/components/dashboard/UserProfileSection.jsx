@@ -623,7 +623,7 @@ export function UserProfileSection() {
             Streamlined Details Profile
           </h1>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-            Fill your high-impact academic, financial, accommodation, and quota details once. ScholarHub matches you with eligible grants automatically.
+            Fill your high-impact academic, financial, accommodation, and quota details once. ScholarHub Finder matches you with eligible grants automatically.
           </p>
         </div>
 

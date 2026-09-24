@@ -1,4 +1,4 @@
-# ScholarHub Security & Data Protection Guide
+# ScholarHub Finder Security & Data Protection Guide
 
 > **Document Version:** 2.0  
 > **Last Updated:** August 23, 2026  
@@ -8,15 +8,15 @@
 
 ## 1. What SECURITY.md Is
 
-This document explains in simple, clear, non-technical language how **ScholarHub** protects its users, student profile details, academic records, applications, bookmarks, passwords, and administrative capabilities.
+This document explains in simple, clear, non-technical language how **ScholarHub Finder** protects its users, student profile details, academic records, applications, bookmarks, passwords, and administrative capabilities.
 
-ScholarHub is designed to help students discover and apply for scholarships across India securely. Keeping student data safe and ensuring only authorized people can perform administrative tasks are top priorities for the platform.
+ScholarHub Finder is designed to help students discover and apply for scholarships across India securely. Keeping student data safe and ensuring only authorized people can perform administrative tasks are top priorities for the platform.
 
 ---
 
-## 2. How ScholarHub Protects Users
+## 2. How ScholarHub Finder Protects Users
 
-ScholarHub enforces a simple 7-step security flow every time a user interacts with the application:
+ScholarHub Finder enforces a simple 7-step security flow every time a user interacts with the application:
 
 $$\text{User} \longrightarrow \text{Login} \longrightarrow \text{Password Verification} \longrightarrow \text{JWT Token} \longrightarrow \text{Server Verification} \longrightarrow \text{Permission Check} \longrightarrow \text{Requested Action}$$
 
@@ -32,7 +32,7 @@ $$\text{User} \longrightarrow \text{Login} \longrightarrow \text{Password Verifi
 
 ## 3. Login & Role Security
 
-ScholarHub uses **one single login page** located at `/login`:
+ScholarHub Finder uses **one single login page** located at `/login`:
 
 - **Single Entry Point**: Both Students and Admins log in through the exact same `/login` form.
 - **Automatic Role-Based Dashboard Routing**: Once a user successfully logs in, the system checks their role in their digital pass (token):
@@ -44,20 +44,20 @@ ScholarHub uses **one single login page** located at `/login`:
 
 ## 4. Password Security
 
-Passwords are the primary lock guarding user accounts. ScholarHub ensures passwords can never be stolen from the system:
+Passwords are the primary lock guarding user accounts. ScholarHub Finder ensures passwords can never be stolen from the system:
 
 - **No Plain-Text Storage**: Passwords are never saved in plain text anywhere in the database or logs.
-- **Strong Encryption (Bcrypt Hashing)**: When a user registers or changes their password, ScholarHub turns the password into a unique mathematical scramble called a **hash** using `bcrypt` (with 12 security rounds).
-- **Secure Matching**: When logging in, ScholarHub compares the newly entered password against the stored hash. Even if someone obtains access to the database, they cannot reverse the hashes to find the real passwords.
+- **Strong Encryption (Bcrypt Hashing)**: When a user registers or changes their password, ScholarHub Finder turns the password into a unique mathematical scramble called a **hash** using `bcrypt` (with 12 security rounds).
+- **Secure Matching**: When logging in, ScholarHub Finder compares the newly entered password against the stored hash. Even if someone obtains access to the database, they cannot reverse the hashes to find the real passwords.
 
 ---
 
 ## 5. Password Reset & One-Time Password (OTP) Security
 
-If a user forgets their password, ScholarHub provides a secure recovery process:
+If a user forgets their password, ScholarHub Finder provides a secure recovery process:
 
 1. **Email Verification**: The user enters their registered email address at `/forgot-password`.
-2. **6-Digit OTP**: ScholarHub sends a temporary 6-digit One-Time Password (OTP) via automated email.
+2. **6-Digit OTP**: ScholarHub Finder sends a temporary 6-digit One-Time Password (OTP) via automated email.
 3. **Encrypted Storage**: The 6-digit OTP is hashed using SHA-256 before being stored in the database. Raw OTP numbers are never kept in the database.
 4. **Time Expiration**: Each OTP expires automatically after **10 minutes**.
 5. **Single-Use Enforcement**: Once an OTP is used successfully to reset a password, it is permanently marked as used and cannot be reused.
@@ -68,20 +68,20 @@ If a user forgets their password, ScholarHub provides a secure recovery process:
 
 ## 6. Authentication Tokens (JWT) & Session Expiration
 
-Once a user logs in, ScholarHub gives their browser a temporary digital pass called a **JSON Web Token (JWT)**.
+Once a user logs in, ScholarHub Finder gives their browser a temporary digital pass called a **JSON Web Token (JWT)**.
 
 > **Analogy**: Imagine a digital wristband given at a concert. Every time you try to enter a restricted area (like the VIP section), the security guard inspects your wristband to see who you are and what access level you have.
 
 - **Cryptographic Signature**: The digital pass is signed with a secret key (`JWT_SECRET`) stored safely on the server. If a user tries to alter their pass in the browser (for example, trying to change their role from "Student" to "Admin"), the server detects that the signature is broken and immediately rejects the request with a **401 Unauthorized** error.
 - **Automatic Expiration**: Digital passes expire automatically after **1 hour**, requiring users to log in again if inactive.
 - **Session Expiration Handling**: When a token expires, the client detects the `401 TOKEN_EXPIRED` API response, dispatches a `scholarhub_session_expired` event, and safely returns the user to `/login` with an informative toast message.
-- **Issuer & Audience Validation**: The server verifies that the digital pass was issued specifically by ScholarHub (`scholarhub-api`) for the ScholarHub web client (`scholarhub-frontend`).
+- **Issuer & Audience Validation**: The server verifies that the digital pass was issued specifically by ScholarHub Finder (`scholarhub-api`) for the ScholarHub Finder web client (`scholarhub-frontend`).
 
 ---
 
 ## 7. Student vs. Admin Capabilities
 
-ScholarHub strictly separates what normal students and platform administrators can do:
+ScholarHub Finder strictly separates what normal students and platform administrators can do:
 
 ### Student Capabilities
 - Access the **Student Dashboard**, personal **Profile**, and **Scholarship Search**.
@@ -104,7 +104,7 @@ ScholarHub strictly separates what normal students and platform administrators c
 
 In web applications, protecting frontend buttons or hiding website pages in the browser is **not** enough for real security. A malicious user could bypass the browser UI and send direct network calls to admin web addresses.
 
-ScholarHub enforces security directly on the backend server:
+ScholarHub Finder enforces security directly on the backend server:
 
 Every single Admin API endpoint (such as `/api/admin/stats`, `/api/admin/users`, or `/api/admin/portals`) is guarded by two mandatory security checkpoints:
 
@@ -121,7 +121,7 @@ Even if a student manually types `/admin/dashboard` in their browser, all backgr
 
 **IDOR** (Insecure Direct Object Reference) is a common web security flaw where a user changes an ID number in a request to view or edit another person's private data.
 
-ScholarHub prevents IDOR entirely by obeying one strict rule:
+ScholarHub Finder prevents IDOR entirely by obeying one strict rule:
 
 > **Rule**: Protected student endpoints (`GET /api/profile`, `POST /api/profile`, `POST /api/scholarships/bookmark`, `POST /api/scholarships/apply`) **never trust** user IDs sent in request bodies or web link parameters.
 
@@ -133,9 +133,9 @@ Instead, the server extracts the user's identity directly from their verified di
 
 Privilege escalation occurs when a normal user tries to give themselves higher privileges (such as Admin access).
 
-ScholarHub prevents privilege escalation:
+ScholarHub Finder prevents privilege escalation:
 
-- **Self-Registration Constraint**: When anyone signs up on the registration page (`POST /register`), ScholarHub hardcodes their account role to **`Student`** in PostgreSQL.
+- **Self-Registration Constraint**: When anyone signs up on the registration page (`POST /register`), ScholarHub Finder hardcodes their account role to **`Student`** in PostgreSQL.
 - **Payload Sanitization**: If a user attempts to inject secret fields like `role: "Admin"`, `isAdmin: true`, or `permissions: ["*"]` during registration or profile updates, the server strips and ignores those fields.
 - **Controlled Admin Role Assignment**: User roles can only be updated by authenticated Admins through protected Admin management endpoints (`POST /api/admin/users/role`).
 
@@ -145,7 +145,7 @@ ScholarHub prevents privilege escalation:
 
 **SQL Injection** is an attack where malicious database commands are typed into form fields (such as search boxes or login inputs) to trick the database into running unauthorized commands.
 
-ScholarHub prevents SQL injection completely:
+ScholarHub Finder prevents SQL injection completely:
 
 - **Parameterized Queries**: Every database query uses parameterized placeholder variables (`$1`, `$2`, `$3`) provided by the official PostgreSQL driver (`pg`).
 - **Data Isolation**: User inputs are treated strictly as literal data strings, never as executable SQL code. Malicious test payloads (such as `' OR '1'='1` or `'; DROP TABLE users; --`) are safely stored or searched as literal text without affecting database execution.
@@ -156,7 +156,7 @@ ScholarHub prevents SQL injection completely:
 
 **Cross-Site Scripting (XSS)** occurs when an attacker tries to inject malicious code or scripts into web pages viewed by other users.
 
-ScholarHub protects users against XSS:
+ScholarHub Finder protects users against XSS:
 
 - **React Automatic HTML Escaping**: The frontend is built using React. React automatically escapes all string variables before rendering them in the DOM tree, preventing injected script tags (such as `<script>alert(1)</script>`) from running.
 - **Safe Link Handling**: External website links render with standard HTML text elements and safe attributes (`target="_blank" rel="noopener noreferrer"`).
@@ -174,14 +174,14 @@ ScholarHub protects users against XSS:
 
 **CORS** is a browser security feature that controls which websites are allowed to request data from an API server.
 
-- **Production Origin Restriction**: In production, ScholarHub's backend configures CORS (`cors` middleware) to allow requests exclusively from trusted frontend domain origins specified in `ALLOWED_ORIGINS` (such as `https://scholarhub.app`).
+- **Production Origin Restriction**: In production, ScholarHub Finder's backend configures CORS (`cors` middleware) to allow requests exclusively from trusted frontend domain origins specified in `ALLOWED_ORIGINS` (such as `https://scholarhub.app`).
 - **Blocking Unauthorized Domains**: Requests sent from unauthorized third-party websites are automatically blocked by the browser.
 
 ---
 
 ## 15. HTTP Security Headers (Helmet)
 
-ScholarHub uses **`helmet`** middleware to set essential HTTP security headers on all API responses:
+ScholarHub Finder uses **`helmet`** middleware to set essential HTTP security headers on all API responses:
 
 - **`X-Content-Type-Options: nosniff`**: Stops browsers from trying to guess file types, preventing MIME-type attacks.
 - **`X-Frame-Options: DENY`**: Prevents the application from being embedded inside hidden `<iframe>` frames on malicious websites (protecting against clickjacking attacks).
@@ -200,7 +200,7 @@ To protect public endpoints against automated abuse, denial-of-service, and high
 
 ## 17. Database Structure, Indexes & Cascade Safety
 
-ScholarHub uses a **PostgreSQL 16** relational database engineered for data accuracy and reliability:
+ScholarHub Finder uses a **PostgreSQL 16** relational database engineered for data accuracy and reliability:
 
 - **UUID Identifiers**: Uses 128-bit universally unique identifiers (UUIDs) for primary keys, preventing predictable sequential ID guessing (e.g., `user/1`, `user/2`).
 - **Foreign Key Cascade Relationships**: Related tables (such as student profiles, saved scholarships, and applications) link directly to `users` and `scholarships` tables using `ON DELETE CASCADE` or `ON DELETE SET NULL`. Deleting a user or scholarship cleanly updates or removes child records without creating orphan rows.
@@ -210,7 +210,7 @@ ScholarHub uses a **PostgreSQL 16** relational database engineered for data accu
 
 ## 18. Scholarship Portal Authorization & Safe Delete Protection
 
-ScholarHub includes dedicated **Scholarship Portal Management** (`scholarship_portals` table):
+ScholarHub Finder includes dedicated **Scholarship Portal Management** (`scholarship_portals` table):
 
 - **Admin Authorization**: All portal CRUD endpoints (`GET/POST/PUT/DELETE /api/admin/portals` and `PATCH /api/admin/portals/:id/status`) are guarded by `authenticateToken` + `requireAdmin`. Student requests receive `403 Forbidden`.
 - **Phase 4 Safe Delete Protection**: Deleting a portal (`DELETE /api/admin/portals/:id`) checks if any scholarships currently reference `portal_id`. If scholarships are linked, the backend blocks deletion and returns HTTP `409 Conflict` (`PORTAL_IN_USE`), advising the Admin to disable the portal instead.
@@ -221,7 +221,7 @@ ScholarHub includes dedicated **Scholarship Portal Management** (`scholarship_po
 
 ## 19. Protection of Sensitive Information
 
-ScholarHub ensures confidential system secrets never leak to unauthorized parties:
+ScholarHub Finder ensures confidential system secrets never leak to unauthorized parties:
 
 - **Sanitized API Responses**: Endpoints returning user details (such as `GET /api/admin/users`) sanitize user objects to strip out `password_hash` fields before sending data to the client.
 - **Secret Isolation**: System secrets (`DB_PASSWORD`, `JWT_SECRET`, `EMAIL_APP_PASSWORD`, `GEMINI_API_KEY`) remain strictly on the backend server inside the `.env` configuration file.
@@ -231,9 +231,9 @@ ScholarHub ensures confidential system secrets never leak to unauthorized partie
 
 ## 20. What Happens If Someone Tries to Break In?
 
-Here are simple real-world examples of how ScholarHub stops unauthorized access:
+Here are simple real-world examples of how ScholarHub Finder stops unauthorized access:
 
-1. **Invalid Login Attempts**: If someone guesses a password incorrectly, ScholarHub returns a generic `"Invalid email or password"` message without revealing whether the email exists.
+1. **Invalid Login Attempts**: If someone guesses a password incorrectly, ScholarHub Finder returns a generic `"Invalid email or password"` message without revealing whether the email exists.
 2. **Student Accessing Admin APIs**: If a student attempts to access `/api/admin/stats` or `/api/admin/portals`, the server checks their JWT role and blocks the request with **403 Forbidden**.
 3. **Trying to Access Another User's Data**: If User A passes User B's ID in a request body to `/api/profile`, the server ignores the submitted ID and operates exclusively on User A's token identity (`req.user.id`).
 4. **SQL Injection Attempts**: If an attacker types `' OR '1'='1` into a search box, the database treats it as literal search text rather than executable SQL logic.
@@ -246,7 +246,7 @@ Here are simple real-world examples of how ScholarHub stops unauthorized access:
 
 ## 21. Production Security Guidelines
 
-To maintain security when deploying ScholarHub to a live cloud environment:
+To maintain security when deploying ScholarHub Finder to a live cloud environment:
 
 - **Strong Production JWT Secret**: Set `JWT_SECRET` to a random 256-bit secret generated via `openssl rand -base64 32`.
 - **Private Backend Credentials**: Keep database passwords, Gmail SMTP passwords, and Gemini API keys inside server environment variables.
@@ -259,7 +259,7 @@ To maintain security when deploying ScholarHub to a live cloud environment:
 
 ## 22. Security Maintenance for Future Developers
 
-Future developers working on ScholarHub must follow these rules:
+Future developers working on ScholarHub Finder must follow these rules:
 
 1. **Keep Dependencies Updated**: Regularly run `npm audit` to patch package vulnerabilities.
 2. **Protect New APIs**: Mount `authenticateToken` on new student routes and `requireAdmin` on new admin routes.
@@ -272,7 +272,7 @@ Future developers working on ScholarHub must follow these rules:
 
 ## 23. Security & QA Assessment Summary (Rounds 1–10)
 
-ScholarHub has undergone 10 comprehensive Quality Assurance (QA) testing passes:
+ScholarHub Finder has undergone 10 comprehensive Quality Assurance (QA) testing passes:
 
 1. **Round 1 — Authentication & Session QA**: Verified registration, login, logout, token persistence, and session expiration.
 2. **Round 2 — Scholarship & IDOR QA**: Verified scholarship filtering, application submissions, bookmarking, and identity protection.
@@ -289,9 +289,9 @@ ScholarHub has undergone 10 comprehensive Quality Assurance (QA) testing passes:
 
 ## 24. Final Manual End-to-End Runtime QA
 
-> **Real-World Testing Analogy**: Think of this as actually driving the finished car rather than only inspecting its engine. ScholarHub was started and used through its major student and administrator workflows to confirm that the finished system works correctly in practice.
+> **Real-World Testing Analogy**: Think of this as actually driving the finished car rather than only inspecting its engine. ScholarHub Finder was started and used through its major student and administrator workflows to confirm that the finished system works correctly in practice.
 
-The current ScholarHub build (Commit: `25dff88` on branch `main`) was started and manually tested at runtime across all 7 operational phases:
+The current ScholarHub Finder build (Commit: `25dff88` on branch `main`) was started and manually tested at runtime across all 7 operational phases:
 
 1. **Backend Startup & Health Check**: Verified `GET /api/health` returns `200 OK`.
 2. **PostgreSQL Connectivity**: Verified active database connection pool (`SELECT 1`).
@@ -328,7 +328,7 @@ The current ScholarHub build (Commit: `25dff88` on branch `main`) was started an
 ## 25. Known Security Limitation & Future Enhancement
 
 - **Stateless JWT Role Revocation**:
-  - *Current Behavior*: ScholarHub uses stateless JWT tokens for performance and scalability. If an Admin demotes an account from `Admin` to `Student` in the database, a previously issued Admin token remains valid until it expires (up to 1 hour), because the server verifies the cryptographic token signature without querying PostgreSQL on every request. Conversely, promoting a Student to Admin requires the user to log in again to receive a token with the new `Admin` claim.
+  - *Current Behavior*: ScholarHub Finder uses stateless JWT tokens for performance and scalability. If an Admin demotes an account from `Admin` to `Student` in the database, a previously issued Admin token remains valid until it expires (up to 1 hour), because the server verifies the cryptographic token signature without querying PostgreSQL on every request. Conversely, promoting a Student to Admin requires the user to log in again to receive a token with the new `Admin` claim.
   - *Future Enhancement*: In a future enterprise release, a server-side token revocation list (blacklisting token IDs upon role changes) can be added if instantaneous role revocation is required.
 
 ---
@@ -355,4 +355,4 @@ The current ScholarHub build (Commit: `25dff88` on branch `main`) was started an
 | **Production Build Cleanliness** | `[PASS]` | `npm run build` compiles with zero errors |
 
 ---
-*ScholarHub Security Guide — Maintained by the ScholarHub Engineering & Security Team.*
+*ScholarHub Finder Security Guide — Maintained by the ScholarHub Finder Engineering & Security Team.*

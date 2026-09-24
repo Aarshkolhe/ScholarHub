@@ -2,7 +2,7 @@ import React from "react";
 
 /**
  * ScholarHubAiAvatar
- * Reusable mascot component for ScholarHub AI Assistant.
+ * Reusable mascot component for ScholarHub Finder AI Assistant.
  * Represents the friendly robot character with:
  * - Light outer head & body frame
  * - Dark face screen visor
@@ -28,7 +28,7 @@ export function ScholarHubAiAvatar({ size = "md", className = "", showContainer 
       xmlns="http://www.w3.org/2000/svg"
       className="w-full h-full transform transition-transform duration-300 hover:scale-105"
       role="img"
-      aria-label="ScholarHub AI Mascot"
+      aria-label="ScholarHub Finder AI Mascot"
     >
       {/* Top Antenna */}
       <line x1="50" y1="18" x2="50" y2="8" stroke="#38BDF8" strokeWidth="4" strokeLinecap="round" />

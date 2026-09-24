@@ -29,7 +29,7 @@ const AI_RESPONSES = [
   {
     keywords: ["tip", "tips", "statement", "essay", "profile"],
     reply:
-      "Pro Tips for your application: 1) Complete 100% of your ScholarHub profile, 2) Write a clear 200-word statement highlighting your academic achievements & financial need, and 3) Apply at least 5 days before the deadline!",
+      "Pro Tips for your application: 1) Complete 100% of your ScholarHub Finder profile, 2) Write a clear 200-word statement highlighting your academic achievements & financial need, and 3) Apply at least 5 days before the deadline!",
   },
 ];
 
@@ -42,7 +42,7 @@ export function AiAssistantPill() {
   const [messages, setMessages] = useState([
     {
       sender: "ai",
-      text: `Hi ${firstName}! I'm your ScholarHub AI Assistant. Ask me anything about eligibility, deadlines, required documents, or application tips!`,
+      text: `Hi ${firstName}! I'm your ScholarHub Finder AI Assistant. Ask me anything about eligibility, deadlines, required documents, or application tips!`,
     },
   ]);
 
@@ -106,7 +106,7 @@ export function AiAssistantPill() {
     setMessages([
       {
         sender: "ai",
-        text: `Hi ${firstName}! I'm your ScholarHub AI Assistant. Ask me anything about eligibility, deadlines, required documents, or application tips!`,
+        text: `Hi ${firstName}! I'm your ScholarHub Finder AI Assistant. Ask me anything about eligibility, deadlines, required documents, or application tips!`,
       },
     ]);
   };
@@ -131,7 +131,7 @@ export function AiAssistantPill() {
             <div className="flex items-center gap-2">
               <ScholarHubAiAvatar size="sm" showContainer={true} />
               <div className="leading-tight">
-                <p className="text-sm font-semibold">ScholarHub AI</p>
+                <p className="text-sm font-semibold">ScholarHub Finder AI</p>
                 <p className="text-[11px] text-blue-100 flex items-center gap-1">
                   <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
                   Smart Matching Active
@@ -174,7 +174,7 @@ export function AiAssistantPill() {
                     <div className="flex items-center gap-1.5">
                       <ScholarHubAiAvatar size="xs" showContainer={true} />
                       <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400">
-                        ScholarHub AI
+                        ScholarHub Finder AI
                       </span>
                     </div>
                     <div className="pl-6 text-xs leading-relaxed text-slate-800 dark:text-slate-100 whitespace-pre-wrap">

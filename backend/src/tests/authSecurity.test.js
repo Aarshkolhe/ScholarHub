@@ -4,7 +4,7 @@ import crypto from "crypto";
 import { requestPasswordResetOtp, verifyPasswordResetOtp, markOtpAsUsed } from "../services/otpService.js";
 
 async function runTests() {
-  console.log("=== Starting ScholarHub Security & OTP Integration Tests ===");
+  console.log("=== Starting ScholarHub Finder Security & OTP Integration Tests ===");
 
   try {
     await testDatabaseConnection();

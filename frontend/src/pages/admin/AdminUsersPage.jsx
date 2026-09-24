@@ -110,7 +110,7 @@ export default function AdminUsersPage() {
     setAlertingUser(u);
     if (defaultTemplate === "profile") {
       setAlertTitle("Action Required: Please complete your profile details");
-      setAlertMessage(`Hello ${u.name || "Student"}, please complete your academic, category, and income details on ScholarHub to unlock 100% matched scholarships and government grants.`);
+      setAlertMessage(`Hello ${u.name || "Student"}, please complete your academic, category, and income details on ScholarHub Finder to unlock 100% matched scholarships and government grants.`);
       setAlertType("profile_reminder");
     } else if (defaultTemplate === "documents") {
       setAlertTitle("Action Required: Upload pending verification documents");
@@ -769,7 +769,7 @@ export default function AdminUsersPage() {
                 type="button"
                 onClick={() => {
                   setAlertTitle("Action Required: Please complete your profile details");
-                  setAlertMessage(`Hello ${alertingUser.name || "Student"}, please complete your academic, category, and income details on ScholarHub to unlock 100% matched scholarships and government grants.`);
+                  setAlertMessage(`Hello ${alertingUser.name || "Student"}, please complete your academic, category, and income details on ScholarHub Finder to unlock 100% matched scholarships and government grants.`);
                   setAlertType("profile_reminder");
                 }}
                 className="px-2.5 py-1 rounded-lg bg-blue-50 dark:bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-500/30 hover:bg-blue-100 dark:hover:bg-blue-500/20"

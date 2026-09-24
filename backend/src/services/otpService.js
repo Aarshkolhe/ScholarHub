@@ -94,16 +94,16 @@ export async function requestPasswordResetOtp(email) {
   // Send OTP to registered email
   await sendEmail({
     to: user.email,
-    subject: "ScholarHub Password Reset OTP",
-    text: `Your ScholarHub password reset OTP is ${otp}. This OTP will expire in ${OTP_EXPIRY_MINUTES} minutes.`,
+    subject: "ScholarHub Finder Password Reset OTP",
+    text: `Your ScholarHub Finder password reset OTP is ${otp}. This OTP will expire in ${OTP_EXPIRY_MINUTES} minutes.`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 500px; margin: auto;">
-        <h2>ScholarHub Password Reset</h2>
+        <h2>ScholarHub Finder Password Reset</h2>
 
         <p>Hello ${user.name || "Student"},</p>
 
         <p>
-          We received a request to reset your ScholarHub password.
+          We received a request to reset your ScholarHub Finder password.
         </p>
 
         <p>Your OTP is:</p>
@@ -131,7 +131,7 @@ export async function requestPasswordResetOtp(email) {
         </p>
 
         <p>
-          — ScholarHub Team
+          — ScholarHub Finder Team
         </p>
       </div>
     `,

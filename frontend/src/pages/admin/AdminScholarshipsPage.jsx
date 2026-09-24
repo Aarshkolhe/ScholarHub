@@ -450,7 +450,7 @@ export default function AdminScholarshipsPage() {
                       </div>
 
                       <p className="text-xs text-slate-600 dark:text-slate-400 line-clamp-2">
-                        {p.description || "Official government / institutional scholarship portal configured in ScholarHub database."}
+                        {p.description || "Official government / institutional scholarship portal configured in ScholarHub Finder database."}
                       </p>
                     </div>
 
@@ -670,7 +670,7 @@ export default function AdminScholarshipsPage() {
                   className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
                 />
                 <label htmlFor="portalActive" className="text-xs font-medium text-slate-700 dark:text-slate-300 cursor-pointer select-none">
-                  Portal is Active & Visible in ScholarHub
+                  Portal is Active & Visible in ScholarHub Finder
                 </label>
               </div>
 

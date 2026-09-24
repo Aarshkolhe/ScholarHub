@@ -14,7 +14,7 @@ const transporter = nodemailer.createTransport({
  */
 export async function sendEmail({ to, subject, text, html }) {
   return transporter.sendMail({
-    from: `"ScholarHub Alerts" <${process.env.EMAIL_USER}>`,
+    from: `"ScholarHub Finder Alerts" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     text,
@@ -39,7 +39,7 @@ export async function sendDeadlineAlertEmail({
   const html = `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; color: #1e293b;">
       <div style="background: linear-gradient(135deg, #2563eb, #4f46e5); padding: 32px 24px; text-align: center; color: #ffffff;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">🎓 ScholarHub</h1>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">🎓 ScholarHub Finder</h1>
         <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.9;">Scholarship Deadline Alert</p>
       </div>
 
@@ -82,7 +82,7 @@ export async function sendDeadlineAlertEmail({
       </div>
 
       <div style="background: #f1f5f9; padding: 16px; text-align: center; font-size: 12px; color: #64748b; border-top: 1px solid #e2e8f0;">
-        &copy; ${new Date().getFullYear()} ScholarHub Portal. You received this email because you opted into deadline notifications.
+        &copy; ${new Date().getFullYear()} ScholarHub Finder Portal. You received this email because you opted into deadline notifications.
       </div>
     </div>
   `;
@@ -108,13 +108,13 @@ export async function sendApplicationConfirmationEmail({
   const html = `
     <div style="font-family: 'Segoe UI', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; overflow: hidden; color: #1e293b;">
       <div style="background: linear-gradient(135deg, #059669, #0d9488); padding: 32px 24px; text-align: center; color: #ffffff;">
-        <h1 style="margin: 0; font-size: 24px; font-weight: 800;">🎓 ScholarHub</h1>
+        <h1 style="margin: 0; font-size: 24px; font-weight: 800;">🎓 ScholarHub Finder</h1>
         <p style="margin: 6px 0 0; font-size: 14px; opacity: 0.9;">Application Confirmation</p>
       </div>
       <div style="padding: 32px 24px;">
         <p style="font-size: 16px; font-weight: 600; margin-top: 0;">Hello ${studentName},</p>
         <p style="font-size: 14px; line-height: 1.6; color: #475569;">
-          Your application for <strong>${scholarshipName}</strong> has been successfully submitted and logged in the ScholarHub database.
+          Your application for <strong>${scholarshipName}</strong> has been successfully submitted and logged in the ScholarHub Finder database.
         </p>
         <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 12px; padding: 16px; margin: 20px 0; text-align: center;">
           <p style="font-size: 12px; color: #166534; margin: 0; font-weight: 600;">Reference Application ID</p>

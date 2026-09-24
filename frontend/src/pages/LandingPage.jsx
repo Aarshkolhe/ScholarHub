@@ -195,7 +195,7 @@ export default function LandingPage() {
           <div className="flex items-center gap-8">
             <Link className="text-xl text-[#004ac6] dark:text-blue-400 flex items-center font-bold font-display" to="/landing">
               <span className="material-symbols-outlined mr-2 text-[#004ac6] dark:text-blue-400 text-2xl">school</span>
-              ScholarHub
+              ScholarHub Finder
             </Link>
           </div>
           <div className="flex items-center gap-4">
@@ -306,9 +306,9 @@ export default function LandingPage() {
         {/* Feature Cards Section */}
         <section className="mb-32" id="find-scholarships">
           <div className="text-center mb-12">
-            <h2 className="text-[28px] sm:text-2xl font-bold text-[#191c1e] dark:text-white mb-3">Why Choose ScholarHub?</h2>
+            <h2 className="text-[28px] sm:text-2xl font-bold text-[#191c1e] dark:text-white mb-3">Why Choose ScholarHub Finder?</h2>
             <p className="text-sm text-[#434655] dark:text-slate-300 max-w-2xl mx-auto">
-              Two things stand between students and the funding they deserve: finding the right opportunity, and knowing it's actually the right fit. We built ScholarHub to solve both.
+              Two things stand between students and the funding they deserve: finding the right opportunity, and knowing it's actually the right fit. We built ScholarHub Finder to solve both.
             </p>
           </div>
 
@@ -339,10 +339,10 @@ export default function LandingPage() {
       {/* Footer */}
       <footer className="border-t border-[#c3c6d7] dark:border-slate-800 bg-white dark:bg-slate-900 transition-colors">
         <div className="max-w-7xl mx-auto px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm text-[#434655] dark:text-slate-400">© 2026 ScholarHub. All rights reserved.</span>
+          <span className="text-sm text-[#434655] dark:text-slate-400">© 2026 ScholarHub Finder. All rights reserved.</span>
           <div className="flex items-center gap-2 text-[#004ac6] dark:text-blue-400 text-xl font-bold font-display">
             <span className="material-symbols-outlined text-[#004ac6] dark:text-blue-400">school</span>
-            ScholarHub
+            ScholarHub Finder
           </div>
         </div>
       </footer>

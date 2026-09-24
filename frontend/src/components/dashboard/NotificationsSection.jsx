@@ -666,7 +666,7 @@ export function NotificationsSection({ onNavigateTab }) {
               </h3>
             </div>
             <p className="text-xs text-purple-900/80 dark:text-purple-300/80 leading-relaxed">
-              ScholarHub continuously scans government schemes (MahaDBT, AICTE, NSP) and private CSR endowments to find funding matching your profile.
+              ScholarHub Finder continuously scans government schemes (MahaDBT, AICTE, NSP) and private CSR endowments to find funding matching your profile.
             </p>
             <button
               type="button"

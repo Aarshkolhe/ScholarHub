@@ -54,7 +54,7 @@ router.post("/api/ai/chat", async (req, res) => {
 
   const scholarshipContext =
     eligibleScholarships && eligibleScholarships.length > 0
-      ? `\n\nTop Eligible Scholarships from ScholarHub database:\n` +
+      ? `\n\nTop Eligible Scholarships from ScholarHub Finder database:\n` +
         eligibleScholarships
           .slice(0, 5)
           .map(
@@ -66,7 +66,7 @@ router.post("/api/ai/chat", async (req, res) => {
           .join("\n")
       : "";
 
-  const systemInstruction = `You are ScholarHub AI — an expert scholarship advisor and eligibility counselor for Indian students.
+  const systemInstruction = `You are ScholarHub Finder AI — an expert scholarship advisor and eligibility counselor for Indian students.
 
 ## Student Profile:
 ${profileLines || "Profile not yet filled. Encourage the student to complete their profile."}
@@ -103,7 +103,7 @@ ${scholarshipContext}
   if (isDoc) {
     fallbackReply = `## Documents Required for Indian Scholarships\n\n**Academic Documents:**\n- 10th & 12th Marksheet / Semester Marksheet\n- College Bonafide / Enrollment Certificate\n\n**Identity & Domicile:**\n- Aadhaar Card\n- State Domicile Certificate (issued by Tehsildar/SDM)\n- Caste/Category Certificate (if applicable: OBC/SC/ST/EWS)\n\n**Financial Documents:**\n- Annual Family Income Certificate (issued by competent authority)\n\n**Bank Details:**\n- Bank Passbook front page (Account Number, IFSC, Branch — must be Aadhaar-seeded for DBT)\n\n**Passport-size Photograph** and **College Fee Receipt** may also be required depending on the scheme.`;
   } else if (isTip) {
-    fallbackReply = `## Application Tips for Scholarship Success\n\n- **Apply Early:** Most central/state schemes open August–December. Don't wait for last-minute portal crashes.\n- **Complete Your ScholarHub Profile:** A higher profile completion score directly improves your AI match accuracy.\n- **Aadhaar–Bank Seeding:** Link your bank account to Aadhaar for seamless DBT credit.\n- **One Scholarship Rule:** Most government schemes allow only one government scholarship per academic year — choose wisely.\n- **Strong SOP:** For competitive grants (STEM, Research), write a crisp 200-word Statement of Purpose highlighting your academic goals and financial need.`;
+    fallbackReply = `## Application Tips for Scholarship Success\n\n- **Apply Early:** Most central/state schemes open August–December. Don't wait for last-minute portal crashes.\n- **Complete Your ScholarHub Finder Profile:** A higher profile completion score directly improves your AI match accuracy.\n- **Aadhaar–Bank Seeding:** Link your bank account to Aadhaar for seamless DBT credit.\n- **One Scholarship Rule:** Most government schemes allow only one government scholarship per academic year — choose wisely.\n- **Strong SOP:** For competitive grants (STEM, Research), write a crisp 200-word Statement of Purpose highlighting your academic goals and financial need.`;
   } else if (isMatch && eligibleScholarships && eligibleScholarships.length > 0) {
     const topMatches = eligibleScholarships
       .slice(0, 3)

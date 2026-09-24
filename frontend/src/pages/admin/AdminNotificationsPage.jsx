@@ -149,8 +149,8 @@ export default function AdminNotificationsPage() {
     } else if (presetKey === "general_announcement") {
       setTargetType("all");
       setAlertType("announcement");
-      setTitle("Important Announcement from ScholarHub Administration");
-      setMessage("ScholarHub has added new government grant schemes for the 2026-2027 academic session. Check your dashboard for newly available scholarship opportunities.");
+      setTitle("Important Announcement from ScholarHub Finder Administration");
+      setMessage("ScholarHub Finder has added new government grant schemes for the 2026-2027 academic session. Check your dashboard for newly available scholarship opportunities.");
     }
   };
 

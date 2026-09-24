@@ -12,7 +12,7 @@ export function SignOutConfirmModal({ isOpen, onClose, onConfirm }) {
             <LogOut className="size-5" />
           </span>
           <div>
-            <h3 className="text-base font-bold text-slate-900 dark:text-white">Sign Out of ScholarHub?</h3>
+            <h3 className="text-base font-bold text-slate-900 dark:text-white">Sign Out of ScholarHub Finder?</h3>
             <p className="text-xs text-rose-600 dark:text-rose-400 font-medium">You will need to log back in</p>
           </div>
         </div>

@@ -98,8 +98,8 @@ export function Sidebar({
                 <GraduationCap className="size-5" />
               </div>
               <div>
-                <span className="font-display text-lg font-extrabold tracking-tight text-slate-900 dark:text-white block leading-tight">
-                  Scholar<span className="text-violet-600 dark:text-violet-400">Hub</span>
+                <span className="font-display text-base font-extrabold tracking-tight text-slate-900 dark:text-white block leading-tight truncate">
+                  ScholarHub <span className="text-violet-600 dark:text-violet-400">Finder</span>
                 </span>
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block">
                   Match Portal

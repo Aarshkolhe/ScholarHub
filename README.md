@@ -1,6 +1,6 @@
-# ScholarHub — Smart AI-Powered Scholarship Matching Platform
+# ScholarHub Finder — Smart AI-Powered Scholarship Matching Platform
 
-ScholarHub is a full-stack academic scholarship platform designed to empower students across India by matching them with official government schemes, state quotas, corporate CSR grants, and merit fellowships tailored to their unique academic, financial, and category profiles.
+ScholarHub Finder is a full-stack academic scholarship platform designed to empower students across India by matching them with official government schemes, state quotas, corporate CSR grants, and merit fellowships tailored to their unique academic, financial, and category profiles.
 
 ---
 

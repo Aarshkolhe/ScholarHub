@@ -62,7 +62,7 @@ const AuthPage = ({ initialMode = "login" }) => {
       case "register":
         return {
           title: "Create your account",
-          subtitle: "Create your ScholarHub account to get started.",
+          subtitle: "Create your ScholarHub Finder account to get started.",
         };
       case "forgot":
         return {

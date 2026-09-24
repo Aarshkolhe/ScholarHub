@@ -663,7 +663,7 @@ export function SettingsSection({
                   <span className="text-xs font-bold text-slate-900 dark:text-white">Live Gmail SMTP Delivery Tester</span>
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-                  ScholarHub delivers automated deadline alerts via configured Gmail SMTP (<code className="text-[11px] text-blue-600 dark:text-blue-400 font-mono">scholarhub34@gmail.com</code>). Test delivering a live deadline alert to <strong className="text-slate-800 dark:text-slate-200">{user?.email || "your registered email"}</strong>:
+                  ScholarHub Finder delivers automated deadline alerts via configured Gmail SMTP (<code className="text-[11px] text-blue-600 dark:text-blue-400 font-mono">scholarhub34@gmail.com</code>). Test delivering a live deadline alert to <strong className="text-slate-800 dark:text-slate-200">{user?.email || "your registered email"}</strong>:
                 </p>
 
                 {testEmailMsg && (
@@ -829,7 +829,7 @@ export function SettingsSection({
 
             <div className="space-y-2 text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
               <p>
-                ScholarHub strictly complies with a <strong>Zero-Document Storage Policy</strong>. To safeguard student privacy and eliminate data exposure risks, official sensitive documents (such as caste validity certificates, annual income proof, and official marksheets) are <strong>never stored or uploaded</strong> to our servers.
+                ScholarHub Finder strictly complies with a <strong>Zero-Document Storage Policy</strong>. To safeguard student privacy and eliminate data exposure risks, official sensitive documents (such as caste validity certificates, annual income proof, and official marksheets) are <strong>never stored or uploaded</strong> to our servers.
               </p>
               <p>
                 All match calculations and eligibility evaluations are computed purely on student-provided self-reported profile metrics. Official credential verification is completed directly through authoritative government portals (MahaDBT, NSP, MahaJYOTI, Vidyasaarathi) during actual grant disbursement.

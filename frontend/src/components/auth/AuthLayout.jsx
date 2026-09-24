@@ -43,7 +43,7 @@ const AuthLayout = ({ children }) => {
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/15 backdrop-blur">
               🎓
             </span>
-            ScholarHub
+            ScholarHub Finder
           </Link>
           <p className="mt-2 text-slate-200">One Platform, Endless Opportunities</p>
         </div>

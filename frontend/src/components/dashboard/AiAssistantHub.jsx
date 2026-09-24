@@ -181,7 +181,7 @@ function MessageBubble({ message, idx, copiedIdx, onCopy, userAvatar, userInitia
 
       <div className="flex-1 min-w-0 space-y-2.5">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-blue-400">ScholarHub AI</span>
+          <span className="text-xs font-bold text-blue-400">ScholarHub Finder AI</span>
           <span className="size-1.5 rounded-full bg-emerald-400 animate-pulse" />
         </div>
 
@@ -287,7 +287,7 @@ export function AiAssistantHub() {
 
   const initialGreeting = hasProfile
     ? `Hello ${firstName}! 👋 I can see your profile (${studentProfile.category || "General"} · ${studentProfile.domicileState || "Maharashtra"} · ${studentProfile.currentCourse || "Higher Education"}). I've matched ${eligibleScholarships.length} scholarships for you. Ask me anything about eligibility, documents, or application tips!`
-    : `Hello ${firstName}! 👋 I'm your ScholarHub AI assistant. Fill in your profile details first and I can instantly tell you which grants you qualify for. What can I help you with?`;
+    : `Hello ${firstName}! 👋 I'm your ScholarHub Finder AI assistant. Fill in your profile details first and I can instantly tell you which grants you qualify for. What can I help you with?`;
 
   const [messages, setMessages] = useState([
     {
@@ -400,7 +400,7 @@ export function AiAssistantHub() {
           </div>
           <div>
             <h2 className="text-[15px] font-bold text-white tracking-tight flex items-center gap-2">
-              ScholarHub AI
+              ScholarHub Finder AI
               <span className="text-[10px] font-semibold bg-blue-500/20 text-blue-300 border border-blue-500/30 rounded-full px-2 py-0.5 tracking-normal">
                 Beta
               </span>

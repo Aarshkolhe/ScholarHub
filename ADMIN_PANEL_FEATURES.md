@@ -1,6 +1,6 @@
-# ScholarHub Admin Panel & Role-Based Access Control (RBAC) Specification
+# ScholarHub Finder Admin Panel & Role-Based Access Control (RBAC) Specification
 
-This document details all completed features across Phases 1–4, system architecture, database changes, environment setup, and the upcoming Phase 5 plan for ScholarHub.
+This document details all completed features across Phases 1–4, system architecture, database changes, environment setup, and the upcoming Phase 5 plan for ScholarHub Finder.
 
 ---
 

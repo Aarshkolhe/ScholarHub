@@ -3,7 +3,7 @@
 This directory (`archive_unused/`) contains legacy prototype files and initial framework boilerplate (Next.js and Flask) retained for historical reference.
 
 > [!NOTE]
-> None of the files in this directory are part of the active **ScholarHub** application.
+> None of the files in this directory are part of the active **ScholarHub Finder** application.
 
 ## Active Application Structure
 
