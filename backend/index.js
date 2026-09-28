@@ -8,6 +8,7 @@ import profileRoutes from "./src/routes/profileRoutes.js";
 import scholarshipRoutes from "./src/routes/scholarshipRoutes.js";
 import notificationRoutes from "./src/routes/notificationRoutes.js";
 import adminRoutes from "./src/routes/adminRoutes.js";
+import cronRoutes from "./src/routes/cronRoutes.js";
 import { testEmailConnection } from "./src/services/emailService.js";
 
 import { initDeadlineScheduler } from "./src/services/schedulerService.js";
@@ -35,27 +36,61 @@ app.use(
 );
 
 // 2. Production Environment-Based CORS
-const allowedOrigins = process.env.ALLOWED_ORIGINS
-  ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
-  : ["http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:5173"];
+const defaultOrigins = [
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173"
+];
+
+const configuredOrigins = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(",")
+      .map((o) => o.trim().replace(/\/$/, ""))
+      .filter(Boolean)
+  : [];
+
+const isProduction = process.env.NODE_ENV === "production";
+const allowedOrigins = isProduction && configuredOrigins.length > 0
+  ? configuredOrigins
+  : [...new Set([...defaultOrigins, ...configuredOrigins])];
 
 app.use(
   cors({
     origin: function (origin, callback) {
-      if (!origin) return callback(null, true);
-      if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== "production") {
+      // Allow requests with no origin (e.g. server-to-server, curl, mobile apps, cron)
+      if (!origin) {
         return callback(null, true);
       }
-      return callback(new Error("CORS policy violation: Origin not allowed."));
-    }
+
+      const normalizedOrigin = origin.trim().replace(/\/$/, "");
+      const isAllowed = allowedOrigins.includes(normalizedOrigin);
+
+      if (isAllowed) {
+        return callback(null, true);
+      }
+
+      // Reject unauthorized origins cleanly without throwing an unhandled Error (prevents Express 500)
+      return callback(null, false);
+    },
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization", "x-cron-secret"],
+    optionsSuccessStatus: 204
   })
 );
 
 app.use(express.json());
 
 // --------------------------------------------------
-// Health Check
+// Health Check & Root Public Status
 // --------------------------------------------------
+
+app.get("/", (req, res) => {
+  res.status(200).json({
+    success: true,
+    status: "ok",
+    message: "ScholarHub API is running"
+  });
+});
 
 app.get("/api/health", (req, res) => {
   res.status(200).json({
@@ -74,7 +109,8 @@ app.use("/", aiRoutes);
 app.use("/", profileRoutes);
 app.use("/", scholarshipRoutes);
 app.use("/", notificationRoutes);
-app.use("/", adminRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/cron", cronRoutes);
 
 // --------------------------------------------------
 // Start Server

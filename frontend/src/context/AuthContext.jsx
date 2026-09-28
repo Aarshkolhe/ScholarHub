@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useCallback } from "react";
-import * as authService from "../services/authService";
+import api, * as authService from "../services/authService";
 
 export const AuthContext = createContext(null);
 
@@ -112,6 +112,12 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const persistSession = useCallback(async (data) => {
+    // Persist token first so it is available for immediate authenticated requests
+    if (data?.token) {
+      localStorage.setItem(TOKEN_KEY, data.token);
+    }
+    const token = data?.token || localStorage.getItem(TOKEN_KEY);
+
     if (data?.user) {
       const u = data.user;
       const uid = u.id ? `_${u.id}` : "";
@@ -148,13 +154,16 @@ export const AuthProvider = ({ children }) => {
 
       setUser(userObj);
 
-      // Fetch saved profile from PostgreSQL for this user if available
-      if (u.id) {
+      // Fetch saved profile from PostgreSQL with Bearer JWT authentication
+      if (u.id && token && !token.startsWith("scholarhub_simulation_")) {
         try {
-          const backendUrl = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-          const resp = await fetch(`${backendUrl}/api/profile?userId=${encodeURIComponent(u.id)}`);
-          const resJson = await resp.json();
-          if (resJson.success && resJson.profile) {
+          const resp = await api.get("/api/profile", {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          });
+          const resJson = resp.data;
+          if (resJson?.success && resJson?.profile) {
             const p = resJson.profile;
             const ed = {
               currentCourse: p.current_course || "",
@@ -199,10 +208,6 @@ export const AuthProvider = ({ children }) => {
           // Backend fetch fallback
         }
       }
-    }
-
-    if (data?.token) {
-      localStorage.setItem(TOKEN_KEY, data.token);
     }
   }, []);
 
